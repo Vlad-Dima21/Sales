@@ -21,49 +21,69 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.theme.*
-import kotlin.math.sign
 
-class Login : ComponentActivity() {
+class EnterAccount : ComponentActivity() {
+
+    private lateinit var viewModel: EnterAccountViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this)[EnterAccountViewModel::class.java]
+
+        // set the app to be in fullscreen (status bar is no longer semi-transparent)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         setContent {
+            val backgroundModifier = when(isSystemInDarkTheme()) {
+                true -> Modifier.background(Brush.linearGradient(
+                    colors = listOf(DarkBackground, TealSecondaryDark)
+                ))
+                false -> Modifier.background(Brush.linearGradient(
+                    colors = listOf(LightBackground, TealSecondaryLight)
+                ))
+            }
             SalesTheme {
                 Box(
-                    modifier = Modifier
+                    modifier = backgroundModifier
                         .fillMaxSize()
-                        .background(if (isSystemInDarkTheme()) DarkBackground else LightBackground)
                 ) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth(.9f)
-//                            .fillMaxHeight(.7f)
                             .align(Alignment.Center),
                         shape = RoundedCornerShape(15.dp),
                         elevation = 5.dp,
                         backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
                         border = if (isSystemInDarkTheme()) BorderStroke(2.dp, DarkSurface) else BorderStroke(0.dp, LightSurface)
                     ) {
-                        EnterAccountNavigation()
+                        EnterAccountNavigation(viewModel)
                     }
                 }
             }
@@ -77,33 +97,30 @@ private sealed class Screen(val route: String) {
 }
 
 @Composable
-fun EnterAccountNavigation() {
+fun EnterAccountNavigation(
+    viewModel: EnterAccountViewModel
+) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.LoginScreen.route) {
         composable(route = Screen.LoginScreen.route) {
-            LoginComposable(navController = navController)
+            LoginComposable(navController, viewModel)
         }
         composable(route = Screen.SignUpScreen.route) {
-            SignUpComposable(navController = navController)
+            SignUpComposable(navController, viewModel)
         }
     }
 }
 
+val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
+
 @OptIn(ExperimentalTextApi::class)
 @Composable
-fun LoginComposable(navController: NavController) {
-    var emailFieldState by remember {
-        mutableStateOf("")
-    }
-    var passwordFieldState by remember {
-        mutableStateOf("")
-    }
+fun LoginComposable(navController: NavController, viewModel: EnterAccountViewModel) {
     var passwordVisibleState by remember {
         mutableStateOf(false)
     }
     val context = LocalContext.current
-    val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
     Column(
         modifier = Modifier.padding(15.dp),
     ) {
@@ -116,7 +133,7 @@ fun LoginComposable(navController: NavController) {
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             style = TextStyle(
-                brush = Brush.linearGradient(
+                brush = Brush.horizontalGradient(
                     colors = gradientColors
                 )
             )
@@ -126,27 +143,27 @@ fun LoginComposable(navController: NavController) {
                 .padding(top = 100.dp)
         ) {
             OutlinedTextField(
-                value = emailFieldState,
+                value = viewModel.emailFieldState,
                 onValueChange = {
-                    emailFieldState = it
+                    viewModel.emailFieldState = it
                 },
                 label = {
                     Text(stringResource(id = R.string.Email))
                 },
 
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = passwordFieldState,
+                value = viewModel.passwordFieldState,
                 onValueChange = {
-                    passwordFieldState = it
+                    viewModel.passwordFieldState = it
                 },
                 label = {
                     Text(stringResource(R.string.Password))
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                    val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -174,7 +191,7 @@ fun LoginComposable(navController: NavController) {
                 Button(
                     onClick = {
                         /*TODO*/
-                        Toast.makeText(context, "email: $emailFieldState   password: $passwordFieldState", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "email: ${viewModel.emailFieldState}   password: ${viewModel.passwordFieldState}", Toast.LENGTH_SHORT).show()
                     },
                 ) {
                     Text(
@@ -201,13 +218,7 @@ fun LoginComposable(navController: NavController) {
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
-fun SignUpComposable(navController: NavController) {
-    var emailFieldState by remember {
-        mutableStateOf("")
-    }
-    var passwordFieldState by remember {
-        mutableStateOf("")
-    }
+fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewModel) {
     var passwordVisibleState by remember {
         mutableStateOf(false)
     }
@@ -235,27 +246,27 @@ fun SignUpComposable(navController: NavController) {
                 .padding(top = 100.dp)
         ) {
             OutlinedTextField(
-                value = emailFieldState,
+                value = viewModel.emailFieldState,
                 onValueChange = {
-                    emailFieldState = it
+                    viewModel.emailFieldState = it
                 },
                 label = {
                     Text(stringResource(id = R.string.Email))
                 },
 
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = passwordFieldState,
+                value = viewModel.passwordFieldState,
                 onValueChange = {
-                    passwordFieldState = it
+                    viewModel.passwordFieldState = it
                 },
                 label = {
                     Text(stringResource(R.string.Password))
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -283,7 +294,7 @@ fun SignUpComposable(navController: NavController) {
                 Button(
                     onClick = {
                         /*TODO*/
-                        Toast.makeText(context, "email: $emailFieldState   password: $passwordFieldState", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "email: ${viewModel.emailFieldState}   password: ${viewModel.passwordFieldState}", Toast.LENGTH_SHORT).show()
                     },
                 ) {
                     Text(

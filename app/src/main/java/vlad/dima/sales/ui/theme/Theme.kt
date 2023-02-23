@@ -45,15 +45,9 @@ fun SalesTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
     }
 
     val systemUiController = rememberSystemUiController()
-    if(darkTheme){
-        systemUiController.setSystemBarsColor(
-            color = DarkBackground
-        )
-    }else{
-        systemUiController.setSystemBarsColor(
-            color = LightBackground
-        )
-    }
+    systemUiController.setSystemBarsColor(
+        color = Color.Transparent
+    )
 
     MaterialTheme(
         colors = colors,
