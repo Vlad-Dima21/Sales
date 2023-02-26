@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui
+package vlad.dima.sales.ui.EnterAccount
 
 import android.os.Bundle
 import android.widget.Toast
@@ -11,6 +11,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -19,14 +20,14 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -45,7 +46,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.theme.*
 
@@ -59,6 +59,10 @@ class EnterAccount : ComponentActivity() {
 
         // set the app to be in fullscreen (status bar is no longer semi-transparent)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        viewModel.toastMessageObserver.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
 
         setContent {
             val backgroundModifier = when(isSystemInDarkTheme()) {
@@ -117,7 +121,7 @@ val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, T
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun LoginComposable(navController: NavController, viewModel: EnterAccountViewModel) {
-    var passwordVisibleState by remember {
+    var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
     val context = LocalContext.current
@@ -216,14 +220,15 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewModel) {
-    var passwordVisibleState by remember {
+    var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
     val context = LocalContext.current
     val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
+    val virtualKeyboard = LocalSoftwareKeyboardController.current
     Column(
         modifier = Modifier.padding(15.dp),
     ) {
@@ -267,6 +272,10 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                     Text(stringResource(R.string.Password))
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    virtualKeyboard?.hide()
+                    viewModel.signUpUser()
+                }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -292,10 +301,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = {
-                        /*TODO*/
-                        Toast.makeText(context, "email: ${viewModel.emailFieldState}   password: ${viewModel.passwordFieldState}", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = { viewModel.signUpUser() },
                 ) {
                     Text(
                         text = stringResource(R.string.SignUp),
