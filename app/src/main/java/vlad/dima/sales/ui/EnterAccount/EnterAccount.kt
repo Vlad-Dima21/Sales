@@ -1,5 +1,7 @@
 package vlad.dima.sales.ui.EnterAccount
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -7,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +49,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.*
 import vlad.dima.sales.R
+import vlad.dima.sales.ui.UIConstants.Companion.BORDER_WIDTH
+import vlad.dima.sales.ui.UIConstants.Companion.ROUNDED_CORNER_RADIUS
 import vlad.dima.sales.ui.theme.*
 
 class EnterAccount : ComponentActivity() {
@@ -55,16 +61,25 @@ class EnterAccount : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         viewModel = ViewModelProvider(this)[EnterAccountViewModel::class.java]
 
         // set the app to be in fullscreen (status bar is no longer semi-transparent)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        viewModel.toastMessageObserver.observe(this) { message ->
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        // the activity observes the results of viewModel operations
+        viewModel.actionResult.observe(this) { result ->
+            if (!result.actionSuccessful) {
+                    errorMessage = getString(result.messageStringId)
+            } else {
+                // TODO start new activity
+                Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
+            }
         }
 
         setContent {
+            // force portrait mode in current activity
+            (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             val backgroundModifier = when(isSystemInDarkTheme()) {
                 true -> Modifier.background(Brush.linearGradient(
                     colors = listOf(DarkBackground, TealSecondaryDark)
@@ -82,18 +97,32 @@ class EnterAccount : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxWidth(.9f)
                             .align(Alignment.Center),
-                        shape = RoundedCornerShape(15.dp),
+                        shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS),
                         elevation = 5.dp,
                         backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
                         border = if (isSystemInDarkTheme()) BorderStroke(2.dp, DarkSurface) else BorderStroke(0.dp, LightSurface)
                     ) {
                         EnterAccountNavigation(viewModel)
                     }
+
+                    if (errorMessage.isNotEmpty()) {
+                        ErrorPopup(
+                            message = errorMessage,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 100.dp))
+                        LaunchedEffect(key1 = errorMessage) {
+                            delay(3000)
+                            errorMessage = ""
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+var errorMessage by mutableStateOf("")
 
 private sealed class Screen(val route: String) {
     object LoginScreen : Screen("login")
@@ -116,6 +145,7 @@ fun EnterAccountNavigation(
     }
 }
 
+// gradient colors used for card header text
 val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
 
 @OptIn(ExperimentalTextApi::class)
@@ -157,6 +187,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
 
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
+                isError = viewModel.inputError,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -168,6 +199,9 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                     Text(stringResource(R.string.Password))
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    viewModel.loginUser()
+                }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                    val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -181,6 +215,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                     }
                 },
                 singleLine = true,
+                isError = viewModel.inputError,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
@@ -194,8 +229,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
             ) {
                 Button(
                     onClick = {
-                        /*TODO*/
-                        Toast.makeText(context, "email: ${viewModel.emailFieldState}   password: ${viewModel.passwordFieldState}", Toast.LENGTH_SHORT).show()
+                        viewModel.loginUser()
                     },
                 ) {
                     Text(
@@ -209,6 +243,8 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                         text = AnnotatedString(stringResource(R.string.SignUp)),
                         style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
                         onClick = {
+                            viewModel.inputError = false
+                            errorMessage = ""
                             navController.navigate(Screen.SignUpScreen.route) {
                                 popUpTo(Screen.LoginScreen.route) { inclusive = true }
                             }
@@ -261,6 +297,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
 
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
+                isError = viewModel.inputError,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -289,6 +326,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                     }
                 },
                 singleLine = true,
+                isError = viewModel.inputError,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
@@ -314,6 +352,8 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                         text = AnnotatedString(stringResource(R.string.Login)),
                         style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
                         onClick = {
+                            errorMessage = ""
+                            viewModel.inputError = false
                             navController.navigate(Screen.LoginScreen.route) {
                                 popUpTo(Screen.SignUpScreen.route) { inclusive = true }
                             }
@@ -322,5 +362,34 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ErrorPopup(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = if (isSystemInDarkTheme()) DarkSurface else LightSurface,
+                shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+            )
+            .border(
+                width = BORDER_WIDTH,
+                color = Color.Red,
+                shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+            )
+            .fillMaxWidth(0.8f),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier
+                .padding(10.dp)
+                .align(Alignment.Center),
+            color = if (isSystemInDarkTheme()) Color.White else Color.Black
+        )
     }
 }

@@ -7,4 +7,11 @@
     <string name="SignUp">Sign up</string>
     <string name="Instead"> instead</string>
     <string name="title_activity_sign_up">SignUp</string>
+    <string name="SignUpSuccessful">User signed up</string>
+    <string name="SignUpUnsuccessful">User didn\'t sign up</string>
+    <string name="FillRequiredFields">Please fill required fields</string>
+    <string name="LogInSuccessful">User logged in</string>
+    <string name="LogInUnsuccessfull">User didn\'t log in</string>
+    <string name="InvalidCredentials">Invalid credentials</string>
+    <string name="EmailAlreadyInUse">The email address is already in use by another account</string>
 </resources>
