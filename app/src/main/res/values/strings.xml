@@ -14,4 +14,7 @@
     <string name="LogInUnsuccessfull">User didn\'t log in</string>
     <string name="InvalidCredentials">Invalid credentials</string>
     <string name="EmailAlreadyInUse">The email address is already in use by another account</string>
+    <string name="Username">Username</string>
+    <string name="SystemError">There was an error. Please try again</string>
+    <string name="title_activity_salesman_dash_board">SalesmanDashBoardActivity</string>
 </resources>

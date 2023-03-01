@@ -1,12 +1,14 @@
 package vlad.dima.sales.ui.EnterAccount
 
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -46,16 +48,18 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
+import vlad.dima.sales.ui.SalesmanDashboard.SalesmanDashboardActivity
 import vlad.dima.sales.ui.UIConstants.Companion.BORDER_WIDTH
 import vlad.dima.sales.ui.UIConstants.Companion.ROUNDED_CORNER_RADIUS
 import vlad.dima.sales.ui.theme.*
 
-class EnterAccount : ComponentActivity() {
+class EnterAccountActivity : ComponentActivity() {
 
     private lateinit var viewModel: EnterAccountViewModel
 
@@ -63,6 +67,10 @@ class EnterAccount : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         viewModel = ViewModelProvider(this)[EnterAccountViewModel::class.java]
+
+        if (viewModel.isLoggedIn()) {
+            startActivity(Intent(this, SalesmanDashboardActivity::class.java))
+        }
 
         // set the app to be in fullscreen (status bar is no longer semi-transparent)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -72,8 +80,8 @@ class EnterAccount : ComponentActivity() {
             if (!result.actionSuccessful) {
                     errorMessage = getString(result.messageStringId)
             } else {
-                // TODO start new activity
                 Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, SalesmanDashboardActivity::class.java))
             }
         }
 
@@ -111,8 +119,8 @@ class EnterAccount : ComponentActivity() {
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 100.dp))
-                        LaunchedEffect(key1 = errorMessage) {
-                            delay(3000)
+                        LaunchedEffect(errorMessage) {
+                            delay(1000)
                             errorMessage = ""
                         }
                     }
@@ -129,13 +137,23 @@ private sealed class Screen(val route: String) {
     object SignUpScreen : Screen("sign_up")
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun EnterAccountNavigation(
     viewModel: EnterAccountViewModel
 ) {
-    val navController = rememberNavController()
+    val navController = rememberAnimatedNavController()
 
-    NavHost(navController = navController, startDestination = Screen.LoginScreen.route) {
+    AnimatedNavHost(
+        navController = navController,
+        startDestination = Screen.LoginScreen.route,
+        enterTransition = {
+            slideIntoContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
+        },
+        exitTransition = {
+            slideOutOfContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
+        }
+    ) {
         composable(route = Screen.LoginScreen.route) {
             LoginComposable(navController, viewModel)
         }
@@ -299,6 +317,20 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 singleLine = true,
                 isError = viewModel.inputError,
                 modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = viewModel.usernameFieldState,
+                onValueChange = {
+                    viewModel.usernameFieldState = it
+                },
+                label = {
+                    Text(stringResource(id = R.string.Username))
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                singleLine = true,
+                isError = viewModel.inputError,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 10.dp)
             )
             OutlinedTextField(
                 value = viewModel.passwordFieldState,

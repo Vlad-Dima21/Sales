@@ -10,15 +10,15 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.R
 
 class EnterAccountViewModel: ViewModel() {
     var emailFieldState by mutableStateOf("")
+    var usernameFieldState by mutableStateOf("")
     var passwordFieldState by mutableStateOf("")
-    private var fieldsFilled: Boolean = false
-        get() = emailFieldState.isNotEmpty() && passwordFieldState.isNotEmpty()
     var inputError by mutableStateOf(false)
 
     val actionResult: MutableLiveData<AccountStatus> = MutableLiveData()
@@ -28,10 +28,16 @@ class EnterAccountViewModel: ViewModel() {
     fun signUpUser() {
         inputError = false
 
-        if (fieldsFilled) {
+        if (emailFieldState.isNotEmpty() && usernameFieldState.isNotEmpty() && passwordFieldState.isNotEmpty()) {
             viewModelScope.launch {
                 try {
                     auth.createUserWithEmailAndPassword(emailFieldState, passwordFieldState).await()
+                    auth.currentUser?.let { user ->
+                        val addUsernameToAccount = UserProfileChangeRequest.Builder()
+                            .setDisplayName(usernameFieldState)
+                            .build()
+                        user.updateProfile(addUsernameToAccount)
+                    }
                     actionResult.postValue(when {
                         isLoggedIn() -> AccountStatus(R.string.SignUpSuccessful, true)
                         else -> AccountStatus(R.string.SignUpUnsuccessful, false)
@@ -44,6 +50,7 @@ class EnterAccountViewModel: ViewModel() {
                     inputError = true
                 } catch (e: Exception) {
                     Log.d("SERVER_RESPONSE", e.stackTraceToString())
+                    actionResult.postValue(AccountStatus(R.string.SystemError, false))
                 }
             }
         } else {
@@ -53,7 +60,7 @@ class EnterAccountViewModel: ViewModel() {
     }
 
     fun loginUser() {
-        if (fieldsFilled) {
+        if (emailFieldState.isNotEmpty() && passwordFieldState.isNotEmpty()) {
             viewModelScope.launch {
                 try {
                     auth.signInWithEmailAndPassword(emailFieldState, passwordFieldState).await()
@@ -76,5 +83,5 @@ class EnterAccountViewModel: ViewModel() {
         }
     }
 
-    private fun isLoggedIn(): Boolean = auth.currentUser != null
+    fun isLoggedIn(): Boolean = auth.currentUser != null
 }
