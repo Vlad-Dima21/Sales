@@ -51,10 +51,10 @@ import androidx.navigation.NavController
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.google.firebase.auth.FirebaseAuth
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
-import vlad.dima.sales.ui.SalesmanDashboard.SalesmanDashboardActivity
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.SalesmanDashboardActivity
 import vlad.dima.sales.ui.UIConstants.Companion.BORDER_WIDTH
 import vlad.dima.sales.ui.UIConstants.Companion.ROUNDED_CORNER_RADIUS
 import vlad.dima.sales.ui.theme.*
@@ -72,7 +72,7 @@ class EnterAccountActivity : ComponentActivity() {
             startActivity(Intent(this, SalesmanDashboardActivity::class.java))
         }
 
-        // set the app to be in fullscreen (status bar is no longer semi-transparent)
+        // set the app to be in fullscreen (can draw behind status bar)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // the activity observes the results of viewModel operations
@@ -88,6 +88,10 @@ class EnterAccountActivity : ComponentActivity() {
         setContent {
             // force portrait mode in current activity
             (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+            val systemUiController = rememberSystemUiController()
+            systemUiController.setSystemBarsColor(Color.Transparent)
+
             val backgroundModifier = when(isSystemInDarkTheme()) {
                 true -> Modifier.background(Brush.linearGradient(
                     colors = listOf(DarkBackground, TealSecondaryDark)
@@ -172,7 +176,6 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
     var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
     Column(
         modifier = Modifier.padding(15.dp),
     ) {
@@ -280,7 +283,6 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
     var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
     val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
     val virtualKeyboard = LocalSoftwareKeyboardController.current
     Column(
@@ -329,7 +331,8 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 singleLine = true,
                 isError = viewModel.inputError,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(top = 10.dp)
             )
             OutlinedTextField(

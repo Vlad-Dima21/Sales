@@ -17,4 +17,7 @@
     <string name="Username">Username</string>
     <string name="SystemError">There was an error. Please try again</string>
     <string name="title_activity_salesman_dash_board">SalesmanDashBoardActivity</string>
+    <string name="DashboardNotifications">Notifications</string>
+    <string name="DashboardSales">Past Sales</string>
+    <string name="DashboardClients">Clients</string>
 </resources>
