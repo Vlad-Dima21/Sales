@@ -70,6 +70,7 @@ class EnterAccountActivity : ComponentActivity() {
 
         if (viewModel.isLoggedIn()) {
             startActivity(Intent(this, SalesmanDashboardActivity::class.java))
+            finish()
         }
 
         // set the app to be in fullscreen (can draw behind status bar)

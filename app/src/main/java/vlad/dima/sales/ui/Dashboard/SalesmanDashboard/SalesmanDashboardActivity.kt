@@ -93,12 +93,9 @@ fun DashboardBottomNavigation(navController: NavHostController) {
         BottomNavigationItem(
             selected = SalesmanDashboardResources.Notifications == selectedPage,
             onClick = {
+                val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.Notifications.route) {
-                    navController.graph.startDestinationRoute?.let {
-                        popUpTo(SalesmanDashboardResources.Notifications.route) { saveState = true }
-                    }
-                    launchSingleTop = true
-                    restoreState = true
+                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
                 }
             },
             icon = {
@@ -129,12 +126,9 @@ fun DashboardBottomNavigation(navController: NavHostController) {
         BottomNavigationItem(
             selected = SalesmanDashboardResources.PastSales == selectedPage,
             onClick = {
+                val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.PastSales.route) {
-                    navController.graph.startDestinationRoute?.let {
-                        popUpTo(SalesmanDashboardResources.PastSales.route) { saveState = true }
-                    }
-                    launchSingleTop = true
-                    restoreState = true
+                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
                 }
             },
             icon = {
@@ -165,12 +159,9 @@ fun DashboardBottomNavigation(navController: NavHostController) {
         BottomNavigationItem(
             selected = SalesmanDashboardResources.Clients == selectedPage,
             onClick = {
+                val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.Clients.route) {
-                    navController.graph.startDestinationRoute?.let {
-                        popUpTo(SalesmanDashboardResources.Clients.route) { saveState = true }
-                    }
-                    launchSingleTop = true
-                    restoreState = true
+                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
                 }
             },
             icon = {
