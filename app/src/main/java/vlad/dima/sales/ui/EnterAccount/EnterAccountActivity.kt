@@ -31,6 +31,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -83,16 +84,13 @@ class EnterAccountActivity : ComponentActivity() {
             } else {
                 Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, SalesmanDashboardActivity::class.java))
+                finish()
             }
         }
 
         setContent {
             // force portrait mode in current activity
             (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-            val systemUiController = rememberSystemUiController()
-            systemUiController.setSystemBarsColor(Color.Transparent)
-
             val backgroundModifier = when(isSystemInDarkTheme()) {
                 true -> Modifier.background(Brush.linearGradient(
                     colors = listOf(DarkBackground, TealSecondaryDark)
@@ -102,6 +100,12 @@ class EnterAccountActivity : ComponentActivity() {
                 ))
             }
             SalesTheme {
+                // set status bars colors to transparent
+                window?.let {
+                    it.statusBarColor = Color.Transparent.toArgb()
+                    it.navigationBarColor = Color.Transparent.toArgb()
+                }
+
                 Box(
                     modifier = backgroundModifier
                         .fillMaxSize()
@@ -151,18 +155,28 @@ fun EnterAccountNavigation(
 
     AnimatedNavHost(
         navController = navController,
-        startDestination = Screen.LoginScreen.route,
-        enterTransition = {
-            slideIntoContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
-        },
-        exitTransition = {
-            slideOutOfContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
-        }
+        startDestination = Screen.LoginScreen.route
     ) {
-        composable(route = Screen.LoginScreen.route) {
+        composable(
+            route = Screen.LoginScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Right, animationSpec = tween(700))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
+            }
+        ) {
             LoginComposable(navController, viewModel)
         }
-        composable(route = Screen.SignUpScreen.route) {
+        composable(
+            route = Screen.SignUpScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Left, animationSpec = tween(700))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Right, animationSpec = tween(700))
+            }
+        ) {
             SignUpComposable(navController, viewModel)
         }
     }

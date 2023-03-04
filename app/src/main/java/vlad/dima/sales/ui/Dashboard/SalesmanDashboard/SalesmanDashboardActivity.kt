@@ -7,7 +7,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -17,26 +19,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.google.firebase.auth.FirebaseAuth
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Clients.SalesmanClientsPage
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.PastSales.SalesmanPastSales
 import vlad.dima.sales.ui.Dashboard.SalesmanDashboardResources
-import vlad.dima.sales.ui.EnterAccount.EnterAccountActivity
 import vlad.dima.sales.ui.theme.*
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Clients.SalesmanClientsViewModel
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Notifications.SalesmanNotificationsViewModel
+import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.PastSales.SalesmanPastSalesViewModel
+import vlad.dima.sales.ui.EnterAccount.EnterAccountActivity
 
 class SalesmanDashboardActivity : ComponentActivity() {
 
-    private lateinit var viewmodel: SalesmanDashboardViewmodel
+    private lateinit var viewmodel: SalesmanDashboardViewModel
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
 
         setContent {
             (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -59,21 +66,37 @@ class SalesmanDashboardActivity : ComponentActivity() {
 @Composable
 fun DashboardNavigation(navController: NavController) {
     val context = LocalContext.current
+    val notificationsViewmodel: SalesmanNotificationsViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanNotificationsViewModel::class.java]
+    val pastSalesViewmodel: SalesmanPastSalesViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanPastSalesViewModel::class.java]
+    val clientsViewmodel: SalesmanClientsViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanClientsViewModel::class.java]
+
+    notificationsViewmodel.isUserLoggedIn.observe(context as LifecycleOwner) { isUserLoggedIn ->
+        if (!isUserLoggedIn) {
+            context.startActivity(Intent(context, EnterAccountActivity::class.java))
+            (context as Activity).finish()
+        }
+    }
 
     AnimatedNavHost(
         navController = navController as NavHostController,
-        startDestination = SalesmanDashboardResources.Notifications.route
+        startDestination = SalesmanDashboardResources.Notifications.route,
+        enterTransition = {
+            fadeIn(initialAlpha = 1f)
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(0))
+        }
     ) {
         composable(route = SalesmanDashboardResources.Notifications.route) {
-            NotificationsPage()
+            SalesmanNotificationsPage(notificationsViewmodel)
         }
 
         composable(route = SalesmanDashboardResources.PastSales.route) {
-            PastSalesPage()
+            SalesmanPastSales(pastSalesViewmodel)
         }
 
         composable(route = SalesmanDashboardResources.Clients.route) {
-            ClientsPage()
+            SalesmanClientsPage(clientsViewmodel)
         }
     }
 }
@@ -189,39 +212,5 @@ fun DashboardBottomNavigation(navController: NavHostController) {
             selectedContentColor = GreenPrimary,
             unselectedContentColor = Color.Gray
         )
-    }
-}
-
-@Composable
-fun NotificationsPage() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "Notifications")
-    }
-}
-@Composable
-fun PastSalesPage() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "Past sales")
-    }
-}
-@Composable
-fun ClientsPage() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "Clients")
     }
 }

@@ -37,7 +37,10 @@ private val LightColorPalette = lightColors(
 )
 
 @Composable
-fun SalesTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun SalesTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
     val colors = if (darkTheme) {
         DarkColorPalette
     } else {
@@ -46,7 +49,7 @@ fun SalesTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
 
     val systemUiController = rememberSystemUiController()
     systemUiController.setSystemBarsColor(
-        color = if (isSystemInDarkTheme()) GreenPrimaryDark else GreenPrimary
+        color = if (darkTheme) GreenPrimaryDark else GreenPrimary
     )
 
     MaterialTheme(
