@@ -1,6 +1,5 @@
-package vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Notifications
+package vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth

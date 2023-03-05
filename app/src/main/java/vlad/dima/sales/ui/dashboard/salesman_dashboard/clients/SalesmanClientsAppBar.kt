@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.Dashboard.SalesmanDashboard.PastSales
+package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 
 @Composable
-fun SalesmanPastSalesAppBar() {
+fun SalesmanClientsAppBar() {
     val localContext = LocalContext.current
     Surface(
         modifier = Modifier
@@ -23,7 +23,7 @@ fun SalesmanPastSalesAppBar() {
         color = MaterialTheme.colors.primary
     ) {
         Text(
-            text = localContext.getString(R.string.DashboardSales),
+            text = localContext.getString(R.string.DashboardClients),
             fontSize = 20.sp,
             modifier = Modifier
                 .padding(16.dp)

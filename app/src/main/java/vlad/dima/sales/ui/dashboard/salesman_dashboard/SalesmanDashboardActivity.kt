@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.Dashboard.SalesmanDashboard
+package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
 import android.app.Activity
 import android.content.Intent
@@ -26,16 +26,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Clients.SalesmanClientsPage
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.PastSales.SalesmanPastSales
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboardResources
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsPage
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSales
+import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Clients.SalesmanClientsViewModel
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.Notifications.SalesmanNotificationsViewModel
-import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.PastSales.SalesmanPastSalesViewModel
-import vlad.dima.sales.ui.EnterAccount.EnterAccountActivity
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
+import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 
 class SalesmanDashboardActivity : ComponentActivity() {
 

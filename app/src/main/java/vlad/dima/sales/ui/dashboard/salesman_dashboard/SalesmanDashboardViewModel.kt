@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.Dashboard.SalesmanDashboard
+package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
 import androidx.lifecycle.ViewModel
 

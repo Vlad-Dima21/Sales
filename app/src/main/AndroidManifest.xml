@@ -13,12 +13,12 @@
         android:theme="@style/Theme.Sales"
         tools:targetApi="31">
         <activity
-            android:name=".ui.Dashboard.SalesmanDashboard.SalesmanDashboardActivity"
+            android:name=".ui.dashboard.salesman_dashboard.SalesmanDashboardActivity"
             android:exported="false"
             android:label="@string/title_activity_salesman_dash_board"
             android:theme="@style/Theme.Sales" />
         <activity
-            android:name=".ui.EnterAccount.EnterAccountActivity"
+            android:name=".ui.enter_account.EnterAccountActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Sales">

@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.Dashboard
+package vlad.dima.sales.ui.dashboard
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article

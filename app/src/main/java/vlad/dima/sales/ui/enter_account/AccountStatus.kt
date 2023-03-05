@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.EnterAccount
+package vlad.dima.sales.ui.enter_account
 
 data class AccountStatus(
     val messageStringId: Int,
