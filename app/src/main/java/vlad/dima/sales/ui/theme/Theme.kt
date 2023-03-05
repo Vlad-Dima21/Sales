@@ -48,9 +48,14 @@ fun SalesTheme(
     }
 
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(
-        color = if (darkTheme) GreenPrimaryDark else GreenPrimary
-    )
+    systemUiController.let {
+        it.setStatusBarColor(
+            color = if (darkTheme) GreenPrimaryDark else GreenPrimary
+        )
+        it.setNavigationBarColor(
+            color =  if (darkTheme) DarkSurface else LightSurface
+        )
+    }
 
     MaterialTheme(
         colors = colors,

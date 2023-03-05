@@ -185,12 +185,13 @@ fun EnterAccountNavigation(
 // gradient colors used for card header text
 val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun LoginComposable(navController: NavController, viewModel: EnterAccountViewModel) {
     var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
+    val keyboardController = LocalSoftwareKeyboardController.current
     Column(
         modifier = Modifier.padding(15.dp),
     ) {
@@ -236,6 +237,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
+                    keyboardController?.hide()
                     viewModel.loginUser()
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),

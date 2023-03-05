@@ -20,19 +20,6 @@ fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
             .background(MaterialTheme.colors.background)
             .fillMaxSize(),
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            elevation = 10.dp,
-            color = MaterialTheme.colors.primary
-        ) {
-            Text(
-                text = context.getString(R.string.DashboardClients),
-                fontSize = 20.sp,
-                modifier = Modifier
-                    .padding(16.dp)
-            )
-        }
+        SalesmanClientsAppBar()
     }
 }

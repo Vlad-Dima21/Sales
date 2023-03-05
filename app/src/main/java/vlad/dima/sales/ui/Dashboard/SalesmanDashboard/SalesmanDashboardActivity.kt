@@ -54,8 +54,10 @@ class SalesmanDashboardActivity : ComponentActivity() {
                     bottomBar = {
                         DashboardBottomNavigation(navController = navController)
                     }
-                ) {
-                    DashboardNavigation(navController = navController)
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        DashboardNavigation(navController = navController)
+                    }
                 }
             }
         }
