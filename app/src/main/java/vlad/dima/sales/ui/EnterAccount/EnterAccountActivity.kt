@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -56,8 +57,6 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.Dashboard.SalesmanDashboard.SalesmanDashboardActivity
-import vlad.dima.sales.ui.UIConstants.Companion.BORDER_WIDTH
-import vlad.dima.sales.ui.UIConstants.Companion.ROUNDED_CORNER_RADIUS
 import vlad.dima.sales.ui.theme.*
 
 class EnterAccountActivity : ComponentActivity() {
@@ -114,7 +113,7 @@ class EnterAccountActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxWidth(.9f)
                             .align(Alignment.Center),
-                        shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS),
+                        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
                         elevation = 5.dp,
                         backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
                         border = if (isSystemInDarkTheme()) BorderStroke(2.dp, DarkSurface) else BorderStroke(0.dp, LightSurface)
@@ -426,12 +425,12 @@ fun ErrorPopup(
         modifier = modifier
             .background(
                 color = if (isSystemInDarkTheme()) DarkSurface else LightSurface,
-                shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+                shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius))
             )
             .border(
-                width = BORDER_WIDTH,
+                width = dimensionResource(id = R.dimen.border_width),
                 color = Color.Red,
-                shape = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+                shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius))
             )
             .fillMaxWidth(0.8f),
         contentAlignment = Alignment.Center
