@@ -39,8 +39,6 @@ import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 
 class SalesmanDashboardActivity : ComponentActivity() {
 
-    private lateinit var viewmodel: SalesmanDashboardViewModel
-
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

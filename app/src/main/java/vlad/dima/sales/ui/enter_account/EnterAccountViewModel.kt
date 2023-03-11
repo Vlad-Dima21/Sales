@@ -9,34 +9,53 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
+import vlad.dima.sales.room.user.User
 
 class EnterAccountViewModel: ViewModel() {
+    
+    private val AUTH_TAG = "Firebase auth error"
+    
     var emailFieldState by mutableStateOf("")
-    var usernameFieldState by mutableStateOf("")
+    var fullNameFieldState by mutableStateOf("")
     var passwordFieldState by mutableStateOf("")
     var inputError by mutableStateOf(false)
 
     val actionResult: MutableLiveData<AccountStatus> = MutableLiveData()
 
     private val auth = FirebaseAuth.getInstance()
+    private val userCollectionRef = Firebase.firestore.collection("users")
 
     fun signUpUser() {
         inputError = false
 
-        if (emailFieldState.isNotEmpty() && usernameFieldState.isNotEmpty() && passwordFieldState.isNotEmpty()) {
+        if (emailFieldState.isNotEmpty() && fullNameFieldState.isNotEmpty() && passwordFieldState.isNotEmpty()) {
             viewModelScope.launch {
                 try {
                     auth.createUserWithEmailAndPassword(emailFieldState, passwordFieldState).await()
                     auth.currentUser?.let { user ->
-                        val addUsernameToAccount = UserProfileChangeRequest.Builder()
-                            .setDisplayName(usernameFieldState)
-                            .build()
-                        user.updateProfile(addUsernameToAccount)
+                        withContext(Dispatchers.IO) {
+                            try {
+                                userCollectionRef.add(
+                                    User(
+                                    fullName = fullNameFieldState,
+                                    userUID = user.uid
+                                )
+                                )
+                            } catch (e: Exception) {
+                                Log.d(AUTH_TAG, e.stackTraceToString())
+                                actionResult.postValue(AccountStatus(R.string.SystemError, false))
+                                auth.signOut()
+                            }
+                        }
                     }
                     actionResult.postValue(when {
                         isLoggedIn() -> AccountStatus(R.string.SignUpSuccessful, true)
@@ -49,7 +68,7 @@ class EnterAccountViewModel: ViewModel() {
                     actionResult.postValue(AccountStatus(R.string.InvalidCredentials, false))
                     inputError = true
                 } catch (e: Exception) {
-                    Log.d("SERVER_RESPONSE", e.stackTraceToString())
+                    Log.d(AUTH_TAG, e.stackTraceToString())
                     actionResult.postValue(AccountStatus(R.string.SystemError, false))
                 }
             }
@@ -73,8 +92,11 @@ class EnterAccountViewModel: ViewModel() {
                 } catch (e: FirebaseAuthInvalidCredentialsException) {
                     actionResult.postValue(AccountStatus(R.string.InvalidCredentials, false))
                     inputError = true
+                } catch (e: FirebaseAuthInvalidUserException) {
+                    actionResult.postValue(AccountStatus(R.string.InvalidCredentials, false))
+                    inputError = true
                 } catch (e: Exception) {
-                    Log.d("SERVER_RESPONSE", e.stackTraceToString())
+                    Log.d(AUTH_TAG, e.stackTraceToString())
                 }
             }
         } else {

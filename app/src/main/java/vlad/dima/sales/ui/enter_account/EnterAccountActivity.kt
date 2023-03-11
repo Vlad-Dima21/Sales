@@ -130,7 +130,7 @@ class EnterAccountActivity : ComponentActivity() {
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 100.dp))
                         LaunchedEffect(errorMessage) {
-                            delay(1000)
+                            delay(2000)
                             errorMessage = ""
                         }
                     }

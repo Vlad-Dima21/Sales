@@ -80,12 +80,12 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = viewModel.usernameFieldState,
+                value = viewModel.fullNameFieldState,
                 onValueChange = {
-                    viewModel.usernameFieldState = it
+                    viewModel.fullNameFieldState = it
                 },
                 label = {
-                    Text(stringResource(id = R.string.Username))
+                    Text(stringResource(id = R.string.FullName))
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 singleLine = true,
