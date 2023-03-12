@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -18,11 +19,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
+import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.user.User
 
-class EnterAccountViewModel: ViewModel() {
+class EnterAccountViewModel(val repository: UserRepository): ViewModel() {
+
+    class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(EnterAccountViewModel::class.java)) {
+                return EnterAccountViewModel(repository) as T
+            }
+            throw IllegalArgumentException("Wrong viewModel type")
+        }
+    }
     
-    private val AUTH_TAG = "Firebase auth error"
+    private val AUTH_TAG = "Firebase_auth_error"
     
     var emailFieldState by mutableStateOf("")
     var fullNameFieldState by mutableStateOf("")
@@ -43,18 +54,20 @@ class EnterAccountViewModel: ViewModel() {
                     auth.createUserWithEmailAndPassword(emailFieldState, passwordFieldState).await()
                     auth.currentUser?.let { user ->
                         withContext(Dispatchers.IO) {
+                            val newUser = User(
+                                fullName = fullNameFieldState,
+                                userUID = user.uid
+                            )
                             try {
                                 userCollectionRef.add(
-                                    User(
-                                    fullName = fullNameFieldState,
-                                    userUID = user.uid
-                                )
+                                    newUser
                                 )
                             } catch (e: Exception) {
                                 Log.d(AUTH_TAG, e.stackTraceToString())
                                 actionResult.postValue(AccountStatus(R.string.SystemError, false))
                                 auth.signOut()
                             }
+                            repository.upsertUser(newUser)
                         }
                     }
                     actionResult.postValue(when {
@@ -68,7 +81,7 @@ class EnterAccountViewModel: ViewModel() {
                     actionResult.postValue(AccountStatus(R.string.InvalidCredentials, false))
                     inputError = true
                 } catch (e: Exception) {
-                    Log.d(AUTH_TAG, e.stackTraceToString())
+                    Log.e(AUTH_TAG, e.stackTraceToString())
                     actionResult.postValue(AccountStatus(R.string.SystemError, false))
                 }
             }
@@ -83,6 +96,18 @@ class EnterAccountViewModel: ViewModel() {
             viewModelScope.launch {
                 try {
                     auth.signInWithEmailAndPassword(emailFieldState, passwordFieldState).await()
+                    auth.currentUser?.let { user ->
+                        withContext(Dispatchers.IO) {
+                            val db = Firebase.firestore.collection("users")
+                            val userFromDb = db.whereEqualTo("userUID", user.uid).get().await().documents[0].toObject(User::class.java)
+                            val newUser = User(
+                                fullName = userFromDb!!.fullName,
+                                userUID = user.uid,
+                                managerUID = userFromDb!!.managerUID
+                            )
+                            repository.upsertUser(newUser)
+                        }
+                    }
                     actionResult.postValue(
                         when {
                             isLoggedIn() -> AccountStatus(R.string.LogInSuccessful, true)
@@ -96,7 +121,9 @@ class EnterAccountViewModel: ViewModel() {
                     actionResult.postValue(AccountStatus(R.string.InvalidCredentials, false))
                     inputError = true
                 } catch (e: Exception) {
-                    Log.d(AUTH_TAG, e.stackTraceToString())
+                    auth.signOut()
+                    Log.e(AUTH_TAG, e.stackTraceToString())
+                    actionResult.postValue(AccountStatus(R.string.SystemError, false))
                 }
             }
         } else {

@@ -20,4 +20,5 @@
     <string name="DashboardNotifications">Notifications</string>
     <string name="DashboardSales">Past Sales</string>
     <string name="DashboardClients">Clients</string>
+    <string name="LatestNotifications">Recent notifications</string>
 </resources>

@@ -1,8 +1,6 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
-import android.app.Activity
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,8 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,7 +29,9 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSa
 import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
+import vlad.dima.sales.R
+import vlad.dima.sales.repository.UserRepository
+import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
@@ -43,8 +43,18 @@ class SalesmanDashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val repository = UserRepository(SalesDatabase.getDatabase(this).userDAO())
+
+        val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
+            owner = this,
+            factory = SalesmanNotificationsViewModel.Factory(repository)
+        )[SalesmanNotificationsViewModel::class.java]
+        val pastSalesViewModel: SalesmanPastSalesViewModel = ViewModelProvider(this)[SalesmanPastSalesViewModel::class.java]
+        val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(this)[SalesmanClientsViewModel::class.java]
+
+        notificationsInitialize(notificationsViewModel)
+
         setContent {
-            (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             SalesTheme {
                 val navController = rememberAnimatedNavController()
 
@@ -54,9 +64,32 @@ class SalesmanDashboardActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        DashboardNavigation(navController = navController)
+                        DashboardNavigation(
+                            navController = navController,
+                            notificationsViewModel = notificationsViewModel,
+                            pastSalesViewModel = pastSalesViewModel,
+                            clientsViewModel = clientsViewModel
+                        )
                     }
                 }
+            }
+        }
+    }
+
+    private fun notificationsInitialize(notificationsViewModel: SalesmanNotificationsViewModel) {
+        // logout functionality
+        notificationsViewModel.isUserLoggedIn.observe(this) { isUserLoggedIn ->
+            if (!isUserLoggedIn) {
+                startActivity(Intent(this, EnterAccountActivity::class.java))
+                finish()
+            }
+        }
+
+        // update current user
+        notificationsViewModel.currentUserLD.observe(this) {user ->
+            if (user != null) {
+                notificationsViewModel.currentUserSate = user
+                notificationsViewModel.loadItems()
             }
         }
     }
@@ -64,18 +97,13 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun DashboardNavigation(navController: NavController) {
+fun DashboardNavigation(
+    navController: NavController,
+    notificationsViewModel: SalesmanNotificationsViewModel,
+    pastSalesViewModel: SalesmanPastSalesViewModel,
+    clientsViewModel: SalesmanClientsViewModel
+) {
     val context = LocalContext.current
-    val notificationsViewmodel: SalesmanNotificationsViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanNotificationsViewModel::class.java]
-    val pastSalesViewmodel: SalesmanPastSalesViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanPastSalesViewModel::class.java]
-    val clientsViewmodel: SalesmanClientsViewModel = ViewModelProvider(owner = context as ViewModelStoreOwner)[SalesmanClientsViewModel::class.java]
-
-    notificationsViewmodel.isUserLoggedIn.observe(context as LifecycleOwner) { isUserLoggedIn ->
-        if (!isUserLoggedIn) {
-            context.startActivity(Intent(context, EnterAccountActivity::class.java))
-            (context as Activity).finish()
-        }
-    }
 
     AnimatedNavHost(
         navController = navController as NavHostController,
@@ -88,15 +116,15 @@ fun DashboardNavigation(navController: NavController) {
         }
     ) {
         composable(route = SalesmanDashboardResources.Notifications.route) {
-            SalesmanNotificationsPage(notificationsViewmodel)
+            SalesmanNotificationsPage(notificationsViewModel)
         }
 
         composable(route = SalesmanDashboardResources.PastSales.route) {
-            SalesmanPastSales(pastSalesViewmodel)
+            SalesmanPastSales(pastSalesViewModel)
         }
 
         composable(route = SalesmanDashboardResources.Clients.route) {
-            SalesmanClientsPage(clientsViewmodel)
+            SalesmanClientsPage(clientsViewModel)
         }
     }
 }
@@ -111,7 +139,7 @@ fun DashboardBottomNavigation(navController: NavHostController) {
     BottomNavigation(
         modifier = Modifier.height(80.dp),
         backgroundColor = if (isSystemInDarkTheme()) DarkSurface else LightSurface,
-        elevation = 10.dp
+        elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
         BottomNavigationItem(
             selected = SalesmanDashboardResources.Notifications == selectedPage,

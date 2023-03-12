@@ -1,31 +1,54 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 
 @Composable
-fun SalesmanNotificationsAppBar() {
+fun SalesmanNotificationsAppBar(
+    viewModel: SalesmanNotificationsViewModel
+) {
     val localContext = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth(),
-        elevation = 10.dp,
+        elevation = dimensionResource(id = R.dimen.standard_elevation),
         color = MaterialTheme.colors.primary
     ) {
-        Text(
-            text = localContext.getString(R.string.DashboardNotifications),
-            fontSize = 20.sp,
-            modifier = Modifier
-                .padding(16.dp)
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(id = R.string.LatestNotifications),
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+            )
+            ClickableText(
+                text = AnnotatedString(
+                    text = "Logout"
+                ),
+                onClick = { viewModel.Logout() },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterEnd)
+            )
+        }
     }
 }
