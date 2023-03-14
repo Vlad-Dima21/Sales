@@ -21,4 +21,16 @@
     <string name="DashboardSales">Past Sales</string>
     <string name="DashboardClients">Clients</string>
     <string name="LatestNotifications">Recent notifications</string>
+    <string name="title_activity_manager_dashboard">ManagerDashboardActivity</string>
+    <string name="AddNotification">Add notification</string>
+    <string name="title_activity_new_notification">NewNotification</string>
+    <string name="NewNotificationAppBar">New notification...</string>
+    <string name="NotificationImportanceLabel">Importance</string>
+    <string name="NormalImportance">Normal</string>
+    <string name="HightImportance">High</string>
+    <string name="AlertImportance">Alert</string>
+    <string name="NotificationDetailsLabel">Details</string>
+    <string name="NotificationTitlePlaceholder">Title</string>
+    <string name="NotificationDescPlaceholder">Description</string>
+    <string name="Today">Today</string>
 </resources>

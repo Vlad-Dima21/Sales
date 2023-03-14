@@ -7,9 +7,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -25,10 +23,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.ui.dashboard.manager_dashboard.ManagerDashboardActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.SalesmanDashboardActivity
 import vlad.dima.sales.ui.theme.*
 
@@ -47,8 +47,15 @@ class EnterAccountActivity : ComponentActivity() {
         viewModel = ViewModelProvider(this, EnterAccountViewModel.Factory(repository))[EnterAccountViewModel::class.java]
 
         if (viewModel.isLoggedIn()) {
-            startActivity(Intent(this, SalesmanDashboardActivity::class.java))
-            finish()
+            repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid).observe(this) {user ->
+                if (user.managerUID == "") {
+                    startActivity(Intent(this, ManagerDashboardActivity::class.java))
+                    finish()
+                } else {
+                    startActivity(Intent(this, SalesmanDashboardActivity::class.java))
+                    finish()
+                }
+            }
         }
 
         // set the app to be in fullscreen (can draw behind status bar)
@@ -59,15 +66,21 @@ class EnterAccountActivity : ComponentActivity() {
             if (!result.actionSuccessful) {
                     errorMessage = getString(result.messageStringId)
             } else {
-                Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, SalesmanDashboardActivity::class.java))
-                finish()
+                repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid).observe(this) {user ->
+                    if (user.managerUID == "") {
+                        startActivity(Intent(this, ManagerDashboardActivity::class.java))
+                        Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        startActivity(Intent(this, SalesmanDashboardActivity::class.java))
+                        Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                }
             }
         }
 
         setContent {
-            // force portrait mode in current activity
-            (LocalContext.current as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             val backgroundModifier = when(isSystemInDarkTheme()) {
                 true -> Modifier.background(Brush.linearGradient(
                     colors = listOf(DarkBackground, TealSecondaryDark)
@@ -82,32 +95,39 @@ class EnterAccountActivity : ComponentActivity() {
                     it.statusBarColor = Color.Transparent.toArgb()
                     it.navigationBarColor = Color.Transparent.toArgb()
                 }
-
-                Box(
-                    modifier = backgroundModifier
-                        .fillMaxSize()
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(.9f)
-                            .align(Alignment.Center),
-                        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
-                        elevation = 5.dp,
-                        backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
-                        border = if (isSystemInDarkTheme()) BorderStroke(2.dp, DarkSurface) else BorderStroke(0.dp, LightSurface)
+                if (!viewModel.isLoggedIn()) {
+                    Box(
+                        modifier = backgroundModifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        EnterAccountNavigation(viewModel)
-                    }
-
-                    if (errorMessage.isNotEmpty()) {
-                        ErrorPopup(
-                            message = errorMessage,
+                        Card(
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 100.dp))
-                        LaunchedEffect(errorMessage) {
-                            delay(2000)
-                            errorMessage = ""
+                                .fillMaxWidth(.9f)
+                                .align(Alignment.Center)
+                                .padding(vertical = 16.dp),
+                            shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
+                            elevation = 5.dp,
+                            backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
+                            border = if (isSystemInDarkTheme()) BorderStroke(
+                                2.dp,
+                                DarkSurface
+                            ) else BorderStroke(0.dp, LightSurface)
+                        ) {
+                            EnterAccountNavigation(viewModel)
+                        }
+
+                        if (errorMessage.isNotEmpty()) {
+                            ErrorPopup(
+                                message = errorMessage,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = 100.dp)
+                            )
+                            LaunchedEffect(errorMessage) {
+                                delay(2000)
+                                errorMessage = ""
+                            }
                         }
                     }
                 }

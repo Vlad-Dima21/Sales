@@ -17,7 +17,9 @@ private val DarkColorPalette = darkColors(
     secondary = TealSecondary,
     secondaryVariant = TealSecondaryLight,
     background = DarkBackground,
-    surface = DarkSurface
+    surface = DarkSurface,
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 private val LightColorPalette = lightColors(

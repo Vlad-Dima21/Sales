@@ -60,11 +60,11 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
                 Scaffold(
                     bottomBar = {
-                        DashboardBottomNavigation(navController = navController)
+                        SalesmanDashboardBottomNavigation(navController = navController)
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        DashboardNavigation(
+                        SalesmanDashboardNavigation(
                             navController = navController,
                             notificationsViewModel = notificationsViewModel,
                             pastSalesViewModel = pastSalesViewModel,
@@ -97,7 +97,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun DashboardNavigation(
+fun SalesmanDashboardNavigation(
     navController: NavController,
     notificationsViewModel: SalesmanNotificationsViewModel,
     pastSalesViewModel: SalesmanPastSalesViewModel,
@@ -130,7 +130,7 @@ fun DashboardNavigation(
 }
 
 @Composable
-fun DashboardBottomNavigation(navController: NavHostController) {
+fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
     val selectedPage = listOf(SalesmanDashboardResources.Notifications, SalesmanDashboardResources.PastSales, SalesmanDashboardResources.Clients)

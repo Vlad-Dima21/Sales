@@ -16,3 +16,9 @@ val LightSurface = Color(0xfff5f5f6)
 val DarkBackground = Color(0xff000a06)
 val DarkSurface = Color(0xff2b2b2b)
 
+
+// theme unrelated colors
+
+val Orange = Color(0xffFFA500)
+val LightGray = Color(0xffc0c0c0)
+
