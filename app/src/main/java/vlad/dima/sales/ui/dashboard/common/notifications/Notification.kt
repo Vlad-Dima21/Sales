@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 data class Notification(
+    var id: String = "",
     var title: String = "",
     var description: String = "",
     var managerUID: String = "",

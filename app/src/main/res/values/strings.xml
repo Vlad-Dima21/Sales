@@ -33,4 +33,11 @@
     <string name="NotificationTitlePlaceholder">Title</string>
     <string name="NotificationDescPlaceholder">Description</string>
     <string name="Today">Today</string>
+    <string name="title_activity_notification_chat">NotificationChatActivity</string>
+    <string name="DeleteNotification">Delete Notification</string>
+    <string name="NotificationMessageError">There was an error loading new messages</string>
+    <string name="SendMessage">Send message…</string>
+    <string name="GoToTop">Go to top</string>
+    <string name="NotificationDeleted">Notification has been deleted</string>
+    <string name="GoToBottom">Go to bottom</string>
 </resources>

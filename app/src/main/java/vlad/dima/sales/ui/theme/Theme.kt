@@ -26,21 +26,15 @@ private val LightColorPalette = lightColors(
     primary = GreenPrimary,
     primaryVariant = GreenPrimaryDark,
     secondary = TealSecondary,
-    secondaryVariant = TealSecondaryDark
-
-    /* Other default colors to override
-    background = Color.White,
-    surface = Color.White,
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
-    */
+    secondaryVariant = TealSecondaryDark,
+    surface = LightSurface,
+    background = LightBackground
 )
 
 @Composable
 fun SalesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    defaultSystemBarsColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) {
@@ -49,14 +43,16 @@ fun SalesTheme(
         LightColorPalette
     }
 
-    val systemUiController = rememberSystemUiController()
-    systemUiController.let {
-        it.setStatusBarColor(
-            color = if (darkTheme) GreenPrimaryDark else GreenPrimary
-        )
-        it.setNavigationBarColor(
-            color =  if (darkTheme) DarkSurface else LightSurface
-        )
+    if (defaultSystemBarsColor) {
+        val systemUiController = rememberSystemUiController()
+        systemUiController.let {
+            it.setStatusBarColor(
+                color = if (darkTheme) GreenPrimaryDark else GreenPrimary
+            )
+            it.setNavigationBarColor(
+                color = if (darkTheme) DarkSurface else LightSurface
+            )
+        }
     }
 
     MaterialTheme(

@@ -56,7 +56,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                     .background(MaterialTheme.colors.background)
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 state = lazyListState
             ) {
                 item {
@@ -65,7 +65,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                 }
                 items(
                     items = viewModel.items,
-                    key = { it.title }
+                    key = { it.createdDate }
                 ) { notification ->
                     var previousNotification: Notification
                     val previousIndex = viewModel.items.indexOf(notification) - 1
@@ -92,10 +92,12 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                         }
                     }
                     NotificationCard(
+                        id = notification.id,
                         title = notification.title,
                         description = notification.description,
                         importance = notification.importance,
-                        modifier = Modifier.animateItemPlacement()
+                        modifier = Modifier.animateItemPlacement(),
+                        viewModel = viewModel
                     )
                 }
                 item {

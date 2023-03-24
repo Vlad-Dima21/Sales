@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +47,7 @@ import vlad.dima.sales.R
 import vlad.dima.sales.ui.dashboard.common.notifications.Notification
 import vlad.dima.sales.ui.theme.*
 
+const val NOTIFICATION_ERROR = "Post notification error"
 class NewNotification : ComponentActivity() {
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +55,6 @@ class NewNotification : ComponentActivity() {
 
         val notificationsCollection = Firebase.firestore.collection("notifications")
         val currentUserUID = FirebaseAuth.getInstance().currentUser?.uid
-        val NOTIFICATION_ERROR = "Post notification error"
         var isError by mutableStateOf(false)
 
         setContent {
@@ -116,7 +117,9 @@ class NewNotification : ComponentActivity() {
                             },
                             modifier = Modifier.align(Alignment.CenterEnd)
                         ) {
-                            Icon(imageVector = Icons.Filled.AddAlert, contentDescription = null)
+                            Icon(imageVector = Icons.Filled.AddAlert, contentDescription = stringResource(
+                                id = R.string.AddNotification
+                            ))
                         }
                     }
                     Column(

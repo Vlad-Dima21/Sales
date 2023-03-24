@@ -10,8 +10,8 @@ val TealSecondary = Color(0xff38a3a5)
 val TealSecondaryDark = Color(0xff007476)
 val TealSecondaryLight = Color(0xff6fd5d6)
 
-val LightBackground = Color(0xffa8a8a8)
-val LightSurface = Color(0xfff5f5f6)
+val LightBackground = Color(0xfff5f5f6)
+val LightSurface = Color(0xffdae0e0)
 
 val DarkBackground = Color(0xff000a06)
 val DarkSurface = Color(0xff2b2b2b)

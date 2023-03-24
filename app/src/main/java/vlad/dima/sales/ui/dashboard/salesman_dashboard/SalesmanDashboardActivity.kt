@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -29,6 +31,8 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSa
 import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
@@ -38,6 +42,8 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSa
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 
 class SalesmanDashboardActivity : ComponentActivity() {
+
+    private lateinit var resultActivity: ActivityResultLauncher<Intent>
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +57,16 @@ class SalesmanDashboardActivity : ComponentActivity() {
         )[SalesmanNotificationsViewModel::class.java]
         val pastSalesViewModel: SalesmanPastSalesViewModel = ViewModelProvider(this)[SalesmanPastSalesViewModel::class.java]
         val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(this)[SalesmanClientsViewModel::class.java]
+
+        resultActivity = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                if (result.data?.getBooleanExtra("isNotificationDeleted", false) == true) {
+                    notificationsViewModel.loadItems()
+                }
+            }
+        }
 
         notificationsInitialize(notificationsViewModel)
 
@@ -90,6 +106,15 @@ class SalesmanDashboardActivity : ComponentActivity() {
             if (user != null) {
                 notificationsViewModel.currentUserSate = user
                 notificationsViewModel.loadItems()
+            }
+        }
+
+        lifecycleScope.launch {
+            notificationsViewModel.isViewingNotification.collect {
+                if (it != null) {
+                    resultActivity.launch(it)
+                    notificationsViewModel.isViewingNotification.emit(null)
+                }
             }
         }
     }
@@ -138,7 +163,7 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
 
     BottomNavigation(
         modifier = Modifier.height(80.dp),
-        backgroundColor = if (isSystemInDarkTheme()) DarkSurface else LightSurface,
+        backgroundColor = MaterialTheme.colors.background,
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
         BottomNavigationItem(

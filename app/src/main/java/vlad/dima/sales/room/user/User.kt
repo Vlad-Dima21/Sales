@@ -7,6 +7,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "user")
 data class User(
     var fullName: String = "",
-    var managerUID: String = "",
+    var managerUID: String = "unassigned",
     @PrimaryKey var userUID: String = ""
 )

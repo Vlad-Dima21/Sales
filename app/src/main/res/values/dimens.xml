@@ -2,5 +2,5 @@
 <resources>
     <dimen name="rounded_corner_radius">15dp</dimen>
     <dimen name="border_width">2dp</dimen>
-    <dimen name="standard_elevation">10dp</dimen>
+    <dimen name="standard_elevation">5dp</dimen>
 </resources>

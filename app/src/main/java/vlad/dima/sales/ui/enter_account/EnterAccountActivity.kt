@@ -3,10 +3,12 @@ package vlad.dima.sales.ui.enter_account
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
+import vlad.dima.sales.BuildConfig
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
@@ -38,6 +41,7 @@ var errorMessage by mutableStateOf("")
 class EnterAccountActivity : ComponentActivity() {
 
     private lateinit var viewModel: EnterAccountViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,6 +98,9 @@ class EnterAccountActivity : ComponentActivity() {
                 window?.let {
                     it.statusBarColor = Color.Transparent.toArgb()
                     it.navigationBarColor = Color.Transparent.toArgb()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        it.isStatusBarContrastEnforced = MaterialTheme.colors.isLight
+                    }
                 }
                 if (!viewModel.isLoggedIn()) {
                     Box(
@@ -108,7 +115,7 @@ class EnterAccountActivity : ComponentActivity() {
                                 .padding(vertical = 16.dp),
                             shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
                             elevation = 5.dp,
-                            backgroundColor = if (isSystemInDarkTheme()) DarkBackground else LightSurface,
+                            backgroundColor = MaterialTheme.colors.background,
                             border = if (isSystemInDarkTheme()) BorderStroke(
                                 2.dp,
                                 DarkSurface

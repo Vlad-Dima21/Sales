@@ -1,11 +1,13 @@
 package vlad.dima.sales.ui.dashboard.manager_dashboard.notifications
 
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
@@ -20,9 +22,9 @@ import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.user.User
 import vlad.dima.sales.ui.dashboard.common.notifications.Notification
-import java.text.SimpleDateFormat
+import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
-class ManagerNotificationsViewModel(val repository: UserRepository): ViewModel() {
+class ManagerNotificationsViewModel(repository: UserRepository): NotificationsViewModel, ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
@@ -37,18 +39,25 @@ class ManagerNotificationsViewModel(val repository: UserRepository): ViewModel()
     var items by mutableStateOf(listOf<Notification>())
 
     val isCreatingNewNotification = MutableStateFlow(false)
+    val isViewingNotification = MutableStateFlow<Intent?>(null)
 
     fun logout() {
         FirebaseAuth.getInstance().signOut()
         isUserLoggedIn.postValue(false)
     }
 
-    fun loadItems() = CoroutineScope(Dispatchers.IO).launch {
+    override fun loadItems() = CoroutineScope(Dispatchers.IO).launch {
         _isRefreshing.emit(true)
         items = notificationsCollection.whereEqualTo("managerUID", currentUserSate.userUID).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList().map {
-            it.toObject(Notification::class.java)!!
+            val notification = it.toObject(Notification::class.java)!!
+            notification.id = it.id
+            return@map notification
         }
         _isRefreshing.emit(false)
+    }
+
+    override fun viewNotification(intent: Intent) = viewModelScope.launch {
+        isViewingNotification.emit(intent)
     }
 
     class Factory(private val repository: UserRepository): ViewModelProvider.Factory {

@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -32,7 +33,6 @@ import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
-import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
@@ -46,9 +46,8 @@ class ManagerDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationsViewModel: ManagerNotificationsViewModel
 
-    private lateinit var activityResult: ActivityResultLauncher<Intent>
-
-    private var isDestroyed = false
+    private lateinit var addedActivityResult: ActivityResultLauncher<Intent>
+    private lateinit var deletedActivityResult: ActivityResultLauncher<Intent>
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +59,8 @@ class ManagerDashboardActivity : ComponentActivity() {
             factory = ManagerNotificationsViewModel.Factory(repository)
         )[ManagerNotificationsViewModel::class.java]
 
-        activityResult = registerActivityResult()
+        addedActivityResult = registerAddedActivityResult()
+        deletedActivityResult = registerDeletedActivityResult()
 
         notificationsInitialize(notificationsViewModel)
 
@@ -85,23 +85,25 @@ class ManagerDashboardActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        isDestroyed = false
-        super.onResume()
-    }
-
-    override fun onPause() {
-        isDestroyed = true
-        super.onPause()
-    }
-
-    private fun registerActivityResult(): ActivityResultLauncher<Intent> {
+    private fun registerAddedActivityResult(): ActivityResultLauncher<Intent> {
         return registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
             if (result.resultCode == RESULT_OK) {
                 val isNotificationAdded = result.data?.getBooleanExtra("isNotificationAdded", false)
                 if (isNotificationAdded == true) {
+                    notificationsViewModel.loadItems()
+                }
+            }
+        }
+    }
+
+    private fun registerDeletedActivityResult(): ActivityResultLauncher<Intent> {
+        return registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                if (result.data?.getBooleanExtra("isNotificationDeleted", false) == true) {
                     notificationsViewModel.loadItems()
                 }
             }
@@ -125,17 +127,23 @@ class ManagerDashboardActivity : ComponentActivity() {
             }
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             notificationsViewModel.isCreatingNewNotification.collect {
                 if (it) {
-                    if (isDestroyed) {
-                        activityResult = registerActivityResult()
-                    }
-                    activityResult.launch(
+                    addedActivityResult.launch(
                         Intent(this@ManagerDashboardActivity, NewNotification::class.java)
                     )
+                    notificationsViewModel.isCreatingNewNotification.emit(false)
                 }
-                notificationsViewModel.isCreatingNewNotification.emit(false)
+            }
+        }
+
+        lifecycleScope.launch {
+            notificationsViewModel.isViewingNotification.collect {
+                if (it != null) {
+                    deletedActivityResult.launch(it)
+                    notificationsViewModel.isViewingNotification.emit(null)
+                }
             }
         }
     }
@@ -173,7 +181,7 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
 
     BottomNavigation(
         modifier = Modifier.height(80.dp),
-        backgroundColor = if (!MaterialTheme.colors.isLight) DarkSurface else LightSurface,
+        backgroundColor = MaterialTheme.colors.background,
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
         BottomNavigationItem(
