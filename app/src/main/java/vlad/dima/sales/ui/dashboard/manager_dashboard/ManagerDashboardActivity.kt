@@ -26,8 +26,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
@@ -37,9 +35,7 @@ import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotif
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
-import vlad.dima.sales.ui.theme.DarkSurface
 import vlad.dima.sales.ui.theme.GreenPrimary
-import vlad.dima.sales.ui.theme.LightSurface
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class ManagerDashboardActivity : ComponentActivity() {
@@ -53,7 +49,7 @@ class ManagerDashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = UserRepository(SalesDatabase.getDatabase(this).userDAO())
+        val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
         notificationsViewModel = ViewModelProvider(
             owner = this,
             factory = ManagerNotificationsViewModel.Factory(repository)

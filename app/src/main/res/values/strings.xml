@@ -24,7 +24,7 @@
     <string name="title_activity_manager_dashboard">ManagerDashboardActivity</string>
     <string name="AddNotification">Add notification</string>
     <string name="title_activity_new_notification">NewNotification</string>
-    <string name="NewNotificationAppBar">New notification...</string>
+    <string name="NewNotificationAppBar">New notification…</string>
     <string name="NotificationImportanceLabel">Importance</string>
     <string name="NormalImportance">Normal</string>
     <string name="HightImportance">High</string>
@@ -40,4 +40,7 @@
     <string name="GoToTop">Go to top</string>
     <string name="NotificationDeleted">Notification has been deleted</string>
     <string name="GoToBottom">Go to bottom</string>
+    <string name="NumberOfSales">No. sales (current month): %1$d</string>
+    <string name="GoToAddress">Open navigation</string>
+    <string name="title_activity_new_order">NewOrderActivity</string>
 </resources>

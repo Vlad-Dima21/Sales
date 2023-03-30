@@ -28,7 +28,6 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     private val notificationsCollection = Firebase.firestore.collection("notifications")
 
     val isUserLoggedIn = MutableLiveData<Boolean>(true)
-    val currentUserLD = repository.getUserByUID(auth.currentUser!!.uid)
     var currentUserSate by mutableStateOf(User())
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -36,7 +35,7 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
         get() = _isRefreshing.asStateFlow()
     var items by mutableStateOf(listOf<Notification>())
 
-    val isViewingNotification = MutableStateFlow<Intent?>(null)
+    val isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
 
     fun logout() {
         FirebaseAuth.getInstance().signOut()
@@ -54,7 +53,7 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     }
 
     override fun viewNotification(intent: Intent) = viewModelScope.launch {
-        isViewingNotification.emit(intent)
+        isViewingNotificationIntent.emit(intent)
     }
     class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

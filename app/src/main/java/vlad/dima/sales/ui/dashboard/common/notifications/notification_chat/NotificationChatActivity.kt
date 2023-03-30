@@ -2,7 +2,6 @@ package vlad.dima.sales.ui.dashboard.common.notifications.notification_chat
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -39,7 +37,6 @@ import kotlinx.coroutines.*
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
-import vlad.dima.sales.ui.theme.Orange
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class NotificationChatActivity : ComponentActivity() {
@@ -56,7 +53,7 @@ class NotificationChatActivity : ComponentActivity() {
         description = intent.getStringExtra("description") ?: ""
         importance = intent.getIntExtra("importance", 0)
 
-        val repository = UserRepository(SalesDatabase.getDatabase(this).userDAO())
+        val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
 
         viewModel = ViewModelProvider(
             this, NotificationChatViewModel.Factory(intent.getStringExtra("id") ?: "", repository)
@@ -272,7 +269,11 @@ class NotificationChatActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier
                                         .background(MaterialTheme.colors.surface, CircleShape)
-                                        .border(1.dp, MaterialTheme.colors.secondaryVariant, CircleShape)
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colors.secondaryVariant,
+                                            CircleShape
+                                        )
                                         .size(50.dp),
                                 ) {
                                     if (scrollUpVisibility) {
@@ -320,7 +321,11 @@ class NotificationChatActivity : ComponentActivity() {
                                 AnimatedVisibility(visible = viewModel.message.isNotEmpty()) {
                                     IconButton(
                                         onClick = {
-                                            viewModel.sendMessage()
+
+                                            coroutineScope.launch {
+                                                viewModel.sendMessage().join()
+                                                scrollState.animateScrollToItem(messages.lastIndex)
+                                            }
                                         },
                                         enabled = viewModel.message.isNotEmpty()
                                     ) {
@@ -331,11 +336,6 @@ class NotificationChatActivity : ComponentActivity() {
                                             ),
                                             tint = MaterialTheme.colors.onSurface
                                         )
-                                    }
-                                }
-                                LaunchedEffect(key1 = messages) {
-                                    if (messages.isNotEmpty()) {
-                                        scrollState.animateScrollToItem(messages.size - 1)
                                     }
                                 }
                             }

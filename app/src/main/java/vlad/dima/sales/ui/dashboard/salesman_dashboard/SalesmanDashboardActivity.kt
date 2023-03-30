@@ -1,7 +1,9 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -10,7 +12,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -32,24 +33,28 @@ import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.new_order.NewOrderActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 
 class SalesmanDashboardActivity : ComponentActivity() {
 
-    private lateinit var resultActivity: ActivityResultLauncher<Intent>
+    private lateinit var notificationResultActivity: ActivityResultLauncher<Intent>
+    private lateinit var clientResultActivity: ActivityResultLauncher<Intent>
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = UserRepository(SalesDatabase.getDatabase(this).userDAO())
+        val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
@@ -58,7 +63,22 @@ class SalesmanDashboardActivity : ComponentActivity() {
         val pastSalesViewModel: SalesmanPastSalesViewModel = ViewModelProvider(this)[SalesmanPastSalesViewModel::class.java]
         val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(this)[SalesmanClientsViewModel::class.java]
 
-        resultActivity = registerForActivityResult(
+        val currentUserLD = repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid)
+
+        // update current user across viewModels
+        currentUserLD.observe(this) {user ->
+            if (user != null) {
+                notificationsViewModel.currentUserSate = user
+                notificationsViewModel.loadItems()
+
+                clientsViewModel.currentUserState = user
+                clientsViewModel.loadClients()
+            }
+        }
+
+        var navController: NavHostController? = null
+
+        notificationResultActivity = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult(),
         ) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -68,26 +88,53 @@ class SalesmanDashboardActivity : ComponentActivity() {
             }
         }
 
+        clientResultActivity = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                navController?.navigate(SalesmanDashboardResources.PastSales.route)
+                var client: Client
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    client = result.data?.getSerializableExtra("client", Client::class.java)!!
+                } else {
+                    client = result.data?.getSerializableExtra("client") as Client
+                }
+                Toast.makeText(this, client.clientName, Toast.LENGTH_SHORT).show()
+            }
+        }
+
         notificationsInitialize(notificationsViewModel)
+        clientsInitialize(clientsViewModel)
 
         setContent {
             SalesTheme {
-                val navController = rememberAnimatedNavController()
+                navController = rememberAnimatedNavController()
 
                 Scaffold(
                     bottomBar = {
-                        SalesmanDashboardBottomNavigation(navController = navController)
+                        SalesmanDashboardBottomNavigation(navController = navController!!)
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         SalesmanDashboardNavigation(
-                            navController = navController,
+                            navController = navController!!,
                             notificationsViewModel = notificationsViewModel,
                             pastSalesViewModel = pastSalesViewModel,
                             clientsViewModel = clientsViewModel
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private fun clientsInitialize(clientsViewModel: SalesmanClientsViewModel) = lifecycleScope.launch {
+        clientsViewModel.isCreatingOrderIntent.collect { client ->
+            if (client != null) {
+                clientResultActivity.launch(
+                    Intent(this@SalesmanDashboardActivity, NewOrderActivity::class.java)
+                        .putExtra("client", client)
+                )
             }
         }
     }
@@ -101,19 +148,11 @@ class SalesmanDashboardActivity : ComponentActivity() {
             }
         }
 
-        // update current user
-        notificationsViewModel.currentUserLD.observe(this) {user ->
-            if (user != null) {
-                notificationsViewModel.currentUserSate = user
-                notificationsViewModel.loadItems()
-            }
-        }
-
         lifecycleScope.launch {
-            notificationsViewModel.isViewingNotification.collect {
+            notificationsViewModel.isViewingNotificationIntent.collect {
                 if (it != null) {
-                    resultActivity.launch(it)
-                    notificationsViewModel.isViewingNotification.emit(null)
+                    notificationResultActivity.launch(it)
+                    notificationsViewModel.isViewingNotificationIntent.emit(null)
                 }
             }
         }

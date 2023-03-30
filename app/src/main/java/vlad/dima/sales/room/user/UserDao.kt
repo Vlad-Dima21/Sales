@@ -9,7 +9,7 @@ interface UserDao {
     fun getAll(): LiveData<List<User>>
 
     @Query("SELECT * FROM user WHERE userUID = :uid")
-    fun getWithUID(uid: String): LiveData<User>
+    fun getByUID(uid: String): LiveData<User>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg users: User)
