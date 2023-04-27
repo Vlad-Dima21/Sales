@@ -8,10 +8,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.*
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -29,7 +28,7 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsPage
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSales
-import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
+import vlad.dima.sales.ui.dashboard.SalesmanDashboardResource
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -38,6 +37,7 @@ import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.new_order.NewOrderActivity
@@ -92,7 +92,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult(),
         ) { result ->
             if (result.resultCode == RESULT_OK) {
-                navController?.navigate(SalesmanDashboardResources.PastSales.route)
+                navController?.navigate(SalesmanDashboardResource.PastSales.route)
                 var client: Client
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     client = result.data?.getSerializableExtra("client", Client::class.java)!!
@@ -171,7 +171,7 @@ fun SalesmanDashboardNavigation(
 
     AnimatedNavHost(
         navController = navController as NavHostController,
-        startDestination = SalesmanDashboardResources.Notifications.route,
+        startDestination = SalesmanDashboardResource.Notifications.route,
         enterTransition = {
             fadeIn(initialAlpha = 1f)
         },
@@ -179,15 +179,15 @@ fun SalesmanDashboardNavigation(
             fadeOut(animationSpec = tween(0))
         }
     ) {
-        composable(route = SalesmanDashboardResources.Notifications.route) {
+        composable(route = SalesmanDashboardResource.Notifications.route) {
             SalesmanNotificationsPage(notificationsViewModel)
         }
 
-        composable(route = SalesmanDashboardResources.PastSales.route) {
+        composable(route = SalesmanDashboardResource.PastSales.route) {
             SalesmanPastSales(pastSalesViewModel)
         }
 
-        composable(route = SalesmanDashboardResources.Clients.route) {
+        composable(route = SalesmanDashboardResource.Clients.route) {
             SalesmanClientsPage(clientsViewModel)
         }
     }
@@ -197,7 +197,7 @@ fun SalesmanDashboardNavigation(
 fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = listOf(SalesmanDashboardResources.Notifications, SalesmanDashboardResources.PastSales, SalesmanDashboardResources.Clients)
+    val selectedPage = listOf(SalesmanDashboardResource.Notifications, SalesmanDashboardResource.PastSales, SalesmanDashboardResource.Clients)
         .find { p -> p.route == backStackEntry.value?.destination?.route }
 
     BottomNavigation(
@@ -205,104 +205,35 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
         backgroundColor = MaterialTheme.colors.background,
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
-        BottomNavigationItem(
-            selected = SalesmanDashboardResources.Notifications == selectedPage,
+        AnimatedBottomNavigationItem(
+            isSelected = SalesmanDashboardResource.Notifications == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResources.Notifications.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
+                navController.navigate(SalesmanDashboardResource.Notifications.route) {
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
                 }
             },
-            icon = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    when (SalesmanDashboardResources.Notifications == selectedPage) {
-                        true -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.Notifications.iconSelected,
-                                contentDescription = context.getString(SalesmanDashboardResources.Notifications.title)
-                            )
-                            Text(
-                                text = context.getString(SalesmanDashboardResources.Notifications.title),
-                                color = GreenPrimary
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.Notifications.icon,
-                                contentDescription = context.getString(SalesmanDashboardResources.Notifications.title)
-                            )
-                        }
-                    }
-                }
-            },
-            selectedContentColor = GreenPrimary,
-            unselectedContentColor = Color.Gray
+            resource = SalesmanDashboardResource.Notifications
         )
-        BottomNavigationItem(
-            selected = SalesmanDashboardResources.PastSales == selectedPage,
+        AnimatedBottomNavigationItem(
+            isSelected = SalesmanDashboardResource.PastSales == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResources.PastSales.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
+                navController.navigate(SalesmanDashboardResource.PastSales.route) {
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
                 }
             },
-            icon = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    when (SalesmanDashboardResources.PastSales == selectedPage) {
-                        true -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.PastSales.iconSelected,
-                                contentDescription = context.getString(SalesmanDashboardResources.PastSales.title)
-                            )
-                            Text(
-                                text = context.getString(SalesmanDashboardResources.PastSales.title),
-                                color = GreenPrimary
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.PastSales.icon,
-                                contentDescription = context.getString(SalesmanDashboardResources.PastSales.title)
-                            )
-                        }
-                    }
-                }
-            },
-            selectedContentColor = GreenPrimary,
-            unselectedContentColor = Color.Gray
+            resource = SalesmanDashboardResource.PastSales
         )
-        BottomNavigationItem(
-            selected = SalesmanDashboardResources.Clients == selectedPage,
+        AnimatedBottomNavigationItem(
+            isSelected = SalesmanDashboardResource.Clients == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResources.Clients.route) {
+                navController.navigate(SalesmanDashboardResource.Clients.route) {
                     if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
                 }
             },
-            icon = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    when (SalesmanDashboardResources.Clients == selectedPage) {
-                        true -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.Clients.iconSelected,
-                                contentDescription = context.getString(SalesmanDashboardResources.Clients.title)
-                            )
-                            Text(
-                                text = context.getString(SalesmanDashboardResources.Clients.title),
-                                color = GreenPrimary
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                imageVector = SalesmanDashboardResources.Clients.icon,
-                                contentDescription = context.getString(SalesmanDashboardResources.Clients.title)
-                            )
-                        }
-                    }
-                }
-            },
-            selectedContentColor = GreenPrimary,
-            unselectedContentColor = Color.Gray
+            resource = SalesmanDashboardResource.Clients
         )
     }
 }

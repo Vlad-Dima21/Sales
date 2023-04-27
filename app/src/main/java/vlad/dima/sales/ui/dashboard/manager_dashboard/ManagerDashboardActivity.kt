@@ -30,7 +30,8 @@ import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
-import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
+import vlad.dima.sales.ui.dashboard.ManagerDashboardResource
+import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
@@ -155,7 +156,7 @@ fun ManagerDashboardNavigation(
 
     AnimatedNavHost(
         navController = navController,
-        startDestination = ManagerDashboardResources.Notifications.route,
+        startDestination = ManagerDashboardResource.Notifications.route,
         enterTransition = {
             fadeIn(initialAlpha = 1f)
         },
@@ -163,7 +164,7 @@ fun ManagerDashboardNavigation(
             fadeOut(animationSpec = tween(0))
         }
     ) {
-        composable(route = ManagerDashboardResources.Notifications.route) {
+        composable(route = ManagerDashboardResource.Notifications.route) {
             ManagerNotificationsPage(notificationsViewModel)
         }
     }
@@ -173,45 +174,22 @@ fun ManagerDashboardNavigation(
 fun ManagerDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = ManagerDashboardResources.Notifications
+    val selectedPage = ManagerDashboardResource.Notifications
 
     BottomNavigation(
         modifier = Modifier.height(80.dp),
         backgroundColor = MaterialTheme.colors.background,
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
-        BottomNavigationItem(
-            selected = ManagerDashboardResources.Notifications == selectedPage,
+        AnimatedBottomNavigationItem(
+            isSelected = ManagerDashboardResource.Notifications == selectedPage,
             onClick = {
 //                val previousRoute = selectedPage.route
 //                navController.navigate(ManagerDashboardResources.Notifications.route) {
 //                    popUpTo(previousRoute) { inclusive = true }
 //                }
             },
-            icon = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    when (ManagerDashboardResources.Notifications == selectedPage) {
-                        true -> {
-                            Icon(
-                                imageVector = ManagerDashboardResources.Notifications.iconSelected,
-                                contentDescription = context.getString(ManagerDashboardResources.Notifications.title)
-                            )
-                            Text(
-                                text = context.getString(ManagerDashboardResources.Notifications.title),
-                                color = GreenPrimary
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                imageVector = ManagerDashboardResources.Notifications.icon,
-                                contentDescription = context.getString(ManagerDashboardResources.Notifications.title)
-                            )
-                        }
-                    }
-                }
-            },
-            selectedContentColor = GreenPrimary,
-            unselectedContentColor = Color.Gray
+            resource = ManagerDashboardResource.Notifications
         )
     }
 }
