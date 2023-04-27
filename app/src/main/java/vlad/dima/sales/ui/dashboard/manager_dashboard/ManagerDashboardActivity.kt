@@ -13,9 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
@@ -30,13 +28,12 @@ import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
-import vlad.dima.sales.ui.dashboard.ManagerDashboardResource
+import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
-import vlad.dima.sales.ui.theme.GreenPrimary
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class ManagerDashboardActivity : ComponentActivity() {
@@ -156,7 +153,7 @@ fun ManagerDashboardNavigation(
 
     AnimatedNavHost(
         navController = navController,
-        startDestination = ManagerDashboardResource.Notifications.route,
+        startDestination = ManagerDashboardResources.Notifications.route,
         enterTransition = {
             fadeIn(initialAlpha = 1f)
         },
@@ -164,7 +161,7 @@ fun ManagerDashboardNavigation(
             fadeOut(animationSpec = tween(0))
         }
     ) {
-        composable(route = ManagerDashboardResource.Notifications.route) {
+        composable(route = ManagerDashboardResources.Notifications.route) {
             ManagerNotificationsPage(notificationsViewModel)
         }
     }
@@ -174,7 +171,7 @@ fun ManagerDashboardNavigation(
 fun ManagerDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = ManagerDashboardResource.Notifications
+    val selectedPage = ManagerDashboardResources.Notifications
 
     BottomNavigation(
         modifier = Modifier.height(80.dp),
@@ -182,14 +179,14 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
         AnimatedBottomNavigationItem(
-            isSelected = ManagerDashboardResource.Notifications == selectedPage,
+            isSelected = ManagerDashboardResources.Notifications == selectedPage,
             onClick = {
 //                val previousRoute = selectedPage.route
 //                navController.navigate(ManagerDashboardResources.Notifications.route) {
 //                    popUpTo(previousRoute) { inclusive = true }
 //                }
             },
-            resource = ManagerDashboardResource.Notifications
+            resource = ManagerDashboardResources.Notifications
         )
     }
 }

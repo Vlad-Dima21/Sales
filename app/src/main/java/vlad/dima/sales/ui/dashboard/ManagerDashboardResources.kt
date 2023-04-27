@@ -6,12 +6,12 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.ui.graphics.vector.ImageVector
 import vlad.dima.sales.R
 
-sealed class ManagerDashboardResource (
+sealed class ManagerDashboardResources (
     route: String,
     title: Int,
     icon: ImageVector,
     iconSelected: ImageVector
 ) : DashboardResource(route, title, icon, iconSelected) {
-    object Notifications: SalesmanDashboardResource("notifications",
+    object Notifications: SalesmanDashboardResources("notifications",
         R.string.DashboardNotifications, Icons.Outlined.Notifications, Icons.Filled.Notifications)
 }

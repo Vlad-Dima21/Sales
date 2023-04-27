@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import vlad.dima.sales.ui.dashboard.DashboardResource
-import vlad.dima.sales.ui.dashboard.SalesmanDashboardResource
 import vlad.dima.sales.ui.theme.GreenPrimary
 
 @Composable

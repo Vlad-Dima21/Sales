@@ -9,14 +9,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
@@ -28,7 +25,7 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsPage
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSales
-import vlad.dima.sales.ui.dashboard.SalesmanDashboardResource
+import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -92,7 +89,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult(),
         ) { result ->
             if (result.resultCode == RESULT_OK) {
-                navController?.navigate(SalesmanDashboardResource.PastSales.route)
+                navController?.navigate(SalesmanDashboardResources.PastSales.route)
                 var client: Client
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     client = result.data?.getSerializableExtra("client", Client::class.java)!!
@@ -171,7 +168,7 @@ fun SalesmanDashboardNavigation(
 
     AnimatedNavHost(
         navController = navController as NavHostController,
-        startDestination = SalesmanDashboardResource.Notifications.route,
+        startDestination = SalesmanDashboardResources.Notifications.route,
         enterTransition = {
             fadeIn(initialAlpha = 1f)
         },
@@ -179,15 +176,15 @@ fun SalesmanDashboardNavigation(
             fadeOut(animationSpec = tween(0))
         }
     ) {
-        composable(route = SalesmanDashboardResource.Notifications.route) {
+        composable(route = SalesmanDashboardResources.Notifications.route) {
             SalesmanNotificationsPage(notificationsViewModel)
         }
 
-        composable(route = SalesmanDashboardResource.PastSales.route) {
+        composable(route = SalesmanDashboardResources.PastSales.route) {
             SalesmanPastSales(pastSalesViewModel)
         }
 
-        composable(route = SalesmanDashboardResource.Clients.route) {
+        composable(route = SalesmanDashboardResources.Clients.route) {
             SalesmanClientsPage(clientsViewModel)
         }
     }
@@ -197,7 +194,7 @@ fun SalesmanDashboardNavigation(
 fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = listOf(SalesmanDashboardResource.Notifications, SalesmanDashboardResource.PastSales, SalesmanDashboardResource.Clients)
+    val selectedPage = listOf(SalesmanDashboardResources.Notifications, SalesmanDashboardResources.PastSales, SalesmanDashboardResources.Clients)
         .find { p -> p.route == backStackEntry.value?.destination?.route }
 
     BottomNavigation(
@@ -206,34 +203,34 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
         elevation = dimensionResource(id = R.dimen.standard_elevation)
     ) {
         AnimatedBottomNavigationItem(
-            isSelected = SalesmanDashboardResource.Notifications == selectedPage,
+            isSelected = SalesmanDashboardResources.Notifications == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResource.Notifications.route) {
+                navController.navigate(SalesmanDashboardResources.Notifications.route) {
                     if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
                 }
             },
-            resource = SalesmanDashboardResource.Notifications
+            resource = SalesmanDashboardResources.Notifications
         )
         AnimatedBottomNavigationItem(
-            isSelected = SalesmanDashboardResource.PastSales == selectedPage,
+            isSelected = SalesmanDashboardResources.PastSales == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResource.PastSales.route) {
+                navController.navigate(SalesmanDashboardResources.PastSales.route) {
                     if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
                 }
             },
-            resource = SalesmanDashboardResource.PastSales
+            resource = SalesmanDashboardResources.PastSales
         )
         AnimatedBottomNavigationItem(
-            isSelected = SalesmanDashboardResource.Clients == selectedPage,
+            isSelected = SalesmanDashboardResources.Clients == selectedPage,
             onClick = {
                 val previousRoute = selectedPage?.route
-                navController.navigate(SalesmanDashboardResource.Clients.route) {
+                navController.navigate(SalesmanDashboardResources.Clients.route) {
                     if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
                 }
             },
-            resource = SalesmanDashboardResource.Clients
+            resource = SalesmanDashboardResources.Clients
         )
     }
 }
