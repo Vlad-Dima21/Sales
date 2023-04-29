@@ -23,8 +23,12 @@ fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
     ) {
         SalesmanClientsAppBar()
         LazyColumn(
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            item {
+                Spacer(modifier = Modifier)
+            }
             items(
                 items = clients,
                 key = {it.clientName}

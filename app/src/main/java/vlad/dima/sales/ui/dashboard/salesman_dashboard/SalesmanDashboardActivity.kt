@@ -37,7 +37,7 @@ import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.new_order.NewOrderActivity
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.PendingOrderActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
@@ -129,7 +129,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
         clientsViewModel.isCreatingOrderIntent.collect { client ->
             if (client != null) {
                 clientResultActivity.launch(
-                    Intent(this@SalesmanDashboardActivity, NewOrderActivity::class.java)
+                    Intent(this@SalesmanDashboardActivity, PendingOrderActivity::class.java)
                         .putExtra("client", client)
                 )
             }

@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import vlad.dima.sales.ui.dashboard.DashboardResource
 import vlad.dima.sales.ui.theme.GreenPrimary
+import vlad.dima.sales.R
 
 @Composable
 fun RowScope.AnimatedBottomNavigationItem(
@@ -21,6 +22,8 @@ fun RowScope.AnimatedBottomNavigationItem(
     resource: DashboardResource
 ) {
     val context = LocalContext.current
+    val durationMillis = context.resources.getInteger(R.integer.durationMillis)
+    val title = context.getString(resource.title)
     BottomNavigationItem(
         selected = isSelected,
         onClick = onClick,
@@ -30,23 +33,23 @@ fun RowScope.AnimatedBottomNavigationItem(
                     true -> {
                         Icon(
                             imageVector = resource.iconSelected,
-                            contentDescription = context.getString(resource.title)
+                            contentDescription = title
                         )
                     }
                     else -> {
                         Icon(
                             imageVector = resource.icon,
-                            contentDescription = context.getString(resource.title)
+                            contentDescription = title
                         )
                     }
                 }
                 AnimatedVisibility(
                     visible = isSelected,
-                    enter = fadeIn(keyframes { durationMillis = 100 }) + expandVertically(keyframes { durationMillis = 100 }),
-                    exit = fadeOut(keyframes { durationMillis = 100 }) + shrinkVertically(keyframes { durationMillis = 100 })
+                    enter = fadeIn(keyframes { this.durationMillis = durationMillis }) + expandVertically(keyframes { this.durationMillis = durationMillis }),
+                    exit = fadeOut(keyframes { this.durationMillis = durationMillis }) + shrinkVertically(keyframes { this.durationMillis = durationMillis })
                 ) {
                     Text(
-                        text = context.getString(resource.title),
+                        text = title,
                         color = GreenPrimary
                     )
                 }

@@ -18,8 +18,7 @@ fun SalesmanClientsAppBar() {
     val localContext = LocalContext.current
     Surface(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .fillMaxWidth(),
         elevation = dimensionResource(id = R.dimen.standard_elevation),
         color = MaterialTheme.colors.primary
     ) {

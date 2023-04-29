@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
@@ -35,7 +36,6 @@ fun NotificationCard(
     viewModel: NotificationsViewModel,
     modifier: Modifier = Modifier
 ) {
-    val shortenedDescription = if (description.length <= 100) description else "${description.slice(0..99)}..."
     val importanceColor = when (importance) {
         1 -> Orange
         2 -> Color.Red
@@ -70,7 +70,12 @@ fun NotificationCard(
                 fontSize = 24.sp,
                 modifier = Modifier.padding(bottom = 5.dp)
             )
-            Text(text = shortenedDescription, fontSize = 16.sp)
+            Text(
+                text = description,
+                fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
