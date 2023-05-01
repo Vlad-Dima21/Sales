@@ -24,10 +24,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +46,7 @@ fun ProductItem(
     val context = LocalContext.current
     val cornerRadius = context.resources.getDimension(R.dimen.rounded_corner_radius)
     var selectedQuantity by rememberSaveable {
-        mutableStateOf(product.quantitySold.toString())
+        mutableStateOf("0")
     }
     var validationMessage by rememberSaveable {
         mutableStateOf("")
@@ -102,78 +104,85 @@ fun ProductItem(
                     .padding(top = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     IconLabeledText(
-                        icon = Icons.Outlined.LibraryBooks,
-                        label = context.getString(R.string.ProductCode),
-                        text = product.productCode
-                    )
-                    IconLabeledText(
                         icon = Icons.Outlined.Notes,
                         label = context.getString(R.string.ProductDescription),
-                        text = product.productDescription
+                        text = product.productDescription,
+                        oneLine = true
                     )
-                    IconLabeledText(
-                        icon = painterResource(id = R.drawable.product_quantity),
-                        label = context.getString(R.string.ProductQuantitySold),
-                        text = product.quantitySold.toString()
-                    )
-                    IconLabeledText(
-                        icon = Icons.Outlined.Inventory2,
-                        label = context.getString(R.string.ProductStock),
-                        text = product.stock.toString()
-                    )
-
-                }
-
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .padding(end = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Icon(
-                        modifier = Modifier.size(20.dp),
-                        imageVector = Icons.Outlined.ShoppingCart,
-                        contentDescription = stringResource(
-                            id = R.string.CartQuantity
-                        )
-                    )
-                    TextFieldWithValidation(
-                        value = selectedQuantity,
-                        maxLength = 4,
-                        onValueChange = { newValue ->
-                            if (newValue.length > 4) {
-                                return@TextFieldWithValidation
-                            }
-                            if (newValue.length > 1 && newValue[0] == '0') {
-                                return@TextFieldWithValidation
-                            }
-                            if (newValue.isNotEmpty()) {
-                                val digits = (0..9).map { it.toString()[0] }
-                                newValue.forEach {
-                                    if (!digits.contains(it)) {
+                    Row {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            IconLabeledText(
+                                icon = Icons.Outlined.LibraryBooks,
+                                label = context.getString(R.string.ProductCode),
+                                text = product.productCode
+                            )
+                            IconLabeledText(
+                                icon = painterResource(id = R.drawable.product_quantity),
+                                label = context.getString(R.string.ProductQuantitySold),
+                                text = product.quantitySold.toString()
+                            )
+                            IconLabeledText(
+                                icon = Icons.Outlined.Inventory2,
+                                label = context.getString(R.string.ProductStock),
+                                text = product.stock.toString()
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(end = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(20.dp),
+                                imageVector = Icons.Outlined.ShoppingCart,
+                                contentDescription = stringResource(
+                                    id = R.string.CartQuantity
+                                )
+                            )
+                            TextFieldWithValidation(
+                                value = selectedQuantity,
+                                maxLength = 4,
+                                onValueChange = { newValue ->
+                                    if (newValue.length > 4) {
                                         return@TextFieldWithValidation
                                     }
-                                }
-                            }
-                            selectedQuantity = newValue
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(onDone = {
-                            keyboardController?.hide()
-                        }),
-                        textStyle = TextStyle(
-                            fontSize = 14.sp
-                        ),
-                        isError = !isValidQuantity,
-                        errorMessage = validationMessage
-                    )
+                                    if (newValue.length > 1 && newValue[0] == '0') {
+                                        return@TextFieldWithValidation
+                                    }
+                                    if (newValue.isNotEmpty()) {
+                                        val digits = (0..9).map { it.toString()[0] }
+                                        newValue.forEach {
+                                            if (!digits.contains(it)) {
+                                                return@TextFieldWithValidation
+                                            }
+                                        }
+                                    }
+                                    selectedQuantity = newValue
+                                },
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Done
+                                ),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    keyboardController?.hide()
+                                }),
+                                textStyle = TextStyle(
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colors.onSurface
+                                ),
+                                isError = !isValidQuantity,
+                                errorMessage = validationMessage
+                            )
+                        }
+                    }
+
                 }
             }
         }
@@ -187,7 +196,8 @@ fun IconLabeledText(
     label: String,
     labelColor: Color = MaterialTheme.colors.onSurface,
     text: String,
-    textColor: Color = MaterialTheme.colors.onSurface
+    textColor: Color = MaterialTheme.colors.onSurface,
+    oneLine: Boolean = false
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -206,7 +216,11 @@ fun IconLabeledText(
                 .height(2.dp),
             color = MaterialTheme.colors.onSurface
         )
-        Text(text = text, color = textColor, fontStyle = FontStyle.Italic)
+        if (!oneLine) {
+            Text(text = text, color = textColor, fontStyle = FontStyle.Italic, fontFamily = FontFamily.Default)
+        } else {
+            Text(text = text, color = textColor, fontStyle = FontStyle.Italic, fontFamily = FontFamily.Default, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -246,6 +260,6 @@ fun ProductItemPreview() {
     Box(
         Modifier.fillMaxSize()
     ) {
-        ProductItem(product = Product("", "213", "Amongus", "blabla", 10, 0, 20f, stock = 100), imageUrl = "")
+        ProductItem(product = Product("", "213", "Amongus", "blablablablablablablablablablablablablablablablablablablabla", 10, 0, 20f, stock = 100), imageUrl = "")
     }
 }
