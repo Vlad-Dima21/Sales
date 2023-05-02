@@ -1,7 +1,9 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,16 +18,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -33,15 +35,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.TextFieldWithValidation
 import vlad.dima.sales.ui.dashboard.common.products.Product
+import vlad.dima.sales.ui.theme.italicText
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProductItem(
     product: Product,
-    imageUrl: String
+    imageUri: Uri
 ) {
     val context = LocalContext.current
     val cornerRadius = context.resources.getDimension(R.dimen.rounded_corner_radius)
@@ -89,14 +95,36 @@ fun ProductItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
             ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = product.productName,
-                    color = MaterialTheme.colors.onSurface,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = product.productName,
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        CircularProgressIndicator()
+                    },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(80.dp)
                 )
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .align(Alignment.Center),
+                        text = product.productName,
+                        color = MaterialTheme.colors.onSurface,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
             Row(
                 modifier = Modifier
@@ -217,9 +245,9 @@ fun IconLabeledText(
             color = MaterialTheme.colors.onSurface
         )
         if (!oneLine) {
-            Text(text = text, color = textColor, fontStyle = FontStyle.Italic, fontFamily = FontFamily.Default)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
         } else {
-            Text(text = text, color = textColor, fontStyle = FontStyle.Italic, fontFamily = FontFamily.Default, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText,  maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -250,7 +278,7 @@ fun IconLabeledText(
                 .height(2.dp),
             color = MaterialTheme.colors.onSurface
         )
-        Text(text = text, color = textColor, fontStyle = FontStyle.Italic)
+        Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
     }
 }
 
@@ -260,6 +288,49 @@ fun ProductItemPreview() {
     Box(
         Modifier.fillMaxSize()
     ) {
-        ProductItem(product = Product("", "213", "Amongus", "blablablablablablablablablablablablablablablablablablablabla", 10, 0, 20f, stock = 100), imageUrl = "")
+        ProductItem(
+            product = Product(
+                "",
+                "213",
+                "Amongus",
+                "blablablablablablablablablablablablablablablablablablablabla",
+                10,
+                0,
+                20f,
+                stock = 100
+            ),
+            imageUri = Uri.parse("https://s13emagst.akamaized.net/products/28743/28742947/images/res_13ff985e86dd5eb605b19edd0435c15a.jpg")
+        )
+    }
+}
+
+@Composable
+fun image(
+    url: String
+) {
+    Card {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(url)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .size(50.dp)
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = "blabla",
+                color = MaterialTheme.colors.onSurface,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }

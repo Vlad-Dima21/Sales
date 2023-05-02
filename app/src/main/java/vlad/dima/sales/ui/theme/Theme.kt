@@ -3,12 +3,19 @@ package vlad.dima.sales.ui.theme
 import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Typography
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import vlad.dima.sales.R
 
 private val DarkColorPalette = darkColors(
     primary = GreenPrimary,
@@ -30,6 +37,20 @@ private val LightColorPalette = lightColors(
     surface = LightSurface,
     background = LightBackground
 )
+
+val RobotoFont = FontFamily(
+    Font(R.font.roboto_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.roboto_bold_italic, FontWeight.Bold, FontStyle.Italic)
+)
+
+val Typography.italicText: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = RobotoFont,
+            fontWeight = FontWeight.Normal
+        )
+    }
 
 @Composable
 fun SalesTheme(
