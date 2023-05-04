@@ -9,10 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.LibraryBooks
-import androidx.compose.material.icons.outlined.Notes
-import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -39,15 +36,18 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import vlad.dima.sales.R
+import vlad.dima.sales.ui.composables.IconLabeledText
 import vlad.dima.sales.ui.composables.TextFieldWithValidation
 import vlad.dima.sales.ui.dashboard.common.products.Product
 import vlad.dima.sales.ui.theme.italicText
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProductItem(
     product: Product,
-    imageUri: Uri
+    modifier: Modifier = Modifier,
+    quantityChangedCallback: ((oldValue: Int, newValue: Int, product: Product) -> Unit),
 ) {
     val context = LocalContext.current
     val cornerRadius = context.resources.getDimension(R.dimen.rounded_corner_radius)
@@ -57,11 +57,10 @@ fun ProductItem(
     var validationMessage by rememberSaveable {
         mutableStateOf("")
     }
-    val isValidQuantity by remember {
+    val isValidQuantity by remember(key1 = selectedQuantity) {
         derivedStateOf {
             if (selectedQuantity.isNotEmpty()) {
                 val value = selectedQuantity.trim().toInt()
-                product.quantityAdded = value
                 if (value % product.quantitySold != 0) {
                     validationMessage = context.getString(R.string.ProductIncorrectValue)
                     return@derivedStateOf false
@@ -70,16 +69,21 @@ fun ProductItem(
                     validationMessage = context.getString(R.string.ProductUnavailableStock)
                     return@derivedStateOf false
                 }
+                // call this lambda only if value is different, otherwise is called after every recomposition
+                if (product.quantityAdded != value) {
+                    quantityChangedCallback(product.quantityAdded, value, product)
+                }
+                product.quantityAdded = value
                 validationMessage = ""
                 return@derivedStateOf true
             }
             validationMessage = context.getString(R.string.FieldRequired)
-            product.quantityAdded = 0
             return@derivedStateOf false
         }
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     Card(
+        modifier = modifier,
         shape = RoundedCornerShape(cornerRadius),
         contentColor = contentColorFor(backgroundColor = MaterialTheme.colors.surface),
         border = when (isValidQuantity) {
@@ -99,7 +103,7 @@ fun ProductItem(
             ) {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUri)
+                        .data(product.productImageUri)
                         .crossfade(true)
                         .build(),
                     contentDescription = product.productName,
@@ -160,6 +164,11 @@ fun ProductItem(
                                 label = context.getString(R.string.ProductStock),
                                 text = product.stock.toString()
                             )
+                            IconLabeledText(
+                                icon = Icons.Outlined.Payment,
+                                label = stringResource(R.string.Price),
+                                text = stringResource(id = R.string.PriceFormat, ((product.price * 100.0f).roundToInt() / 100.0f).toString())
+                            )
                         }
                         Row(
                             modifier = Modifier
@@ -218,71 +227,6 @@ fun ProductItem(
 }
 
 @Composable
-fun IconLabeledText(
-    icon: ImageVector,
-    iconColor: Color = MaterialTheme.colors.primaryVariant,
-    label: String,
-    labelColor: Color = MaterialTheme.colors.onSurface,
-    text: String,
-    textColor: Color = MaterialTheme.colors.onSurface,
-    oneLine: Boolean = false
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = iconColor,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(text = label, color = labelColor)
-        Divider(
-            modifier = Modifier
-                .width(2.dp)
-                .height(2.dp),
-            color = MaterialTheme.colors.onSurface
-        )
-        if (!oneLine) {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
-        } else {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText,  maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-@Composable
-fun IconLabeledText(
-    icon: Painter,
-    iconColor: Color = MaterialTheme.colors.primaryVariant,
-    label: String,
-    labelColor: Color = MaterialTheme.colors.onSurface,
-    text: String,
-    textColor: Color = MaterialTheme.colors.onSurface
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            painter = icon,
-            contentDescription = label,
-            tint = iconColor,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(text = label, color = labelColor)
-        Divider(
-            modifier = Modifier
-                .width(2.dp)
-                .height(2.dp),
-            color = MaterialTheme.colors.onSurface
-        )
-        Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
-    }
-}
-
-@Composable
 @Preview
 fun ProductItemPreview() {
     Box(
@@ -293,13 +237,14 @@ fun ProductItemPreview() {
                 "",
                 "213",
                 "Amongus",
+                Uri.parse("https://s13emagst.akamaized.net/products/28743/28742947/images/res_13ff985e86dd5eb605b19edd0435c15a.jpg"),
                 "blablablablablablablablablablablablablablablablablablablabla",
                 10,
                 0,
                 20f,
                 stock = 100
             ),
-            imageUri = Uri.parse("https://s13emagst.akamaized.net/products/28743/28742947/images/res_13ff985e86dd5eb605b19edd0435c15a.jpg")
+            quantityChangedCallback = { _, _, _ -> }
         )
     }
 }

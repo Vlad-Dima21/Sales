@@ -1,5 +1,7 @@
 package vlad.dima.sales.ui.theme
 
+import androidx.compose.material.Colors
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val GreenPrimary = Color(0xff52b788)
@@ -21,4 +23,7 @@ val DarkSurface = Color(0xff2b2b2b)
 
 val Orange = Color(0xffFFA500)
 val LightGray = Color(0xffc0c0c0)
+
+val Colors.extra: Color
+    @Composable get() = Color(0xffE0A458)
 

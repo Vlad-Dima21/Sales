@@ -51,4 +51,12 @@
     <string name="ProductUnavailableStock">Unavailable stock</string>
     <string name="FieldRequired">Field required</string>
     <string name="CartQuantity">Cart Quantity</string>
+    <string name="NewOrderFor">Pending order for %1$s</string>
+    <string name="OnlyStock">In stock</string>
+    <string name="OnlyCart">In cart</string>
+    <string name="GoBack">Go back</string>
+    <string name="TotalPrice">Total</string>
+    <string name="PriceFormat">%1$s €</string>
+    <string name="Price">Price</string>
+    <string name="Save">Save</string>
 </resources>
