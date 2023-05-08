@@ -1,6 +1,8 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.app.Activity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.InteractionSource
@@ -36,7 +38,8 @@ import java.util.logging.Filter
 @Composable
 fun PendingOrderAppBar(
     viewModel: PendingOrderViewModel,
-    client: Client
+    client: Client,
+    isCollapsed: Boolean = false
 ) {
     val localContext = LocalContext.current
     val totalPrice by viewModel.totalPrice.collectAsState("0")
@@ -53,27 +56,29 @@ fun PendingOrderAppBar(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Row {
-                IconButton(
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .padding(start = 8.dp),
-                    onClick = { (localContext as Activity).finish() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.GoBack),
-                        tint = onBackgroundTint
+            AnimatedVisibility(visible = !isCollapsed) {
+                Row {
+                    IconButton(
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .padding(start = 8.dp),
+                        onClick = { (localContext as Activity).finish() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.GoBack),
+                            tint = onBackgroundTint
+                        )
+                    }
+                    Text(
+                        text = localContext.getString(R.string.NewOrderFor, client.clientName),
+                        fontSize = 24.sp,
+                        color = onBackgroundTint,
+                        modifier = Modifier
+                            .padding(8.dp),
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Text(
-                    text = localContext.getString(R.string.NewOrderFor, client.clientName),
-                    fontSize = 24.sp,
-                    color = onBackgroundTint,
-                    modifier = Modifier
-                        .padding(8.dp),
-                    fontWeight = FontWeight.SemiBold
-                )
             }
             Column(
                 modifier = Modifier
@@ -92,12 +97,13 @@ fun PendingOrderAppBar(
                 ) {
                     FilterButton(
                         label = stringResource(id = R.string.OnlyStock),
-                        isActive = onlyInStock,
+                        isActive = onlyInStock || onlyInCart,
                         onClick = {
                             viewModel.filterStock()
                         },
                         activeColor = MaterialTheme.colors.extra,
-                        backgroundColor = MaterialTheme.colors.background
+                        backgroundColor = MaterialTheme.colors.background,
+                        isEnabled = !onlyInCart
                     )
                     FilterButton(
                         label = stringResource(id = R.string.OnlyCart),
@@ -106,11 +112,12 @@ fun PendingOrderAppBar(
                             viewModel.filterCart()
                         },
                         activeColor = MaterialTheme.colors.extra,
-                        backgroundColor = MaterialTheme.colors.background
+                        backgroundColor = MaterialTheme.colors.background,
+                        isEnabled = totalPrice != "0"
                     )
                     vlad.dima.sales.ui.composables.IconButton(
                         label = stringResource(id = R.string.Save),
-                        isEnabled = true,
+                        isEnabled = totalPrice != "0",
                         onClick = { /*TODO*/ },
                         icon = Icons.Filled.ShoppingCart,
                         buttonColor = MaterialTheme.colors.extra

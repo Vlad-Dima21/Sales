@@ -12,10 +12,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -64,37 +64,51 @@ class PendingOrderActivity : ComponentActivity() {
                 val products by viewModel.products.collectAsState()
                 val isLoading by viewModel.isLoading.collectAsState()
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colors.background)
-                ) {
-                    item {
-                        PendingOrderAppBar(viewModel = viewModel, client = client)
-                    }
-                    item { Spacer(modifier = Modifier) }
-                    if (isLoading) {
-                        item {
-                            CircularProgressIndicator()
+                val scrollState = rememberLazyListState()
+                var previousScrollItem by remember { mutableStateOf(0) }
+                val isAppBarCollapsed by remember {
+                    derivedStateOf {
+                        if (scrollState.firstVisibleItemIndex != 0) {
+                            (scrollState.firstVisibleItemIndex > previousScrollItem)
+                        } else {
+                            false
+                        }.also {
+                            previousScrollItem = scrollState.firstVisibleItemIndex
                         }
                     }
-                    items(
-                        items = products,
-                        key = { item: Product -> item.productCode }
+                }
+                Column {
+                    PendingOrderAppBar(viewModel = viewModel, client = client, isCollapsed = isAppBarCollapsed)
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        state = scrollState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colors.background)
                     ) {
-                        ProductItem(
-                            product = it,
-                            modifier = Modifier.animateItemPlacement(
-                                animationSpec = tween(600)
-                            ),
-                            quantityChangedCallback = { oldValue, newValue, product ->
-                                viewModel.updateProductInCart(oldValue, newValue, product)
+                        item { Spacer(modifier = Modifier) }
+                        if (isLoading) {
+                            item {
+                                CircularProgressIndicator()
                             }
-                        )
+                        }
+                        items(
+                            items = products,
+                            key = { item: Product -> item.productCode }
+                        ) {
+                            ProductItem(
+                                product = it,
+                                modifier = Modifier.animateItemPlacement(
+                                    animationSpec = tween(600)
+                                ),
+                                quantityChangedCallback = { oldValue, newValue, product ->
+                                    viewModel.updateProductInCart(oldValue, newValue, product)
+                                }
+                            )
+                        }
+                        item { Spacer(modifier = Modifier) }
                     }
-                    item { Spacer(modifier = Modifier) }
                 }
             }
         }

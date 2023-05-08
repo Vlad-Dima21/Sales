@@ -1,6 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +39,13 @@ class PendingOrderViewModel(
 
     private var _totalPrice = MutableStateFlow(0f)
     var totalPrice: Flow<String> = _totalPrice.map {
-        ((_totalPrice.value * 100.0f).roundToInt() / 100.0f).toString()
+        roundFloat(it).run {
+            if (this > 0f) {
+                this.toString()
+            } else {
+                "0"
+            }
+        }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "0")
 
@@ -49,7 +56,7 @@ class PendingOrderViewModel(
     private val _onlyInCart = MutableStateFlow(false)
     val onlyInCart = _onlyInCart.asStateFlow()
 
-    val products = combine(_products, _onlyInStock, _onlyInCart) { products, onlyInStock, onlyInCart ->
+    val products = combine(_products, _onlyInStock, _onlyInCart, _totalPrice) { products, onlyInStock, onlyInCart, _ ->
         var requestedProducts = products
         if (onlyInStock) {
             requestedProducts =  requestedProducts.filter { it.stock > 0 }
@@ -66,7 +73,7 @@ class PendingOrderViewModel(
     }
 
 
-    private fun loadProducts() = CoroutineScope(Dispatchers.IO).launch {
+    private fun loadProducts() = viewModelScope.launch(Dispatchers.IO) {
         _isLoading.emit(true)
 
         val loadedProducts = productsCollection.orderBy("productName").get().await().documents.map {snapshot ->
@@ -100,7 +107,12 @@ class PendingOrderViewModel(
 
     fun updateProductInCart(oldValue: Int, newValue: Int, product: Product) {
         _totalPrice.value += (newValue - oldValue) / product.quantitySold * product.price
+        if (_totalPrice.value == 0f) {
+            _onlyInCart.value = false
+        }
     }
+
+    private fun roundFloat(value: Float): Float = (value * 100.0f).roundToInt() / 100.0f
 
     class Factory(private val client: Client, private val repository: OrderRepository): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

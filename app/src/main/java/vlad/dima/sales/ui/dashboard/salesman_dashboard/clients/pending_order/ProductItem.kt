@@ -1,6 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,8 +18,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -28,7 +27,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +37,6 @@ import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.IconLabeledText
 import vlad.dima.sales.ui.composables.TextFieldWithValidation
 import vlad.dima.sales.ui.dashboard.common.products.Product
-import vlad.dima.sales.ui.theme.italicText
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -69,11 +66,12 @@ fun ProductItem(
                     validationMessage = context.getString(R.string.ProductUnavailableStock)
                     return@derivedStateOf false
                 }
-                // call this lambda only if value is different, otherwise is called after every recomposition
-                if (product.quantityAdded != value) {
-                    quantityChangedCallback(product.quantityAdded, value, product)
-                }
+                val oldValue = product.quantityAdded
                 product.quantityAdded = value
+                // call this lambda only if value is different, otherwise is called after every recomposition
+                if (oldValue != value) {
+                    quantityChangedCallback(oldValue, value, product)
+                }
                 validationMessage = ""
                 return@derivedStateOf true
             }
@@ -173,7 +171,8 @@ fun ProductItem(
                         Row(
                             modifier = Modifier
                                 .align(Alignment.CenterVertically)
-                                .padding(end = 8.dp),
+                                .padding(end = 8.dp)
+                                .animateContentSize(),
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             Icon(

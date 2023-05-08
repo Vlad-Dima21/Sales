@@ -1,5 +1,6 @@
 package vlad.dima.sales.ui.composables
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
@@ -32,7 +33,8 @@ fun TextFieldWithValidation(
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     Column(
-        modifier = modifier.width(IntrinsicSize.Max),
+        modifier = modifier.width(IntrinsicSize.Max)
+            .animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         BasicTextField(
