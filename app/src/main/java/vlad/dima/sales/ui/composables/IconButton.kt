@@ -1,9 +1,7 @@
 package vlad.dima.sales.ui.composables
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -21,6 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import vlad.dima.sales.R
 
+/**
+ * circular progress bar takes up at least 48dp in height, so all buttons must be at least 48dp tall
+ */
+
 @Composable
 fun FilterButton(
     label: String,
@@ -37,6 +39,7 @@ fun FilterButton(
     val finalTextColor = if (isEnabled) textColor else textColor.copy(0.5f)
 
     OutlinedButton(
+        modifier = Modifier.heightIn(min = 48.dp),
         onClick = onClick,
         elevation = ButtonDefaults.elevation(),
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
@@ -80,6 +83,7 @@ fun IconButton(
     contentColor: Color = MaterialTheme.colors.onPrimary
 ) {
     Button(
+        modifier = Modifier.heightIn(min = 48.dp),
         onClick = onClick,
         elevation = ButtonDefaults.elevation(),
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
@@ -96,6 +100,30 @@ fun IconButton(
             contentDescription = label,
             tint = contentColor
         )
+        Spacer(modifier = Modifier.width(5.dp))
+        Text(text = label, color = contentColor)
+    }
+}
+
+@Composable
+fun LoadingButton(
+    label: String,
+    buttonColor: Color = MaterialTheme.colors.primary,
+    contentColor: Color = MaterialTheme.colors.onPrimary
+) {
+    Button(
+        modifier = Modifier.heightIn(min = 48.dp),
+        onClick = { },
+        elevation = ButtonDefaults.elevation(),
+        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = buttonColor,
+            contentColor = contentColor,
+            disabledContentColor = contentColor.copy(alpha = 0.5f)
+        ),
+        contentPadding = PaddingValues(top = 5.dp, bottom = 5.dp, start = 5.dp, end = 10.dp)
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = contentColor, strokeWidth = 2.dp)
         Spacer(modifier = Modifier.width(5.dp))
         Text(text = label, color = contentColor)
     }

@@ -90,13 +90,6 @@ class SalesmanDashboardActivity : ComponentActivity() {
         ) { result ->
             if (result.resultCode == RESULT_OK) {
                 navController?.navigate(SalesmanDashboardResources.PastSales.route)
-                var client: Client
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    client = result.data?.getSerializableExtra("client", Client::class.java)!!
-                } else {
-                    client = result.data?.getSerializableExtra("client") as Client
-                }
-                Toast.makeText(this, client.clientName, Toast.LENGTH_SHORT).show()
             }
         }
 

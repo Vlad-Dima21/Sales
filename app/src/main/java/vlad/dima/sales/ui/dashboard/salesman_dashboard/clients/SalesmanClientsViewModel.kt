@@ -36,7 +36,9 @@ class SalesmanClientsViewModel: ViewModel() {
         val managerUID = currentUserState.managerUID.ifEmpty { currentUserState.userUID }
 
         _clients.emit(clientCollection.whereEqualTo("managerUID", managerUID).get().await().map { document ->
-              document.toObject(Client::class.java)
+              document.toObject(Client::class.java).apply {
+                  clientId = document.id
+              }
             }.toList()
         )
     }

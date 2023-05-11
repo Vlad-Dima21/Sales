@@ -59,4 +59,5 @@
     <string name="PriceFormat">%1$s €</string>
     <string name="Price">Price</string>
     <string name="Save">Save</string>
+    <string name="CheckFields">Check all required fields first</string>
 </resources>

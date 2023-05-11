@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.products.Product
@@ -46,12 +47,19 @@ class PendingOrderActivity : ComponentActivity() {
         }
 
         viewModel = ViewModelProvider(
-            this,
-            PendingOrderViewModel.Factory(
-                client,
-                repository
+            this, PendingOrderViewModel.Factory(
+                client, repository
             )
         )[PendingOrderViewModel::class.java]
+
+        lifecycleScope.launch {
+            viewModel.orderStatus.collect { orderStatus ->
+                if (orderStatus == PendingOrderViewModel.OrderStatus.SUCCEEDED) {
+                    setResult(RESULT_OK, Intent().putExtra("client", client))
+                    finish()
+                }
+            }
+        }
 
         setContent {
             SalesTheme(
@@ -78,14 +86,16 @@ class PendingOrderActivity : ComponentActivity() {
                     }
                 }
                 Column {
-                    PendingOrderAppBar(viewModel = viewModel, client = client, isCollapsed = isAppBarCollapsed)
+                    PendingOrderAppBar(
+                        viewModel = viewModel, client = client, isCollapsed = isAppBarCollapsed
+                    )
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         state = scrollState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.background)
+                            .padding(horizontal = 8.dp)
                     ) {
                         item { Spacer(modifier = Modifier) }
                         if (isLoading) {
@@ -93,19 +103,10 @@ class PendingOrderActivity : ComponentActivity() {
                                 CircularProgressIndicator()
                             }
                         }
-                        items(
-                            items = products,
-                            key = { item: Product -> item.productCode }
-                        ) {
-                            ProductItem(
-                                product = it,
-                                modifier = Modifier.animateItemPlacement(
-                                    animationSpec = tween(600)
-                                ),
-                                quantityChangedCallback = { oldValue, newValue, product ->
-                                    viewModel.updateProductInCart(oldValue, newValue, product)
-                                }
-                            )
+                        items(items = products, key = { item: PendingOrderViewModel.ProductItemHolder -> item.product.productCode }) {
+                            ProductItem(productItemHolder = it, modifier = Modifier.animateItemPlacement(
+                                animationSpec = tween(600)
+                            ))
                         }
                         item { Spacer(modifier = Modifier) }
                     }

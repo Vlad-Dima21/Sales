@@ -42,49 +42,20 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProductItem(
-    product: Product,
-    modifier: Modifier = Modifier,
-    quantityChangedCallback: ((oldValue: Int, newValue: Int, product: Product) -> Unit),
+    productItemHolder: PendingOrderViewModel.ProductItemHolder,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val cornerRadius = context.resources.getDimension(R.dimen.rounded_corner_radius)
-    var selectedQuantity by rememberSaveable {
-        mutableStateOf("0")
-    }
-    var validationMessage by rememberSaveable {
-        mutableStateOf("")
-    }
-    val isValidQuantity by remember(key1 = selectedQuantity) {
-        derivedStateOf {
-            if (selectedQuantity.isNotEmpty()) {
-                val value = selectedQuantity.trim().toInt()
-                if (value % product.quantitySold != 0) {
-                    validationMessage = context.getString(R.string.ProductIncorrectValue)
-                    return@derivedStateOf false
-                }
-                if (value > product.stock) {
-                    validationMessage = context.getString(R.string.ProductUnavailableStock)
-                    return@derivedStateOf false
-                }
-                val oldValue = product.quantityAdded
-                product.quantityAdded = value
-                // call this lambda only if value is different, otherwise is called after every recomposition
-                if (oldValue != value) {
-                    quantityChangedCallback(oldValue, value, product)
-                }
-                validationMessage = ""
-                return@derivedStateOf true
-            }
-            validationMessage = context.getString(R.string.FieldRequired)
-            return@derivedStateOf false
-        }
-    }
+    val selectedQuantity = productItemHolder.quantityString
+    val validationMessage = productItemHolder.validationMessage
+    val product = productItemHolder.product
     val keyboardController = LocalSoftwareKeyboardController.current
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(cornerRadius),
         contentColor = contentColorFor(backgroundColor = MaterialTheme.colors.surface),
-        border = when (isValidQuantity) {
+        border = when (validationMessage == null) {
             false -> BorderStroke(1.dp, Color.Red)
             true -> null
         }
@@ -200,7 +171,7 @@ fun ProductItem(
                                             }
                                         }
                                     }
-                                    selectedQuantity = newValue
+                                    productItemHolder.changeQuantity(newValue)
                                 },
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Number,
@@ -213,68 +184,14 @@ fun ProductItem(
                                     fontSize = 14.sp,
                                     color = MaterialTheme.colors.onSurface
                                 ),
-                                isError = !isValidQuantity,
-                                errorMessage = validationMessage
+                                isError = validationMessage != null,
+                                errorMessage = if (validationMessage != null) stringResource(id = validationMessage) else ""
                             )
                         }
                     }
 
                 }
             }
-        }
-    }
-}
-
-@Composable
-@Preview
-fun ProductItemPreview() {
-    Box(
-        Modifier.fillMaxSize()
-    ) {
-        ProductItem(
-            product = Product(
-                "",
-                "213",
-                "Amongus",
-                Uri.parse("https://s13emagst.akamaized.net/products/28743/28742947/images/res_13ff985e86dd5eb605b19edd0435c15a.jpg"),
-                "blablablablablablablablablablablablablablablablablablablabla",
-                10,
-                0,
-                20f,
-                stock = 100
-            ),
-            quantityChangedCallback = { _, _, _ -> }
-        )
-    }
-}
-
-@Composable
-fun image(
-    url: String
-) {
-    Card {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(url)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(50.dp)
-            )
-            Text(
-                modifier = Modifier.weight(1f),
-                text = "blabla",
-                color = MaterialTheme.colors.onSurface,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold
-            )
         }
     }
 }

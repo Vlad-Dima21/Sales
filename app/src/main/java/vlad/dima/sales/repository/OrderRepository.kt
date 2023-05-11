@@ -1,6 +1,8 @@
 package vlad.dima.sales.repository
 
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.room.order.OrderDao
 import vlad.dima.sales.room.order.OrderProduct
@@ -8,13 +10,13 @@ import vlad.dima.sales.room.order.OrderProductDao
 
 class OrderRepository(private val orderDao: OrderDao, private val orderProductDao: OrderProductDao) {
 
-    fun getAllOrders(): LiveData<List<Order>> = orderDao.getAll()
+    fun getAllOrders(): Flow<List<Order>> = orderDao.getAll()
 
-    fun getOrderById(id: Int): LiveData<Order> = orderDao.getById(id)
+    fun getOrderById(id: Int): Flow<Order> = orderDao.getById(id)
 
-    fun getOrdersBySalesmanUID(uid: String): LiveData<List<Order>> = orderDao.getBySalesmanUID(uid)
+    fun getOrdersBySalesmanUID(uid: String): Flow<List<Order>> = orderDao.getBySalesmanUID(uid)
 
-    fun upsertOrder(order: Order) = orderDao.insert(order)
+    fun upsertOrder(order: Order): List<Long> = orderDao.insert(order)
 
     fun deleteOrder(order: Order) = orderDao.delete(order)
 
