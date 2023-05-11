@@ -1,7 +1,8 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients
 
+import com.google.firebase.firestore.Exclude
 data class Client(
-    var clientId: String = "",
+    @Exclude var clientId: String = "",
     var clientName: String = "",
     var address: String = "",
     var contactName: String = "",

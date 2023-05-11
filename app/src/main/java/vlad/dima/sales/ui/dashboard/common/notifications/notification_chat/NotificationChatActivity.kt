@@ -59,14 +59,6 @@ class NotificationChatActivity : ComponentActivity() {
             this, NotificationChatViewModel.Factory(intent.getStringExtra("id") ?: "", repository)
         )[NotificationChatViewModel::class.java]
 
-        viewModel.currentUserLD.observe(this) { user ->
-            if (user != null) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    viewModel.currentUserState.emit(user)
-                }
-            }
-        }
-
         lifecycleScope.launch {
             viewModel.error.collect { stringId ->
                 if (stringId != null) {
@@ -94,7 +86,7 @@ class NotificationChatActivity : ComponentActivity() {
                 uiController.setStatusBarColor(MaterialTheme.colors.surface)
                 uiController.setNavigationBarColor(MaterialTheme.colors.surface)
 
-                val currentUser by viewModel.currentUserState.collectAsState()
+                val currentUser by viewModel.currentUser.collectAsState()
                 val messages by viewModel.messages.collectAsState()
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val scrollState = rememberLazyListState()

@@ -113,14 +113,6 @@ class ManagerDashboardActivity : ComponentActivity() {
             }
         }
 
-        // update current user
-        notificationsViewModel.currentUserLD.observe(this) {user ->
-            if (user != null) {
-                notificationsViewModel.currentUserSate = user
-                notificationsViewModel.loadItems()
-            }
-        }
-
         lifecycleScope.launch {
             notificationsViewModel.isCreatingNewNotification.collect {
                 if (it) {

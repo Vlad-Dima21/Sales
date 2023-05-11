@@ -38,7 +38,9 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
     Column(modifier = Modifier.fillMaxSize()) {
         SalesmanNotificationsAppBar(viewModel)
         Box(
-            modifier = Modifier.pullRefresh(pullRefreshState)
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .pullRefresh(pullRefreshState)
         ) {
             LazyColumn(
                 modifier = Modifier

@@ -69,6 +69,7 @@ class NewNotification : ComponentActivity() {
                     mutableStateOf(0)
                 }
                 val keyboardController = LocalSoftwareKeyboardController.current
+                val coroutineScope = rememberCoroutineScope()
 
                 Column(
                     modifier = Modifier
@@ -93,25 +94,31 @@ class NewNotification : ComponentActivity() {
                                     return@IconButton
                                 }
                                 if (currentUserUID != null) {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        val newNotification = Notification(
-                                            title = title,
-                                            description = description,
-                                            managerUID = currentUserUID,
-                                            importance = importance.value
-                                        )
-                                        try {
-                                            notificationsCollection.add(newNotification).await()
-                                        } catch (e: Exception) {
-                                            Log.d(NOTIFICATION_ERROR, e.stackTraceToString())
-                                            Toast.makeText(this@NewNotification, R.string.SystemError, Toast.LENGTH_SHORT).show()
-                                            return@launch
+                                    coroutineScope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            val newNotification = Notification(
+                                                title = title,
+                                                description = description,
+                                                managerUID = currentUserUID,
+                                                importance = importance.value
+                                            )
+                                            try {
+                                                notificationsCollection.add(newNotification).await()
+                                            } catch (e: Exception) {
+                                                Log.d(NOTIFICATION_ERROR, e.stackTraceToString())
+                                                Toast.makeText(
+                                                    this@NewNotification,
+                                                    R.string.SystemError,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                return@withContext
+                                            }
+                                            setResult(
+                                                RESULT_OK,
+                                                Intent().putExtra("isNotificationAdded", true)
+                                            )
+                                            finish()
                                         }
-                                        setResult(
-                                            RESULT_OK,
-                                            Intent().putExtra("isNotificationAdded", true)
-                                        )
-                                        finish()
                                     }
                                 }
                             },

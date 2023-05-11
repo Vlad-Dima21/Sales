@@ -21,6 +21,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
@@ -43,17 +44,35 @@ class EnterAccountActivity : ComponentActivity() {
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
 
-        viewModel = ViewModelProvider(this, EnterAccountViewModel.Factory(repository))[EnterAccountViewModel::class.java]
+        viewModel = ViewModelProvider(
+            this,
+            EnterAccountViewModel.Factory(repository)
+        )[EnterAccountViewModel::class.java]
 
         if (viewModel.isLoggedIn()) {
-            repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid).observe(this) {user ->
-                if (user.managerUID == "") {
-                    startActivity(Intent(this, ManagerDashboardActivity::class.java))
-                    finish()
-                } else {
-                    startActivity(Intent(this, SalesmanDashboardActivity::class.java))
-                    finish()
-                }
+            lifecycleScope.launch(Dispatchers.IO) {
+                repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid)
+                    .collect { user ->
+                        withContext(Dispatchers.Main) {
+                            if (user.managerUID == "") {
+                                startActivity(
+                                    Intent(
+                                        this@EnterAccountActivity,
+                                        ManagerDashboardActivity::class.java
+                                    )
+                                )
+                                finish()
+                            } else {
+                                startActivity(
+                                    Intent(
+                                        this@EnterAccountActivity,
+                                        SalesmanDashboardActivity::class.java
+                                    )
+                                )
+                                finish()
+                            }
+                        }
+                    }
             }
         }
 
@@ -63,30 +82,59 @@ class EnterAccountActivity : ComponentActivity() {
         // the activity observes the results of viewModel operations
         viewModel.actionResult.observe(this) { result ->
             if (!result.actionSuccessful) {
-                    errorMessage = getString(result.messageStringId)
+                errorMessage = getString(result.messageStringId)
             } else {
-                repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid).observe(this) {user ->
-                    if (user.managerUID == "") {
-                        startActivity(Intent(this, ManagerDashboardActivity::class.java))
-                        Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
-                        finish()
-                    } else {
-                        startActivity(Intent(this, SalesmanDashboardActivity::class.java))
-                        Toast.makeText(this, result.messageStringId, Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid)
+                        .collect { user ->
+                            withContext(Dispatchers.Main) {
+                                if (user.managerUID == "") {
+                                    startActivity(
+                                        Intent(
+                                            this@EnterAccountActivity,
+                                            ManagerDashboardActivity::class.java
+                                        )
+                                    )
+                                    Toast.makeText(
+                                        this@EnterAccountActivity,
+                                        result.messageStringId,
+                                        Toast.LENGTH_SHORT
+                                    )
+                                        .show()
+                                    finish()
+                                } else {
+                                    startActivity(
+                                        Intent(
+                                            this@EnterAccountActivity,
+                                            SalesmanDashboardActivity::class.java
+                                        )
+                                    )
+                                    Toast.makeText(
+                                        this@EnterAccountActivity,
+                                        result.messageStringId,
+                                        Toast.LENGTH_SHORT
+                                    )
+                                        .show()
+                                    finish()
+                                }
+                            }
+                        }
                 }
             }
         }
 
         setContent {
-            val backgroundModifier = when(isSystemInDarkTheme()) {
-                true -> Modifier.background(Brush.linearGradient(
-                    colors = listOf(DarkBackground, TealSecondaryDark)
-                ))
-                false -> Modifier.background(Brush.linearGradient(
-                    colors = listOf(LightBackground, TealSecondaryLight)
-                ))
+            val backgroundModifier = when (isSystemInDarkTheme()) {
+                true -> Modifier.background(
+                    Brush.linearGradient(
+                        colors = listOf(DarkBackground, TealSecondaryDark)
+                    )
+                )
+                false -> Modifier.background(
+                    Brush.linearGradient(
+                        colors = listOf(LightBackground, TealSecondaryLight)
+                    )
+                )
             }
             SalesTheme {
                 // set status bars colors to transparent

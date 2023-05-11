@@ -1,9 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -29,13 +27,12 @@ import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
+import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.PendingOrderActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
@@ -51,27 +48,24 @@ class SalesmanDashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
+        val userRepository = UserRepository(SalesDatabase.getDatabase(this).userDao())
+        val orderRepository = SalesDatabase.getDatabase(this).run {
+            OrderRepository(orderDao(), orderProductDao())
+        }
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
-            factory = SalesmanNotificationsViewModel.Factory(repository)
+            factory = SalesmanNotificationsViewModel.Factory(userRepository)
         )[SalesmanNotificationsViewModel::class.java]
-        val pastSalesViewModel: SalesmanPastSalesViewModel = ViewModelProvider(this)[SalesmanPastSalesViewModel::class.java]
-        val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(this)[SalesmanClientsViewModel::class.java]
-
-        val currentUserLD = repository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid)
-
-        // update current user across viewModels
-        currentUserLD.observe(this) {user ->
-            if (user != null) {
-                notificationsViewModel.currentUserSate = user
-                notificationsViewModel.loadItems()
-
-                clientsViewModel.currentUserState = user
-                clientsViewModel.loadClients()
-            }
-        }
+        val pastSalesViewModel: SalesmanPastSalesViewModel =
+            ViewModelProvider(
+                owner = this,
+                factory = SalesmanPastSalesViewModel.Factory(userRepository, orderRepository)
+            )[SalesmanPastSalesViewModel::class.java]
+        val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(
+            owner = this,
+            factory = SalesmanClientsViewModel.Factory(userRepository)
+        )[SalesmanClientsViewModel::class.java]
 
         var navController: NavHostController? = null
 
@@ -118,16 +112,17 @@ class SalesmanDashboardActivity : ComponentActivity() {
         }
     }
 
-    private fun clientsInitialize(clientsViewModel: SalesmanClientsViewModel) = lifecycleScope.launch {
-        clientsViewModel.isCreatingOrderIntent.collect { client ->
-            if (client != null) {
-                clientResultActivity.launch(
-                    Intent(this@SalesmanDashboardActivity, PendingOrderActivity::class.java)
-                        .putExtra("client", client)
-                )
+    private fun clientsInitialize(clientsViewModel: SalesmanClientsViewModel) =
+        lifecycleScope.launch {
+            clientsViewModel.isCreatingOrderIntent.collect { client ->
+                if (client != null) {
+                    clientResultActivity.launch(
+                        Intent(this@SalesmanDashboardActivity, PendingOrderActivity::class.java)
+                            .putExtra("client", client)
+                    )
+                }
             }
         }
-    }
 
     private fun notificationsInitialize(notificationsViewModel: SalesmanNotificationsViewModel) {
         // logout functionality
@@ -187,7 +182,11 @@ fun SalesmanDashboardNavigation(
 fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = listOf(SalesmanDashboardResources.Notifications, SalesmanDashboardResources.PastSales, SalesmanDashboardResources.Clients)
+    val selectedPage = listOf(
+        SalesmanDashboardResources.Notifications,
+        SalesmanDashboardResources.PastSales,
+        SalesmanDashboardResources.Clients
+    )
         .find { p -> p.route == backStackEntry.value?.destination?.route }
 
     BottomNavigation(
@@ -220,7 +219,7 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
             onClick = {
                 val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.Clients.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) {inclusive = true}
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
                 }
             },
             resource = SalesmanDashboardResources.Clients

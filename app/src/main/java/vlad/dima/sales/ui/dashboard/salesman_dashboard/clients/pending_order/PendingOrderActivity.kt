@@ -85,7 +85,9 @@ class PendingOrderActivity : ComponentActivity() {
                         }
                     }
                 }
-                Column {
+                Column(
+                    modifier = Modifier.background(MaterialTheme.colors.background)
+                ) {
                     PendingOrderAppBar(
                         viewModel = viewModel, client = client, isCollapsed = isAppBarCollapsed
                     )

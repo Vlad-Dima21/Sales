@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.FilterButton
 import vlad.dima.sales.ui.composables.LabeledText
@@ -43,7 +44,8 @@ fun PendingOrderAppBar(
     val onBackgroundTint = MaterialTheme.colors.onBackground
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .zIndex(2f),
         color = MaterialTheme.colors.background,
         elevation = dimensionResource(id = R.dimen.standard_elevation),
         contentColor = onBackgroundTint
@@ -82,7 +84,8 @@ fun PendingOrderAppBar(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     LabeledText(
                         modifier = Modifier.weight(1f),

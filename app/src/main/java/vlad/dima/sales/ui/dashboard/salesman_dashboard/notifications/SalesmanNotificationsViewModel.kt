@@ -27,8 +27,8 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
 
-    val isUserLoggedIn = MutableLiveData<Boolean>(true)
-    var currentUserSate by mutableStateOf(User())
+    val isUserLoggedIn = MutableLiveData(true)
+    private lateinit var currentUser: User
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean>
@@ -37,14 +37,23 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
 
     val isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
 
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getUserByUID(auth.currentUser!!.uid).collect { user ->
+                currentUser = user
+                loadItems()
+            }
+        }
+    }
+
     fun logout() {
         FirebaseAuth.getInstance().signOut()
         isUserLoggedIn.postValue(false)
     }
 
-    override fun loadItems() = CoroutineScope(Dispatchers.IO).launch {
+    override fun loadItems() = viewModelScope.launch(Dispatchers.IO) {
         _isRefreshing.emit(true)
-        items = notificationsCollection.whereEqualTo("managerUID", currentUserSate.managerUID).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList().map {
+        items = notificationsCollection.whereEqualTo("managerUID", currentUser.managerUID).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList().map {
             val notification = it.toObject(Notification::class.java)!!
             notification.id = it.id
             return@map notification

@@ -8,10 +8,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,14 +24,20 @@ import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.user.User
 import vlad.dima.sales.ui.dashboard.common.notifications.Notification
 
-class NotificationChatViewModel(private val notificationId: String, repository: UserRepository): ViewModel() {
+class NotificationChatViewModel(
+    private val notificationId: String,
+    private val repository: UserRepository
+) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
-    private val notificationMessagesCollection = Firebase.firestore.collection("notificationMessages")
+    private val notificationMessagesCollection =
+        Firebase.firestore.collection("notificationMessages")
+    private lateinit var notificationSnapshotListener: ListenerRegistration
+    private lateinit var messagesSnapshotListener: ListenerRegistration
 
-    val currentUserLD = repository.getUserByUID(auth.currentUser?.uid ?: "")
-    var currentUserState = MutableStateFlow(User())
+    private val _currentUser = MutableStateFlow(User())
+    var currentUser = _currentUser.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean>
@@ -53,38 +59,47 @@ class NotificationChatViewModel(private val notificationId: String, repository: 
     var message by mutableStateOf("")
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getUserByUID(auth.currentUser!!.uid).collect { user ->
+                _currentUser.value = user
+            }
+        }
         loadNotification()
         loadMessages()
     }
 
-    private fun loadNotification() = CoroutineScope(Dispatchers.IO).launch {
+    private fun loadNotification() = viewModelScope.launch(Dispatchers.IO) {
         _isRefreshing.emit(true)
-        notificationsCollection.document(notificationId).addSnapshotListener { notification, error ->
-            viewModelScope.launch {
-                if (error != null) {
-                    _error.emit(R.string.NotificationMessageError)
-                    Log.e("NOTIFICATION_MESSAGE", error.stackTraceToString())
-                    return@launch
-                }
-
-                if (!notification!!.exists()) {
-                    withContext(Dispatchers.IO) {
-                        notificationMessagesCollection.whereEqualTo("notificationId", notificationId).get().await().forEach {
-                            it.reference.delete()
-                        }
+        notificationSnapshotListener = notificationsCollection.document(notificationId)
+            .addSnapshotListener { notification, error ->
+                viewModelScope.launch {
+                    if (error != null) {
+                        _error.emit(R.string.NotificationMessageError)
+                        Log.e("NOTIFICATION_MESSAGE", error.stackTraceToString())
+                        return@launch
                     }
-                    _error.emit(R.string.NotificationDeleted)
-                } else {
-                    notification.toObject(Notification::class.java)
-                        ?.let { _currentNotification.emit(it) }
+
+                    if (!notification!!.exists()) {
+                        withContext(Dispatchers.IO) {
+                            notificationMessagesCollection.whereEqualTo(
+                                "notificationId",
+                                notificationId
+                            ).get().await().forEach {
+                                it.reference.delete()
+                            }
+                        }
+                        _error.emit(R.string.NotificationDeleted)
+                    } else {
+                        notification.toObject(Notification::class.java)
+                            ?.let { _currentNotification.emit(it) }
+                    }
                 }
             }
-        }
         _isRefreshing.emit(false)
     }
 
     private fun loadMessages() {
-        notificationMessagesCollection
+        messagesSnapshotListener = notificationMessagesCollection
             .whereEqualTo("notificationId", notificationId)
             .orderBy("sendDate", Query.Direction.ASCENDING)
             .addSnapshotListener { querySnapshot, snapshotException ->
@@ -109,22 +124,30 @@ class NotificationChatViewModel(private val notificationId: String, repository: 
             }
     }
 
-    fun sendMessage() = CoroutineScope(Dispatchers.IO).launch {
-        notificationMessagesCollection.add(NotificationMessage(
-            notificationId = notificationId,
-            authorName = currentUserState.value.fullName,
-            authorUID = currentUserState.value.userUID,
-            message = message
-        ))
+    fun sendMessage() = viewModelScope.launch(Dispatchers.IO) {
+        notificationMessagesCollection.add(
+            NotificationMessage(
+                notificationId = notificationId,
+                authorName = currentUser.value.fullName,
+                authorUID = currentUser.value.userUID,
+                message = message
+            )
+        )
         message = ""
     }
 
-    fun deleteMessage() = CoroutineScope(Dispatchers.IO).launch {
+    fun deleteMessage() = viewModelScope.launch(Dispatchers.IO) {
         notificationsCollection.document(notificationId).delete()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        notificationSnapshotListener.remove()
+        messagesSnapshotListener.remove()
+    }
 
-    class Factory(private val notificationId: String, private val repository: UserRepository): ViewModelProvider.Factory {
+    class Factory(private val notificationId: String, private val repository: UserRepository) :
+        ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(NotificationChatViewModel::class.java)) {
                 return NotificationChatViewModel(notificationId, repository) as T

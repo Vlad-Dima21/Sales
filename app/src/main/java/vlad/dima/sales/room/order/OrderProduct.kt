@@ -3,6 +3,7 @@ package vlad.dima.sales.room.order
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.CASCADE
+import vlad.dima.sales.ui.dashboard.common.products.Product
 
 @Entity(
     tableName = "order_product",

@@ -35,6 +35,7 @@ import java.util.*
 @Composable
 fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val refreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing, { viewModel.loadItems() })
     val lazyListState = rememberLazyListState()
@@ -71,13 +72,19 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                     val previousIndex = viewModel.items.indexOf(notification) - 1
                     previousNotification = viewModel.items[max(previousIndex, 0)]
 
-                    if (previousIndex == -1 || DateFormat.getDateInstance().format(notification.createdDate) != DateFormat.getDateInstance().format(previousNotification.createdDate)) {
+                    if (previousIndex == -1 || DateFormat.getDateInstance()
+                            .format(notification.createdDate) != DateFormat.getDateInstance()
+                            .format(previousNotification.createdDate)
+                    ) {
                         Box(
-                            modifier =Modifier.padding(top = 32.dp, bottom = 8.dp)
+                            modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
                         ) {
-                            val isCurrentDate = DateFormat.getDateInstance().format(notification.createdDate) == DateFormat.getDateInstance().format(Date())
+                            val isCurrentDate = DateFormat.getDateInstance()
+                                .format(notification.createdDate) == DateFormat.getDateInstance()
+                                .format(Date())
                             Text(
-                                text = if (isCurrentDate) stringResource(id = R.string.Today) else DateFormat.getDateInstance().format(notification.createdDate),
+                                text = if (isCurrentDate) stringResource(id = R.string.Today) else DateFormat.getDateInstance()
+                                    .format(notification.createdDate),
                                 modifier = Modifier
                                     .align(Alignment.CenterStart),
                                 color = MaterialTheme.colors.onBackground,
@@ -121,7 +128,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
             ) {
                 FloatingActionButton(
                     onClick = {
-                        CoroutineScope(Dispatchers.Main).launch {
+                        coroutineScope.launch {
                             viewModel.isCreatingNewNotification.emit(true)
                         }
                     },
