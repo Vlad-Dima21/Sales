@@ -14,9 +14,13 @@ import vlad.dima.sales.room.order.OrderProductDao
 import vlad.dima.sales.room.user.User
 import vlad.dima.sales.room.user.UserDao
 
-@Database(entities = [User::class, Order::class, OrderProduct::class], version = 2, exportSchema = false)
+@Database(
+    entities = [User::class, Order::class, OrderProduct::class],
+    version = 3,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
-abstract class SalesDatabase: RoomDatabase() {
+abstract class SalesDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
     abstract fun orderDao(): OrderDao
@@ -26,7 +30,7 @@ abstract class SalesDatabase: RoomDatabase() {
         @Volatile
         private var instance: SalesDatabase? = null
 
-        private val MIGRATION_1_2 = object: Migration(1,2) {
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     """
@@ -53,6 +57,16 @@ abstract class SalesDatabase: RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                        ALTER TABLE `order` ADD COLUMN `total` REAL NOT NULL
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): SalesDatabase {
             if (instance != null) {
                 return instance as SalesDatabase
@@ -63,7 +77,7 @@ abstract class SalesDatabase: RoomDatabase() {
                     SalesDatabase::class.java,
                     "sales_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 Companion.instance = instance
                 return instance

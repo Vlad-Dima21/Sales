@@ -21,5 +21,6 @@ data class Order(
     var clientId: String = "",
     var salesmanUID: String = "",
     var products: Map<String, Int> = mapOf(),
+    var total: Float = 0f,
     var createdDate: Date = Date()
 )

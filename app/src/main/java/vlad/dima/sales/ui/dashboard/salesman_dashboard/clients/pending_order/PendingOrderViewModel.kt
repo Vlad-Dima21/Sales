@@ -2,7 +2,6 @@ package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,11 +27,18 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import kotlin.math.roundToInt
 
 class PendingOrderViewModel(
-    private val client: Client,
+    private val clientId: String,
+    private val orderId: Int?,
     private val repository: OrderRepository
 ) : ViewModel() {
 
+    private val _client = MutableStateFlow(Client())
+    val client = _client.asStateFlow()
+    private val _order = MutableStateFlow<Order?>(null)
+    private val _orderProducts = MutableStateFlow(emptyList<OrderProduct>())
+
     private val currentUser = FirebaseAuth.getInstance().currentUser!!
+    private val clientsCollection = Firebase.firestore.collection("clients")
     private val productsCollection = Firebase.firestore.collection("products")
     private val storageReference = FirebaseStorage.getInstance().reference.child("product_images")
 
@@ -78,11 +84,32 @@ class PendingOrderViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), listOf())
 
     init {
-        loadProducts()
+        loadClientAndProducts()
+        if (orderId != null) {
+            combine(_order, _orderProducts) { order, orderProducts ->
+                if (order != null && orderProducts.isNotEmpty()) {
+                    orderProducts.forEach { orderProduct ->
+                        _products.value.find { itemHolder ->
+                            itemHolder.product.productId == orderProduct.productId
+                        }
+                            ?.apply {
+                                changeQuantity(orderProduct.quantity.toString())
+                            }
+                    }
+                    _isLoading.value = false
+                }
+            }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, Unit)
+        }
     }
 
-    private fun loadProducts() = viewModelScope.launch(Dispatchers.IO) {
+    private fun loadClientAndProducts() = viewModelScope.launch(Dispatchers.IO) {
         _isLoading.emit(true)
+        _client.value = clientsCollection.document(clientId).get().await().let { snapshot ->
+            snapshot.toObject(Client::class.java)!!.apply {
+                clientId = snapshot.id
+            }
+        }
 
         val loadedProducts =
             productsCollection.orderBy("productName").get().await().documents.map { snapshot ->
@@ -100,12 +127,31 @@ class PendingOrderViewModel(
         }
 
         loadedProducts.forEach { productHolder ->
-            productHolder.product.productImageUri = productImagesReferences[productHolder.product.productCode] ?: Uri.EMPTY
+            productHolder.product.productImageUri =
+                productImagesReferences[productHolder.product.productCode] ?: Uri.EMPTY
         }
 
         _products.value = loadedProducts
 
-        _isLoading.emit(false)
+        if (orderId != null) {
+            loadOrder()
+            loadOrderProducts()
+        } else {
+            _isLoading.emit(false)
+        }
+    }
+
+
+    private fun loadOrder() = viewModelScope.launch(Dispatchers.IO) {
+        repository.getOrderById(orderId!!).collect { order ->
+            _order.value = order
+        }
+    }
+
+    private fun loadOrderProducts() = viewModelScope.launch(Dispatchers.IO) {
+        repository.getOrderProductsByOrderId(orderId!!).collect { orderProducts ->
+            _orderProducts.value = orderProducts
+        }
     }
 
     fun filterStock() {
@@ -140,24 +186,49 @@ class PendingOrderViewModel(
             _orderStatus.value = OrderStatus.IDLE
             return@launch
         }
-
-        val newOrder = Order(
-            clientId = client.clientId,
-            salesmanUID = currentUser.uid
-        )
         try {
-            withContext(Dispatchers.IO) {
-                val newId = repository.upsertOrder(newOrder)[0]
-                repository.upsertOrderProducts(
-                    _products.value.map {
-                        OrderProduct(
-                            orderId = newId.toInt(),
-                            productId = it.product.productId,
-                            quantity = it.product.quantityAdded
-                        )
-                    }
+            if (orderId == null) {
+                val newOrder = Order(
+                    clientId = _client.value.clientId,
+                    salesmanUID = currentUser.uid,
+                    total = _totalPrice.value
                 )
-                _orderStatus.value = OrderStatus.SUCCEEDED
+                withContext(Dispatchers.IO) {
+                    val newId = repository.upsertOrder(newOrder)[0]
+                    repository.upsertOrderProducts(
+                        _products.value
+                            .filter {
+                                it.product.quantityAdded > 0
+                            }
+                            .map {
+                                OrderProduct(
+                                    orderId = newId.toInt(),
+                                    productId = it.product.productId,
+                                    quantity = it.product.quantityAdded
+                                )
+                            }
+                    )
+                    _orderStatus.value = OrderStatus.SUCCEEDED
+                }
+            } else {
+                _order.value!!.total = _totalPrice.value
+                withContext(Dispatchers.IO) {
+                    repository.upsertOrder(_order.value!!)
+                    repository.upsertOrderProducts(
+                        _products.value
+                            .filter {
+                                it.product.quantityAdded > 0
+                            }
+                            .map {
+                                OrderProduct(
+                                    orderId = orderId,
+                                    productId = it.product.productId,
+                                    quantity = it.product.quantityAdded
+                                )
+                            }
+                    )
+                    _orderStatus.value = OrderStatus.SUCCEEDED
+                }
             }
         } catch (e: Exception) {
             _orderStatus.value = OrderStatus.FAILED
@@ -200,11 +271,16 @@ class PendingOrderViewModel(
             validationMessage = R.string.FieldRequired
         }
     }
-    class Factory(private val client: Client, private val repository: OrderRepository) :
+
+    class Factory(
+        private val clientId: String,
+        private val orderId: Int?,
+        private val repository: OrderRepository
+    ) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PendingOrderViewModel::class.java)) {
-                return PendingOrderViewModel(client, repository) as T
+                return PendingOrderViewModel(clientId, orderId, repository) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

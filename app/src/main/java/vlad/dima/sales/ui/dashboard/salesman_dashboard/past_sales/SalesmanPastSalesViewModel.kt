@@ -17,6 +17,7 @@ import vlad.dima.sales.room.order.OrderProduct
 import vlad.dima.sales.room.user.User
 import vlad.dima.sales.ui.dashboard.common.products.Product
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.OrderContextOption
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleClient
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleOrder
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleProduct
@@ -48,7 +49,10 @@ class SalesmanPastSalesViewModel(
         products
     ) { clients, orders, orderProducts, products ->
         if (clients.isNotEmpty() && orders.isNotEmpty()) {
-            val saleClients = clients.map { client ->
+            _isLoading.value = true
+            val saleClients = clients
+                .filter { client -> orders.count { order -> order.clientId == client.clientId } > 0 }
+                .map { client ->
                 val saleOrders = orders.filter { order ->
                     order.clientId == client.clientId
                 }
@@ -69,9 +73,12 @@ class SalesmanPastSalesViewModel(
                     .sortedByDescending { it.order.createdDate }
                 SaleClient(client, saleOrders)
             }
+                .sortedBy { it.client.clientName }
             saleClients
         } else {
             emptyList()
+        }.also {
+            _isLoading.value = false
         }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -84,18 +91,23 @@ class SalesmanPastSalesViewModel(
                     productId = documentSnapshot.id
                 }
             }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
             userRepository.getUserByUID(currentUser.uid).collect { user ->
                 currentUserWithDetails = user
                 loadClients()
             }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
             orderRepository.getOrdersBySalesmanUID(currentUser.uid).collect { orders ->
                 localOrders.value = orders
             }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
             orderRepository.getOrderProductsBySalesmanUID(currentUser.uid)
                 .collect { orderProducts ->
                     localOrderProducts.value = orderProducts
                 }
-            _isLoading.value = false
         }
     }
 
@@ -107,6 +119,17 @@ class SalesmanPastSalesViewModel(
                         clientId = documentSnapshot.id
                     }
                 }
+    }
+    fun falseDeleteOrder(order: Order) {
+        localOrders.value = localOrders.value.filter { it.orderId != order.orderId }
+    }
+
+    fun deleteOrder(order: Order) = viewModelScope.launch(Dispatchers.IO) {
+        orderRepository.deleteOrder(order)
+    }
+
+    fun undoFalseDelete(order: Order) {
+        localOrders.value = localOrders.value.toMutableList().apply { add(order) }
     }
 
     class Factory(

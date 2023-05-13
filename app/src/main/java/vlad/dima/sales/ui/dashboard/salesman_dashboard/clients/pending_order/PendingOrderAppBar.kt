@@ -33,10 +33,10 @@ import vlad.dima.sales.ui.theme.extra
 @Composable
 fun PendingOrderAppBar(
     viewModel: PendingOrderViewModel,
-    client: Client,
     isCollapsed: Boolean = false
 ) {
     val localContext = LocalContext.current
+    val client by viewModel.client.collectAsState()
     val totalPrice by viewModel.totalPrice.collectAsState("0")
     val onlyInStock by viewModel.onlyInStock.collectAsState()
     val onlyInCart by viewModel.onlyInCart.collectAsState()

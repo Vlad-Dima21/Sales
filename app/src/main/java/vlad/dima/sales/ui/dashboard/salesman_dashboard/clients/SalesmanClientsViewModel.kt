@@ -33,8 +33,8 @@ class SalesmanClientsViewModel(
     val clients: StateFlow<List<Client>>
         get() = _clients.asStateFlow()
 
-    private val _isCreatingOrderIntent = MutableStateFlow<Client?>(null)
-    val isCreatingOrderIntent: StateFlow<Client?>
+    private val _isCreatingOrderIntent = MutableStateFlow<String?>(null)
+    val isCreatingOrderIntent: StateFlow<String?>
         get() = _isCreatingOrderIntent.asStateFlow()
 
     var expandedClient = mutableStateOf(Client())
@@ -60,7 +60,7 @@ class SalesmanClientsViewModel(
     }
 
     fun startCreatingOrder(client: Client) = viewModelScope.launch {
-        _isCreatingOrderIntent.emit(client)
+        _isCreatingOrderIntent.emit(client.clientId)
         delay(100)
         _isCreatingOrderIntent.emit(null)
     }

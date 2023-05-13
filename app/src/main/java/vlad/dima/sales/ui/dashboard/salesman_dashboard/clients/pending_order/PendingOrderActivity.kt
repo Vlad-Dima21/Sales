@@ -21,7 +21,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.products.Product
@@ -36,11 +40,15 @@ class PendingOrderActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val client = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra("client", Client::class.java)
+        val clientId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra("clientId", String::class.java)
         } else {
-            intent.getSerializableExtra("client") as Client
+            intent.getSerializableExtra("clientId") as String
         }!!
+
+        val orderId: Int? = intent.getIntExtra("orderId", -1).let {
+            if (it == -1) null else it
+        }
 
         val repository = SalesDatabase.getDatabase(this).run {
             OrderRepository(orderDao(), orderProductDao())
@@ -48,14 +56,14 @@ class PendingOrderActivity : ComponentActivity() {
 
         viewModel = ViewModelProvider(
             this, PendingOrderViewModel.Factory(
-                client, repository
+                clientId, orderId, repository
             )
         )[PendingOrderViewModel::class.java]
 
         lifecycleScope.launch {
             viewModel.orderStatus.collect { orderStatus ->
                 if (orderStatus == PendingOrderViewModel.OrderStatus.SUCCEEDED) {
-                    setResult(RESULT_OK, Intent().putExtra("client", client))
+                    setResult(RESULT_OK, Intent().putExtra("clientId", clientId))
                     finish()
                 }
             }
@@ -89,7 +97,7 @@ class PendingOrderActivity : ComponentActivity() {
                     modifier = Modifier.background(MaterialTheme.colors.background)
                 ) {
                     PendingOrderAppBar(
-                        viewModel = viewModel, client = client, isCollapsed = isAppBarCollapsed
+                        viewModel = viewModel, isCollapsed = isAppBarCollapsed
                     )
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),

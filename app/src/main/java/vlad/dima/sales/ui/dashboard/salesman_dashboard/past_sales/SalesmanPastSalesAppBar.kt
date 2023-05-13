@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import vlad.dima.sales.R
 
 @Composable
@@ -19,7 +20,7 @@ fun SalesmanPastSalesAppBar() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .zIndex(2f),
         elevation = dimensionResource(id = R.dimen.standard_elevation),
         color = MaterialTheme.colors.primary
     ) {

@@ -13,6 +13,9 @@ interface OrderProductDao {
     @Query("SELECT orderId, productId, quantity FROM order_product JOIN `order` USING(orderId) WHERE salesmanUID = :uid")
     fun getBySalesmanUID(uid: String): Flow<List<OrderProduct>>
 
+    @Query("SELECT * from order_product JOIN `order` USING(orderId) WHERE orderId = :orderId")
+    fun getByOrderId(orderId: Int): Flow<List<OrderProduct>>
+
     @Insert(onConflict = REPLACE)
     fun insert(orderProducts: List<OrderProduct>)
 

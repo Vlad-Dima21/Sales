@@ -22,6 +22,8 @@ class OrderRepository(private val orderDao: OrderDao, private val orderProductDa
 
     fun getOrderProductsBySalesmanUID(uid: String) = orderProductDao.getBySalesmanUID(uid)
 
+    fun getOrderProductsByOrderId(orderId: Int) = orderProductDao.getByOrderId(orderId)
+
     fun upsertOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.insert(orderProducts)
 
     fun deleteOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.delete(orderProducts)

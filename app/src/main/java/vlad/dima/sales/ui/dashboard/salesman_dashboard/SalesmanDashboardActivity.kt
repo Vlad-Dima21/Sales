@@ -2,6 +2,7 @@ package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -27,6 +28,8 @@ import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.OrderRepository
@@ -51,6 +54,14 @@ class SalesmanDashboardActivity : ComponentActivity() {
         val userRepository = UserRepository(SalesDatabase.getDatabase(this).userDao())
         val orderRepository = SalesDatabase.getDatabase(this).run {
             OrderRepository(orderDao(), orderProductDao())
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            orderRepository.getAllOrders().collect { orders ->
+                orders.forEach {order ->
+                    Log.d("activitate", order.toString())
+                }
+            }
         }
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
@@ -114,11 +125,11 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
     private fun clientsInitialize(clientsViewModel: SalesmanClientsViewModel) =
         lifecycleScope.launch {
-            clientsViewModel.isCreatingOrderIntent.collect { client ->
-                if (client != null) {
+            clientsViewModel.isCreatingOrderIntent.collect { clientId ->
+                if (clientId != null) {
                     clientResultActivity.launch(
                         Intent(this@SalesmanDashboardActivity, PendingOrderActivity::class.java)
-                            .putExtra("client", client)
+                            .putExtra("clientId", clientId)
                     )
                 }
             }
