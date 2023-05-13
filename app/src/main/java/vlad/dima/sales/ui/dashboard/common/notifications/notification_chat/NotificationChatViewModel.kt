@@ -46,7 +46,6 @@ class NotificationChatViewModel(
     private val _currentNotification = MutableStateFlow(Notification())
     val currentNotification: StateFlow<Notification>
         get() = _currentNotification.asStateFlow()
-    var notificationDeleted by mutableStateOf(false)
 
     private val _messages = MutableStateFlow(listOf<NotificationMessage>())
     val messages: StateFlow<List<NotificationMessage>>
@@ -78,7 +77,6 @@ class NotificationChatViewModel(
                         Log.e("NOTIFICATION_MESSAGE", error.stackTraceToString())
                         return@launch
                     }
-
                     if (!notification!!.exists()) {
                         withContext(Dispatchers.IO) {
                             notificationMessagesCollection.whereEqualTo(

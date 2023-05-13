@@ -148,7 +148,6 @@ class SalesmanDashboardActivity : ComponentActivity() {
             notificationsViewModel.isViewingNotificationIntent.collect {
                 if (it != null) {
                     notificationResultActivity.launch(it)
-                    notificationsViewModel.isViewingNotificationIntent.emit(null)
                 }
             }
         }

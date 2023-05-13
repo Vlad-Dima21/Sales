@@ -35,7 +35,8 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
         get() = _isRefreshing.asStateFlow()
     var items by mutableStateOf(listOf<Notification>())
 
-    val isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
+    private val _isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
+    val isViewingNotificationIntent = _isViewingNotificationIntent.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -62,7 +63,9 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     }
 
     override fun viewNotification(intent: Intent) = viewModelScope.launch {
-        isViewingNotificationIntent.emit(intent)
+        _isViewingNotificationIntent.emit(intent)
+        delay(100)
+        _isViewingNotificationIntent.emit(null)
     }
     class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

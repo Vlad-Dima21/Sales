@@ -99,10 +99,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                         }
                     }
                     NotificationCard(
-                        id = notification.id,
-                        title = notification.title,
-                        description = notification.description,
-                        importance = notification.importance,
+                        notification = notification,
                         modifier = Modifier.animateItemPlacement(),
                         viewModel = viewModel
                     )
@@ -129,7 +126,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            viewModel.isCreatingNewNotification.emit(true)
+                            viewModel.createNewNotification()
                         }
                     },
                     modifier = Modifier.size(70.dp)

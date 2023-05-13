@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import vlad.dima.sales.R
+import vlad.dima.sales.ui.composables.IconLabeledFlexText
 import vlad.dima.sales.ui.composables.IconLabeledText
 import vlad.dima.sales.ui.composables.TextFieldWithValidation
 import vlad.dima.sales.ui.dashboard.common.products.Product
@@ -107,11 +108,10 @@ fun ProductItem(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    IconLabeledText(
+                    IconLabeledFlexText(
                         icon = Icons.Outlined.Notes,
                         label = context.getString(R.string.ProductDescription),
-                        text = product.productDescription,
-                        oneLine = true
+                        text = product.productDescription
                     )
                     Row {
                         Column(

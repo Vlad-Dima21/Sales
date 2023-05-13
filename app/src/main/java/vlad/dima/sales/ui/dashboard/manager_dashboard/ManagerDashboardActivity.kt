@@ -119,7 +119,6 @@ class ManagerDashboardActivity : ComponentActivity() {
                     addedActivityResult.launch(
                         Intent(this@ManagerDashboardActivity, NewNotification::class.java)
                     )
-                    notificationsViewModel.isCreatingNewNotification.emit(false)
                 }
             }
         }
@@ -128,7 +127,6 @@ class ManagerDashboardActivity : ComponentActivity() {
             notificationsViewModel.isViewingNotification.collect {
                 if (it != null) {
                     deletedActivityResult.launch(it)
-                    notificationsViewModel.isViewingNotification.emit(null)
                 }
             }
         }

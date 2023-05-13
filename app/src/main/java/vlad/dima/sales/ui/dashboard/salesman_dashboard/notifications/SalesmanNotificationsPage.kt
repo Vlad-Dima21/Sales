@@ -82,10 +82,7 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
                         }
                     }
                     NotificationCard(
-                        id = notification.id,
-                        title = notification.title,
-                        description = notification.description,
-                        importance = notification.importance,
+                        notification = notification,
                         modifier = Modifier.animateItemPlacement(),
                         viewModel = viewModel
                     )

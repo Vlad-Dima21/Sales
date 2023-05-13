@@ -20,8 +20,11 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -38,20 +41,15 @@ import vlad.dima.sales.R
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.theme.SalesTheme
+import vlad.dima.sales.ui.theme.extra
 
 class NotificationChatActivity : ComponentActivity() {
 
     private lateinit var viewModel: NotificationChatViewModel
-    private lateinit var title: String
-    private lateinit var description: String
-    private var importance: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        title = intent.getStringExtra("title") ?: ""
-        description = intent.getStringExtra("description") ?: ""
-        importance = intent.getIntExtra("importance", 0)
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
 
@@ -63,10 +61,18 @@ class NotificationChatActivity : ComponentActivity() {
             viewModel.error.collect { stringId ->
                 if (stringId != null) {
                     when (stringId) {
-                        R.string.NotificationMessageError -> Toast.makeText(this@NotificationChatActivity, stringId, Toast.LENGTH_SHORT)
+                        R.string.NotificationMessageError -> Toast.makeText(
+                            this@NotificationChatActivity,
+                            stringId,
+                            Toast.LENGTH_SHORT
+                        )
                             .show()
                         R.string.NotificationDeleted -> {
-                            Toast.makeText(this@NotificationChatActivity, stringId, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@NotificationChatActivity,
+                                stringId,
+                                Toast.LENGTH_SHORT
+                            ).show()
                             setResult(
                                 RESULT_OK,
                                 Intent().putExtra("isNotificationDeleted", true)
@@ -90,6 +96,13 @@ class NotificationChatActivity : ComponentActivity() {
                 val messages by viewModel.messages.collectAsState()
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val scrollState = rememberLazyListState()
+                var messagesLoaded by rememberSaveable {
+                    mutableStateOf(false)
+                }
+                var oldMessageSize by rememberSaveable {
+                    mutableStateOf(0)
+                }
+                val extraColor = MaterialTheme.colors.extra
                 var previousScrollItem by remember { mutableStateOf(0) }
                 val scrollUpVisibility by remember {
                     derivedStateOf {
@@ -109,6 +122,25 @@ class NotificationChatActivity : ComponentActivity() {
                 }
                 val coroutineScope = rememberCoroutineScope()
                 val currentNotification by viewModel.currentNotification.collectAsState()
+                LaunchedEffect(messages.size) {
+                    val lastIndex = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                    val itemsCount = scrollState.layoutInfo.totalItemsCount
+                    if (messages.isNotEmpty()) {
+                        if (!messagesLoaded) {
+                            oldMessageSize = messages.size
+                            messagesLoaded = true
+                        }
+                        if (lastIndex == itemsCount - 1 || lastIndex == itemsCount - 2) {
+                            oldMessageSize = messages.size
+                            scrollState.animateScrollToItem(messages.lastIndex)
+                        }
+                    }
+                }
+                LaunchedEffect(scrollDownVisibility) {
+                    if (!scrollDownVisibility) {
+                        oldMessageSize = messages.size
+                    }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -154,9 +186,7 @@ class NotificationChatActivity : ComponentActivity() {
                             ) {
                                 item {
                                     NotificationChatAppBar(
-                                        title = title,
-                                        description = description,
-                                        importance = importance,
+                                        notification = currentNotification,
                                         isManager = currentUser.managerUID.isEmpty(),
                                         onDelete = {
                                             viewModel.deleteMessage()
@@ -175,7 +205,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                 color = MaterialTheme.colors.onBackground,
                                                 modifier = Modifier.padding(
                                                     top = 32.dp,
-                                                    start = 16.dp
+                                                    start = 8.dp
                                                 )
                                             )
                                         } else if (previousMessageAuthorIndex < 0 || messages[previousMessageAuthorIndex].authorUID != it.authorUID) {
@@ -249,40 +279,58 @@ class NotificationChatActivity : ComponentActivity() {
                                     .align(Alignment.End)
                                     .padding(end = 8.dp, bottom = 8.dp)
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            if (scrollUpVisibility) {
-                                                scrollState.animateScrollToItem(0)
-                                            } else if (scrollDownVisibility) {
-                                                scrollState.animateScrollToItem(messages.size - 1)
+                                Box {
+                                    IconButton(
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                if (scrollUpVisibility) {
+                                                    scrollState.animateScrollToItem(0)
+                                                } else if (scrollDownVisibility) {
+                                                    scrollState.animateScrollToItem(messages.lastIndex)
+                                                    oldMessageSize = messages.size
+                                                }
                                             }
+                                        },
+                                        modifier = Modifier
+                                            .background(MaterialTheme.colors.surface, CircleShape)
+                                            .border(
+                                                1.dp,
+                                                MaterialTheme.colors.secondaryVariant,
+                                                CircleShape
+                                            )
+                                            .size(60.dp),
+                                    ) {
+                                        if (scrollUpVisibility) {
+                                            Icon(
+                                                imageVector = Icons.Filled.ArrowUpward,
+                                                contentDescription = getString(
+                                                    R.string.GoToTop
+                                                ),
+                                                tint = MaterialTheme.colors.onSurface
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Filled.ArrowDownward,
+                                                contentDescription = getString(
+                                                    R.string.GoToBottom
+                                                ),
+                                                tint = MaterialTheme.colors.onSurface
+                                            )
                                         }
-                                    },
-                                    modifier = Modifier
-                                        .background(MaterialTheme.colors.surface, CircleShape)
-                                        .border(
-                                            1.dp,
-                                            MaterialTheme.colors.secondaryVariant,
-                                            CircleShape
-                                        )
-                                        .size(50.dp),
-                                ) {
-                                    if (scrollUpVisibility) {
-                                        Icon(
-                                            imageVector = Icons.Filled.ArrowUpward,
-                                            contentDescription = getString(
-                                                R.string.GoToTop
-                                            ),
-                                            tint = MaterialTheme.colors.onSurface
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.ArrowDownward,
-                                            contentDescription = getString(
-                                                R.string.GoToBottom
-                                            ),
-                                            tint = MaterialTheme.colors.onSurface
+                                    }
+                                    if (messagesLoaded && oldMessageSize < messages.size) {
+                                        Text(
+                                            modifier = Modifier
+                                                .padding(4.dp)
+                                                .drawBehind {
+                                                    drawCircle(
+                                                        color = extraColor,
+                                                        radius = this.size.maxDimension
+                                                    )
+                                                },
+                                            text = (messages.size - oldMessageSize).toString(),
+                                            fontSize = 12.sp,
+                                            color = Color.White
                                         )
                                     }
                                 }
@@ -313,8 +361,8 @@ class NotificationChatActivity : ComponentActivity() {
                                 AnimatedVisibility(visible = viewModel.message.isNotEmpty()) {
                                     IconButton(
                                         onClick = {
-
                                             coroutineScope.launch {
+                                                oldMessageSize++
                                                 viewModel.sendMessage().join()
                                                 scrollState.animateScrollToItem(messages.lastIndex)
                                             }

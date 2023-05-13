@@ -14,6 +14,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,8 +38,11 @@ class ManagerNotificationsViewModel(repository: UserRepository): NotificationsVi
         get() = _isRefreshing.asStateFlow()
     var items by mutableStateOf(listOf<Notification>())
 
-    val isCreatingNewNotification = MutableStateFlow(false)
-    val isViewingNotification = MutableStateFlow<Intent?>(null)
+    private val _isCreatingNewNotification = MutableStateFlow(false)
+    val isCreatingNewNotification = _isCreatingNewNotification.asStateFlow()
+
+    private val _isViewingNotification = MutableStateFlow<Intent?>(null)
+    val isViewingNotification = _isViewingNotification.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -65,7 +69,15 @@ class ManagerNotificationsViewModel(repository: UserRepository): NotificationsVi
     }
 
     override fun viewNotification(intent: Intent) = viewModelScope.launch {
-        isViewingNotification.emit(intent)
+        _isViewingNotification.emit(intent)
+        delay(100)
+        _isViewingNotification.emit(null)
+    }
+
+    fun createNewNotification() = viewModelScope.launch {
+        _isCreatingNewNotification.value = true
+        delay(100)
+        _isCreatingNewNotification.value = false
     }
 
     class Factory(private val repository: UserRepository): ViewModelProvider.Factory {

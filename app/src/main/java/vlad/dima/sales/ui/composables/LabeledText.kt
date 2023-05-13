@@ -6,6 +6,9 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,7 +28,8 @@ fun LabeledText(
     labelColor: Color = MaterialTheme.colors.onSurface,
     text: String,
     textColor: Color = MaterialTheme.colors.onSurface,
-    textSize: TextUnit = 14.sp
+    textSize: TextUnit = 14.sp,
+    oneLine: Boolean = false
 ) {
     Row(
         modifier = modifier,
@@ -39,7 +43,23 @@ fun LabeledText(
                 .height(2.dp),
             color = MaterialTheme.colors.onSurface
         )
-        Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, fontSize = textSize)
+        if (!oneLine) {
+            Text(
+                text = text,
+                color = textColor,
+                style = MaterialTheme.typography.italicText,
+                fontSize = textSize
+            )
+        } else {
+            Text(
+                text = text,
+                color = textColor,
+                style = MaterialTheme.typography.italicText,
+                fontSize = textSize,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -51,7 +71,8 @@ fun IconLabeledText(
     label: String,
     labelColor: Color = MaterialTheme.colors.onSurface,
     text: String,
-    textColor: Color = MaterialTheme.colors.onSurface
+    textColor: Color = MaterialTheme.colors.onSurface,
+    oneLine: Boolean = false
 ) {
     Row(
         modifier = modifier,
@@ -71,7 +92,11 @@ fun IconLabeledText(
                 .height(2.dp),
             color = MaterialTheme.colors.onSurface
         )
-        Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
+        if (!oneLine) {
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
+        } else {
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -81,9 +106,11 @@ fun IconLabeledText(
     icon: ImageVector,
     iconColor: Color = MaterialTheme.colors.primaryVariant,
     label: String,
+    labelSize: TextUnit = 14.sp,
     labelColor: Color = MaterialTheme.colors.onSurface,
     text: String,
     textColor: Color = MaterialTheme.colors.onSurface,
+    textSize: TextUnit = 14.sp,
     oneLine: Boolean = false
 ) {
     Row(
@@ -97,7 +124,7 @@ fun IconLabeledText(
             tint = iconColor,
             modifier = Modifier.size(20.dp)
         )
-        Text(text = label, color = labelColor)
+        Text(text = label, color = labelColor, fontSize = labelSize)
         Divider(
             modifier = Modifier
                 .width(2.dp)
@@ -105,9 +132,60 @@ fun IconLabeledText(
             color = MaterialTheme.colors.onSurface
         )
         if (!oneLine) {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, fontSize = textSize)
         } else {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText,  maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText,  maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = textSize)
         }
     }
 }
+
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun IconLabeledFlexText(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    iconColor: Color = MaterialTheme.colors.primaryVariant,
+    label: String,
+    labelSize: TextUnit = 14.sp,
+    labelColor: Color = MaterialTheme.colors.onSurface,
+    text: String,
+    textColor: Color = MaterialTheme.colors.onSurface,
+    textSize: TextUnit = 14.sp
+) {
+    val textWords by remember(text) {
+        mutableStateOf(
+            text.split(" ")
+        )
+    }
+    FlowRow(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = iconColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            color = labelColor,
+            fontSize = labelSize
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Divider(
+            modifier = Modifier
+                .width(2.dp)
+                .height(2.dp),
+            color = MaterialTheme.colors.onSurface
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        textWords.forEach {  word ->
+            Text(text = word.plus(" "), color = textColor, style = MaterialTheme.typography.italicText, fontSize = textSize)
+        }
+    }
+}
+
+

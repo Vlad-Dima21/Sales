@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Business
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -44,11 +46,21 @@ fun SaleClient(
                 .fillMaxWidth()
                 .padding(8.dp)
         ) {
-            Text(
-                text = saleClient.client.clientName,
-                color = MaterialTheme.colors.onBackground,
-                fontSize = 20.sp
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(18.dp),
+                    imageVector = Icons.Outlined.Business,
+                    contentDescription = saleClient.client.clientName
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = saleClient.client.clientName,
+                    color = MaterialTheme.colors.onBackground,
+                    fontSize = 20.sp
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             LazyColumn(
                 modifier = Modifier.heightIn(max = 300.dp),
