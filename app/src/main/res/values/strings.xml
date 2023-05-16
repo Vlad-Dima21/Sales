@@ -67,4 +67,5 @@
     <string name="OrderDeleted">Order no. %1$d has been deleted</string>
     <string name="Undo">Undo</string>
     <string name="NotificationTime">Time</string>
+    <string name="NoMessages">No messages</string>
 </resources>

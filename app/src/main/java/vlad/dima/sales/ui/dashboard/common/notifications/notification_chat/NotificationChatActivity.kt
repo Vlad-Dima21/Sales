@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -22,17 +24,30 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -47,9 +62,9 @@ class NotificationChatActivity : ComponentActivity() {
 
     private lateinit var viewModel: NotificationChatViewModel
 
+    @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
 
@@ -67,6 +82,7 @@ class NotificationChatActivity : ComponentActivity() {
                             Toast.LENGTH_SHORT
                         )
                             .show()
+
                         R.string.NotificationDeleted -> {
                             Toast.makeText(
                                 this@NotificationChatActivity,
@@ -96,6 +112,8 @@ class NotificationChatActivity : ComponentActivity() {
                 val messages by viewModel.messages.collectAsState()
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val scrollState = rememberLazyListState()
+                val keyboardController = LocalSoftwareKeyboardController.current
+                val isImeShown by rememberUpdatedState(WindowInsets.ime.getBottom(LocalDensity.current) > 0)
                 var messagesLoaded by rememberSaveable {
                     mutableStateOf(false)
                 }
@@ -107,7 +125,7 @@ class NotificationChatActivity : ComponentActivity() {
                 val scrollUpVisibility by remember {
                     derivedStateOf {
                         if (scrollState.firstVisibleItemIndex != 0) {
-                            (scrollState.firstVisibleItemIndex < previousScrollItem)
+                            (scrollState.firstVisibleItemIndex < previousScrollItem) && !isImeShown
                         } else {
                             false
                         }.also {
@@ -117,7 +135,7 @@ class NotificationChatActivity : ComponentActivity() {
                 }
                 val scrollDownVisibility by remember {
                     derivedStateOf {
-                        messages.isNotEmpty() && scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index != scrollState.layoutInfo.totalItemsCount - 1
+                        messages.isNotEmpty() && scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index != scrollState.layoutInfo.totalItemsCount - 1 && !isImeShown
                     }
                 }
                 val coroutineScope = rememberCoroutineScope()
@@ -141,47 +159,44 @@ class NotificationChatActivity : ComponentActivity() {
                         oldMessageSize = messages.size
                     }
                 }
+                LaunchedEffect(isImeShown) {
+                    if (isImeShown && messages.isNotEmpty()) {
+                        delay(200)
+                        scrollState.animateScrollToItem(messages.lastIndex + 1)
+                    }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colors.background)
                         .systemBarsPadding()
+                        .imePadding()
                 ) {
-                    Box(
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isRefreshing,
+                        enter = slideInVertically { -16 } + fadeIn(),
+                        exit = slideOutVertically { -16 } + fadeOut(),
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
+                            .zIndex(1f)
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 16.dp)
                     ) {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = isRefreshing,
-                            enter = slideInVertically { -16 } + fadeIn(),
-                            exit = slideOutVertically { -16 } + fadeOut(),
-                            modifier = Modifier
-                                .zIndex(1f)
-                                .align(Alignment.TopCenter)
-                                .padding(top = 16.dp)
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        CircularProgressIndicator()
+                    }
 
-                        if (messages.isEmpty()) {
-                            Text(
-                                text = "No messages",
-                                color = MaterialTheme.colors.onBackground,
-                                modifier = Modifier.align(
-                                    Alignment.Center
-                                )
-                            )
-                        }
-
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = !isRefreshing,
-                            enter = slideInVertically { 16 } + fadeIn(),
-                            exit = slideOutVertically { 16 } + fadeOut(),
-                        ) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        modifier = Modifier.weight(1f),
+                        visible = !isRefreshing,
+                        enter = slideInVertically { 16 } + fadeIn(),
+                        exit = slideOutVertically { 16 } + fadeOut(),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        ){
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
                                 state = scrollState
                             ) {
                                 item {
@@ -192,6 +207,15 @@ class NotificationChatActivity : ComponentActivity() {
                                             viewModel.deleteMessage()
                                         }
                                     )
+                                }
+                                if (messages.isEmpty()) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        Text(
+                                            text = getString(R.string.NoMessages),
+                                            color = MaterialTheme.colors.onBackground
+                                        )
+                                    }
                                 }
                                 items(
                                     items = messages
@@ -259,24 +283,14 @@ class NotificationChatActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                item {
-                                    Spacer(modifier = Modifier.height(80.dp))
-                                }
+                                item { Spacer(modifier = Modifier.height(10.dp)) }
                             }
-                        }
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomCenter)
-                        ) {
-
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = scrollUpVisibility || scrollDownVisibility,
                                 enter = slideInVertically { -16 } + fadeIn(),
                                 exit = slideOutVertically { -16 } + fadeOut(),
                                 modifier = Modifier
-                                    .zIndex(1f)
-                                    .align(Alignment.End)
+                                    .align(Alignment.BottomEnd)
                                     .padding(end = 8.dp, bottom = 8.dp)
                             ) {
                                 Box {
@@ -335,49 +349,64 @@ class NotificationChatActivity : ComponentActivity() {
                                     }
                                 }
                             }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        color = MaterialTheme.colors.surface
-                                    )
-                                    .padding(8.dp)
-                            ) {
-                                TextField(
-                                    value = viewModel.message,
-                                    onValueChange = { viewModel.message = it },
-                                    textStyle = TextStyle(
-                                        color = MaterialTheme.colors.onSurface,
-                                        fontSize = 18.sp
-                                    ),
-                                    placeholder = { Text(text = stringResource(id = R.string.SendMessage)) },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 8.dp),
-                                    colors = TextFieldDefaults.textFieldColors(
-                                        backgroundColor = Color.Transparent
-                                    )
-                                )
-                                AnimatedVisibility(visible = viewModel.message.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                oldMessageSize++
-                                                viewModel.sendMessage().join()
-                                                scrollState.animateScrollToItem(messages.lastIndex)
-                                            }
-                                        },
-                                        enabled = viewModel.message.isNotEmpty()
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Send,
-                                            contentDescription = getString(
-                                                R.string.SendMessage
-                                            ),
-                                            tint = MaterialTheme.colors.onSurface
-                                        )
-                                    }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = viewModel.message,
+                            onValueChange = { newMessage ->
+                                if (newMessage.isEmpty() || newMessage.isNotBlank()) {
+                                    viewModel.message = newMessage
                                 }
+                            },
+                            textStyle = TextStyle(
+                                color = MaterialTheme.colors.onSurface,
+                                fontSize = 18.sp
+                            ),
+                            placeholder = { Text(text = stringResource(id = R.string.SendMessage)) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                backgroundColor = Color.Transparent
+                            ),
+                            maxLines = 4,
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Sentences,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardController?.hide()
+                                }
+                            ),
+                            shape = RoundedCornerShape(30.dp)
+                        )
+                        AnimatedVisibility(
+                            visible = viewModel.message.isNotEmpty(),
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        ) {
+                            IconButton(
+                                modifier = Modifier.background(color = MaterialTheme.colors.primaryVariant, shape = CircleShape),
+                                onClick = {
+                                    coroutineScope.launch {
+                                        oldMessageSize++
+                                        viewModel.sendMessage().join()
+                                    }
+                                },
+                                enabled = viewModel.message.isNotEmpty()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Send,
+                                    contentDescription = getString(
+                                        R.string.SendMessage
+                                    ),
+                                    tint = MaterialTheme.colors.onPrimary
+                                )
                             }
                         }
                     }
