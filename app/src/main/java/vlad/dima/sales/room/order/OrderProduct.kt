@@ -2,8 +2,6 @@ package vlad.dima.sales.room.order
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.ForeignKey.CASCADE
-import vlad.dima.sales.ui.dashboard.common.products.Product
 
 @Entity(
     tableName = "order_product",
@@ -13,7 +11,7 @@ import vlad.dima.sales.ui.dashboard.common.products.Product
             entity = Order::class,
             parentColumns = ["orderId"],
             childColumns = ["orderId"],
-            onDelete = CASCADE
+            onDelete = ForeignKey.CASCADE
         )
     ]
 )

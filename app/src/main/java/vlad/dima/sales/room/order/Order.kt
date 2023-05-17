@@ -1,8 +1,6 @@
 package vlad.dima.sales.room.order
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
-import vlad.dima.sales.room.Converters
 import vlad.dima.sales.room.user.User
 import java.util.Date
 

@@ -1,5 +1,6 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,8 +37,10 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
 import vlad.dima.sales.repository.OrderRepository
+import vlad.dima.sales.repository.SettingsRepository
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
@@ -41,21 +49,24 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.Pen
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
+import vlad.dima.sales.ui.enter_account.dataStore
+import java.util.prefs.Preferences
 
 class SalesmanDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationResultActivity: ActivityResultLauncher<Intent>
     private lateinit var clientResultActivity: ActivityResultLauncher<Intent>
 
+
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val settingsRepository = SettingsRepository(dataStore)
         val userRepository = UserRepository(SalesDatabase.getDatabase(this).userDao())
         val orderRepository = SalesDatabase.getDatabase(this).run {
             OrderRepository(orderDao(), orderProductDao())
         }
-
         lifecycleScope.launch(Dispatchers.IO) {
             orderRepository.getAllOrders().collect { orders ->
                 orders.forEach {order ->
@@ -71,7 +82,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
         val pastSalesViewModel: SalesmanPastSalesViewModel =
             ViewModelProvider(
                 owner = this,
-                factory = SalesmanPastSalesViewModel.Factory(userRepository, orderRepository)
+                factory = SalesmanPastSalesViewModel.Factory(settingsRepository, userRepository, orderRepository)
             )[SalesmanPastSalesViewModel::class.java]
         val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(
             owner = this,
@@ -139,6 +150,11 @@ class SalesmanDashboardActivity : ComponentActivity() {
         // logout functionality
         notificationsViewModel.isUserLoggedIn.observe(this) { isUserLoggedIn ->
             if (!isUserLoggedIn) {
+                runBlocking {
+                    dataStore.edit {
+                        it.clear()
+                    }
+                }
                 startActivity(Intent(this, EnterAccountActivity::class.java))
                 finish()
             }
@@ -209,7 +225,8 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
             onClick = {
                 val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.Notifications.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
                 }
             },
             resource = SalesmanDashboardResources.Notifications
@@ -219,7 +236,8 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
             onClick = {
                 val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.PastSales.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
                 }
             },
             resource = SalesmanDashboardResources.PastSales
@@ -229,7 +247,8 @@ fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
             onClick = {
                 val previousRoute = selectedPage?.route
                 navController.navigate(SalesmanDashboardResources.Clients.route) {
-                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true }
+                    if (previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
                 }
             },
             resource = SalesmanDashboardResources.Clients

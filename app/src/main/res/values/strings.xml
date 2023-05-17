@@ -68,4 +68,8 @@
     <string name="Undo">Undo</string>
     <string name="NotificationTime">Time</string>
     <string name="NoMessages">No messages</string>
+    <string name="PastSalesDescription">All your pending and past orders can be viewed here. Press on any pending order to edit it, or long press it to view other actions.</string>
+    <string name="Info">Info</string>
+    <string name="ConfirmOrders">Confirm orders</string>
+    <string name="NoOrders">All your orders and sales will be shown here</string>
 </resources>

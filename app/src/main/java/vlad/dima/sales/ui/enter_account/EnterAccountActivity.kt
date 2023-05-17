@@ -1,5 +1,6 @@
 package vlad.dima.sales.ui.enter_account
 
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
@@ -31,6 +33,7 @@ import vlad.dima.sales.ui.dashboard.manager_dashboard.ManagerDashboardActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.SalesmanDashboardActivity
 import vlad.dima.sales.ui.theme.*
 
+val Context.dataStore by preferencesDataStore(name = "settings")
 
 var errorMessage by mutableStateOf("")
 
@@ -155,7 +158,8 @@ class EnterAccountActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxWidth(.9f)
                                 .align(Alignment.Center)
-                                .padding(vertical = 16.dp),
+                                .padding(vertical = 16.dp)
+                                .imePadding(),
                             shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
                             elevation = 5.dp,
                             backgroundColor = MaterialTheme.colors.background,

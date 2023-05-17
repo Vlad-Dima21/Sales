@@ -16,15 +16,15 @@ class OrderRepository(private val orderDao: OrderDao, private val orderProductDa
 
     fun getOrdersBySalesmanUID(uid: String): Flow<List<Order>> = orderDao.getBySalesmanUID(uid)
 
-    fun upsertOrder(order: Order): List<Long> = orderDao.insert(order)
+    suspend fun upsertOrder(order: Order): List<Long> = orderDao.insert(order)
 
-    fun deleteOrder(order: Order) = orderDao.delete(order)
+    suspend fun deleteOrder(order: Order) = orderDao.delete(order)
 
     fun getOrderProductsBySalesmanUID(uid: String) = orderProductDao.getBySalesmanUID(uid)
 
     fun getOrderProductsByOrderId(orderId: Int) = orderProductDao.getByOrderId(orderId)
 
-    fun upsertOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.insert(orderProducts)
+    suspend fun upsertOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.insert(orderProducts)
 
-    fun deleteOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.delete(orderProducts)
+    suspend fun deleteOrderProducts(orderProducts: List<OrderProduct>) = orderProductDao.delete(orderProducts)
 }

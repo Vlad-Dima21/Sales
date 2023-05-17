@@ -3,7 +3,7 @@ package vlad.dima.sales.room.order
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -16,9 +16,9 @@ interface OrderProductDao {
     @Query("SELECT * from order_product JOIN `order` USING(orderId) WHERE orderId = :orderId")
     fun getByOrderId(orderId: Int): Flow<List<OrderProduct>>
 
-    @Insert(onConflict = REPLACE)
-    fun insert(orderProducts: List<OrderProduct>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(orderProducts: List<OrderProduct>)
 
     @Delete
-    fun delete(orderProducts: List<OrderProduct>)
+    suspend fun delete(orderProducts: List<OrderProduct>)
 }
