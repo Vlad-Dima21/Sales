@@ -61,13 +61,14 @@ class EnterAccountViewModel(val repository: UserRepository): ViewModel() {
                             try {
                                 userCollectionRef.add(
                                     newUser
-                                )
+                                ).await()
+                                repository.upsertUser(newUser)
                             } catch (e: Exception) {
                                 Log.d(AUTH_TAG, e.stackTraceToString())
                                 actionResult.postValue(AccountStatus(R.string.SystemError, false))
+                                auth.currentUser?.delete()
                                 auth.signOut()
                             }
-                            repository.upsertUser(newUser)
                         }
                     }
                     actionResult.postValue(when {

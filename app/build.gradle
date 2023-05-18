@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "vlad.dima.sales"
-        minSdk 21
+        minSdk 24   // required for associate on lists
         targetSdk 33
         versionCode 1
         versionName "1.0"

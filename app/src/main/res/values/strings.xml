@@ -72,4 +72,10 @@
     <string name="Info">Info</string>
     <string name="ConfirmOrders">Confirm orders</string>
     <string name="NoOrders">All your orders and sales will be shown here</string>
+    <string name="Warning">Warning</string>
+    <string name="OrdersUploading">Retrieving server data and confirming orders</string>
+    <string name="OrdersStockInvalid">Not enough available stock for the following orders.</string>
+    <string name="OrdersProductsInvalid">Some products are no longer available. These are the affected orders.</string>
+    <string name="OrdersUploaded">Orders successfully confirmed.</string>
+    <string name="ReviewOrders">Review orders and try again</string>
 </resources>

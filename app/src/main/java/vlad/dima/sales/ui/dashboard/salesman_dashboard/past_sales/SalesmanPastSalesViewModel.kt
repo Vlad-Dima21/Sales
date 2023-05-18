@@ -9,13 +9,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.repository.SettingsRepository
 import vlad.dima.sales.repository.UserRepository
@@ -27,6 +29,7 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleClient
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleOrder
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleProduct
+import java.util.Date
 
 class SalesmanPastSalesViewModel(
     private val settingsRepository: SettingsRepository,
@@ -62,31 +65,32 @@ class SalesmanPastSalesViewModel(
         products,
         falseDeletedLocalOrders
     ) { clients, orders, orderProducts, products, falseDeletedOrders ->
-        if (clients.isNotEmpty() && orders.minus(falseDeletedOrders.toSet()).isNotEmpty()) {
+        val visibleOrders = orders.minus(falseDeletedOrders.toSet())
+        if (clients.isNotEmpty() && visibleOrders.isNotEmpty()) {
             _isLoading.value = true
             val saleClients = clients
-                .filter { client -> orders.count { order -> order.clientId == client.clientId } > 0 }
+                .filter { client -> visibleOrders.count { order -> order.clientId == client.clientId } > 0 }
                 .map { client ->
-                val saleOrders = orders.filter { order ->
-                    order.clientId == client.clientId && falseDeletedOrders.find {it == order} == null
-                }
-                    .map { order ->
-                        val saleProducts = orderProducts.filter { orderProduct ->
-                            orderProduct.orderId == order.orderId
-                        }
-                            // some products may be deleted from the database in the meantime
-                            .mapNotNull { orderProduct ->
-                                products.find { it.productId == orderProduct.productId }
-                                    ?.let { product ->
-                                        SaleProduct(product, orderProduct.quantity)
-                                    }
-                            }
-                            .sortedBy { it.product.productName }
-                        SaleOrder(order, saleProducts)
+                    val saleOrders = visibleOrders.filter { order ->
+                        order.clientId == client.clientId && falseDeletedOrders.find { it == order } == null
                     }
-                    .sortedByDescending { it.order.createdDate }
-                SaleClient(client, saleOrders)
-            }
+                        .map { order ->
+                            val saleProducts = orderProducts.filter { orderProduct ->
+                                orderProduct.orderId == order.orderId
+                            }
+                                // some products may be deleted from the database in the meantime
+                                .mapNotNull { orderProduct ->
+                                    products.find { it.productId == orderProduct.productId }
+                                        ?.let { product ->
+                                            SaleProduct(product, orderProduct.quantity)
+                                        }
+                                }
+                                .sortedBy { it.product.productName }
+                            SaleOrder(order, saleProducts)
+                        }
+                        .sortedByDescending { it.order.createdDate }
+                    SaleClient(client, saleOrders)
+                }
                 .sortedBy { it.client.clientName }
             saleClients
         } else {
@@ -96,6 +100,22 @@ class SalesmanPastSalesViewModel(
         }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    enum class UploadSaleState {
+        Idle,
+        Loading,
+        StockInvalid,           // there are orders with products with insufficient stock
+        ProductsInvalid,        // there are orders with products that are no longer available
+        UploadSuccessful
+    }
+
+    private val _uploadState = MutableStateFlow(UploadSaleState.Idle)
+    val uploadState = _uploadState.asStateFlow()
+    private var _ordersWithInsufficientStock = MutableStateFlow(emptyList<Int>())
+    val ordersWithInsufficientStock = _ordersWithInsufficientStock.asStateFlow()
+    private var _ordersWithRemovedProducts = MutableStateFlow(emptyList<Int>())
+    val ordersWithRemovedProducts = _ordersWithRemovedProducts.asStateFlow()
+
 
     init {
         viewModelScope.launch {
@@ -145,16 +165,86 @@ class SalesmanPastSalesViewModel(
     }
 
     fun falseDeleteOrder(order: Order) {
-        falseDeletedLocalOrders.value = falseDeletedLocalOrders.value.toMutableList().apply { add(order) }
+        falseDeletedLocalOrders.value =
+            falseDeletedLocalOrders.value.toMutableList().apply { add(order) }
     }
 
     fun deleteOrder(order: Order) = viewModelScope.launch(Dispatchers.IO) {
         orderRepository.deleteOrder(order)
-        falseDeletedLocalOrders.value = falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
+        falseDeletedLocalOrders.value =
+            falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
     }
 
     fun undoFalseDelete(order: Order) {
-        falseDeletedLocalOrders.value = falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
+        falseDeletedLocalOrders.value =
+            falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
+    }
+
+    fun placeLocalOrders() = viewModelScope.launch {
+        _uploadState.value = UploadSaleState.Loading
+        _ordersWithInsufficientStock.value = emptyList()
+        _ordersWithRemovedProducts.value = emptyList()
+        withContext(Dispatchers.IO) {
+            products.value = productsCollection.get().await().documents.map { documentSnapshot ->
+                documentSnapshot.toObject(Product::class.java)!!.apply {
+                    productId = documentSnapshot.id
+                }
+            }
+        }
+        localOrderProducts.value.groupBy { it.productId }
+            .forEach { (productId, orderProducts) ->
+                val product = products.value.find { it.productId == productId }
+                if (product != null) {
+                    val productQuantity =
+                        orderProducts.fold(0) { sum: Int, orderProduct: OrderProduct ->
+                            sum + orderProduct.quantity
+                        }
+                    if (productQuantity > product.stock) {
+                        _ordersWithInsufficientStock.value =
+                            _ordersWithInsufficientStock.value.toMutableList()
+                                .apply { addAll(orderProducts.map { it.orderId }) }
+                        _uploadState.value = UploadSaleState.StockInvalid
+                        return@launch
+                    }
+                } else {
+                    _ordersWithRemovedProducts.value =
+                        _ordersWithRemovedProducts.value.toMutableList()
+                            .apply { addAll(orderProducts.map { it.orderId }) }
+                    _uploadState.value = UploadSaleState.ProductsInvalid
+                    return@launch
+                }
+            }
+        var maxOrderId = withContext(Dispatchers.IO) {
+            ordersCollection.orderBy("orderId", Query.Direction.DESCENDING).limit(1).get()
+                .await().documents.run {
+                if (isEmpty()) {
+                    return@run 100
+                }
+                return@run (get(0)["orderId"] as Long).toInt() + 1
+            }
+        }
+        val groupedOrderProducts = localOrderProducts.value.groupBy { it.orderId }
+        val fbOrders = localOrders.value.map { order ->
+            order.copy(
+                orderId = maxOrderId++,
+                products = groupedOrderProducts[order.orderId]!!.associate { orderProduct ->
+                    orderProduct.productId to orderProduct.quantity
+                },
+                createdDate = Date()
+            )
+        }
+        fbOrders.forEach {
+            withContext(Dispatchers.IO) {
+                ordersCollection.add(it).await()
+            }
+        }
+        _uploadState.value = UploadSaleState.UploadSuccessful
+    }
+
+    fun dismissAlert() {
+        if (_uploadState.value != UploadSaleState.Loading) {
+            _uploadState.value = UploadSaleState.Idle
+        }
     }
 
     class Factory(
@@ -165,7 +255,11 @@ class SalesmanPastSalesViewModel(
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SalesmanPastSalesViewModel::class.java)) {
-                return SalesmanPastSalesViewModel(settingsRepository, userRepository, orderRepository) as T
+                return SalesmanPastSalesViewModel(
+                    settingsRepository,
+                    userRepository,
+                    orderRepository
+                ) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }
