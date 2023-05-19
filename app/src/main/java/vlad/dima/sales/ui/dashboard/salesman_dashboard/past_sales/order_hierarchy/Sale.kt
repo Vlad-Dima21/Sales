@@ -29,8 +29,8 @@ import kotlin.math.roundToInt
 fun SaleClient(
     modifier: Modifier,
     saleClient: SaleClient,
-    onOrderClick: (clientId: String, orderId: Int) -> Unit,
-    onOrderOptionClick: (option: OrderContextOption, order: Order) -> Unit
+    onOrderClick: ((clientId: String, orderId: Int) -> Unit)? = null,
+    onOrderOptionClick: ((option: OrderContextOption, order: Order) -> Unit)? = null
 ) {
     Card(
         modifier = modifier,
@@ -87,8 +87,8 @@ fun SaleClient(
 private fun SaleOrder(
     modifier: Modifier = Modifier,
     saleOrder: SaleOrder,
-    onOrderClick: (clientId: String, orderId: Int) -> Unit,
-    onOrderOptionClick: (option: OrderContextOption, order: Order) -> Unit
+    onOrderClick: ((clientId: String, orderId: Int) -> Unit)? = null,
+    onOrderOptionClick: ((option: OrderContextOption, order: Order) -> Unit)? = null
 ) {
     var isDropDownVisible by rememberSaveable {
         mutableStateOf(false)
@@ -104,18 +104,25 @@ private fun SaleOrder(
         Box(
             Modifier
                 .fillMaxWidth()
-                .combinedClickable(
-                    interactionSource = interactionSource,
-                    indication = LocalIndication.current,
-                    onClick = {
-                        with(saleOrder) {
-                            onOrderClick(order.clientId, order.orderId)
-                        }
-                    },
-                    onLongClick = {
-                        isDropDownVisible = true
+                .let {
+                    if (onOrderClick != null) {
+                        it.combinedClickable(
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                            onClick = {
+                                with(saleOrder) {
+                                    onOrderClick(order.clientId, order.orderId)
+                                }
+                            },
+                            onLongClick = {
+                                isDropDownVisible = true
+                            }
+                        )
+                    } else {
+                        it
                     }
-                )
+                }
+
         ) {
             Column(
                 Modifier
@@ -158,18 +165,20 @@ private fun SaleOrder(
                     }
                 }
             }
-            Box(modifier = Modifier.align(Alignment.BottomEnd)) {
-                DropdownMenu(
-                    expanded = isDropDownVisible,
-                    onDismissRequest = { isDropDownVisible = false }
-                ) {
-                    DropdownMenuItem(
-                        onClick = {
-                            onOrderOptionClick(OrderContextOption.Delete, saleOrder.order)
-                            isDropDownVisible = false
-                        }
+            if (onOrderOptionClick != null) {
+                Box(modifier = Modifier.align(Alignment.BottomEnd)) {
+                    DropdownMenu(
+                        expanded = isDropDownVisible,
+                        onDismissRequest = { isDropDownVisible = false }
                     ) {
-                        Text(stringResource(id = R.string.Delete))
+                        DropdownMenuItem(
+                            onClick = {
+                                onOrderOptionClick(OrderContextOption.Delete, saleOrder.order)
+                                isDropDownVisible = false
+                            }
+                        ) {
+                            Text(stringResource(id = R.string.Delete))
+                        }
                     }
                 }
             }

@@ -1,6 +1,5 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,11 +8,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -48,10 +47,7 @@ class SalesmanPastSalesViewModel(
     private val productsCollection = Firebase.firestore.collection("products")
     private val ordersCollection = Firebase.firestore.collection("orders")
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
-
-    // all products are loaded at once so as not to send multiple requests for each order
+    // all products and clients are loaded at once so as not to send multiple requests for each order
     private val _clients = MutableStateFlow(emptyList<Client>())
     private val products = MutableStateFlow(emptyList<Product>())
     private val localOrders = MutableStateFlow(emptyList<Order>())
@@ -67,7 +63,7 @@ class SalesmanPastSalesViewModel(
     ) { clients, orders, orderProducts, products, falseDeletedOrders ->
         val visibleOrders = orders.minus(falseDeletedOrders.toSet())
         if (clients.isNotEmpty() && visibleOrders.isNotEmpty()) {
-            _isLoading.value = true
+            _isRefreshing.value = true
             val saleClients = clients
                 .filter { client -> visibleOrders.count { order -> order.clientId == client.clientId } > 0 }
                 .map { client ->
@@ -96,12 +92,12 @@ class SalesmanPastSalesViewModel(
         } else {
             emptyList()
         }.also {
-            _isLoading.value = false
+            _isRefreshing.value = false
         }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    enum class UploadSaleState {
+    enum class UploadSaleState(var productCode: String = "") {
         Idle,
         Loading,
         StockInvalid,           // there are orders with products with insufficient stock
@@ -117,6 +113,44 @@ class SalesmanPastSalesViewModel(
     val ordersWithRemovedProducts = _ordersWithRemovedProducts.asStateFlow()
 
 
+    //past sales
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    private val _pastSales = MutableStateFlow(emptyList<Order>())
+    val pastSaleClients = combine(
+        _pastSales,
+        _clients,
+        products
+    ) { pastSales, clients, products ->
+        if (pastSales.isNotEmpty() && clients.isNotEmpty() && products.isNotEmpty()) {
+            val clientIds = pastSales.map { it.clientId }.toSet()
+            val saleClients = clients.filter { client -> clientIds.contains(client.clientId) }
+                .map { client ->
+                    val saleOrders = pastSales.filter { order ->
+                        order.clientId == client.clientId
+                    }
+                        .map { order ->
+                            val saleProducts = order.products.mapNotNull { (productId, quantity) ->
+                                products.find { it.productId == productId }?.let {
+                                    return@let SaleProduct(it, quantity)
+                                }
+                            }
+                                .sortedBy { it.product.productName }
+                            SaleOrder(order, saleProducts)
+                        }
+                        .sortedByDescending { it.order.createdDate }
+                    SaleClient(client, saleOrders)
+                }
+                .sortedBy { it.client.clientName }
+            saleClients
+        } else {
+            emptyList()
+        }
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+
     init {
         viewModelScope.launch {
             _isHintHidden.collect {
@@ -124,7 +158,7 @@ class SalesmanPastSalesViewModel(
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
+            _isRefreshing.value = true
             products.value = productsCollection.get().await().documents.map { documentSnapshot ->
                 documentSnapshot.toObject(Product::class.java)!!.apply {
                     productId = documentSnapshot.id
@@ -148,6 +182,7 @@ class SalesmanPastSalesViewModel(
                     localOrderProducts.value = orderProducts
                 }
         }
+//        loadPastSales()
     }
 
     private suspend fun loadClients() {
@@ -170,7 +205,7 @@ class SalesmanPastSalesViewModel(
     }
 
     fun deleteOrder(order: Order) = viewModelScope.launch(Dispatchers.IO) {
-        orderRepository.deleteOrder(order)
+        orderRepository.deleteOrders(order)
         falseDeletedLocalOrders.value =
             falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
     }
@@ -191,6 +226,8 @@ class SalesmanPastSalesViewModel(
                 }
             }
         }
+        // used to update products stock
+        val productQuantities = mutableMapOf<String, Int>()
         localOrderProducts.value.groupBy { it.productId }
             .forEach { (productId, orderProducts) ->
                 val product = products.value.find { it.productId == productId }
@@ -203,9 +240,12 @@ class SalesmanPastSalesViewModel(
                         _ordersWithInsufficientStock.value =
                             _ordersWithInsufficientStock.value.toMutableList()
                                 .apply { addAll(orderProducts.map { it.orderId }) }
-                        _uploadState.value = UploadSaleState.StockInvalid
+                        _uploadState.value = UploadSaleState.StockInvalid.apply {
+                            this.productCode = product.productCode
+                        }
                         return@launch
                     }
+                    productQuantities[productId] = productQuantity
                 } else {
                     _ordersWithRemovedProducts.value =
                         _ordersWithRemovedProducts.value.toMutableList()
@@ -217,11 +257,11 @@ class SalesmanPastSalesViewModel(
         var maxOrderId = withContext(Dispatchers.IO) {
             ordersCollection.orderBy("orderId", Query.Direction.DESCENDING).limit(1).get()
                 .await().documents.run {
-                if (isEmpty()) {
-                    return@run 100
+                    if (isEmpty()) {
+                        return@run 100
+                    }
+                    return@run (get(0)["orderId"] as Long).toInt() + 1
                 }
-                return@run (get(0)["orderId"] as Long).toInt() + 1
-            }
         }
         val groupedOrderProducts = localOrderProducts.value.groupBy { it.orderId }
         val fbOrders = localOrders.value.map { order ->
@@ -238,6 +278,13 @@ class SalesmanPastSalesViewModel(
                 ordersCollection.add(it).await()
             }
         }
+        withContext(Dispatchers.IO) {
+            productQuantities.forEach { (productId, quantity) ->
+                productsCollection.document(productId)
+                    .update("stock", FieldValue.increment((-quantity).toLong())).await()
+            }
+        }
+        orderRepository.deleteOrders(*localOrders.value.toTypedArray())
         _uploadState.value = UploadSaleState.UploadSuccessful
     }
 
@@ -245,6 +292,14 @@ class SalesmanPastSalesViewModel(
         if (_uploadState.value != UploadSaleState.Loading) {
             _uploadState.value = UploadSaleState.Idle
         }
+    }
+
+    fun loadPastSales() = viewModelScope.launch(Dispatchers.IO) {
+        _isRefreshing.value = true
+        _pastSales.value = ordersCollection.whereEqualTo("salesmanUID", currentUser.uid).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.map { documentSnapshot ->
+            documentSnapshot.toObject(Order::class.java)!!
+        }
+        _isRefreshing.value = false
     }
 
     class Factory(

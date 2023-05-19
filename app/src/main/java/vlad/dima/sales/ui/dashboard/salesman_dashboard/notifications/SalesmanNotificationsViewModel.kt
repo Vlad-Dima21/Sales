@@ -31,8 +31,7 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     private lateinit var currentUser: User
 
     private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean>
-        get() = _isRefreshing.asStateFlow()
+    val isRefreshing = _isRefreshing.asStateFlow()
     var items by mutableStateOf(listOf<Notification>())
 
     private val _isViewingNotificationIntent = MutableStateFlow<Intent?>(null)

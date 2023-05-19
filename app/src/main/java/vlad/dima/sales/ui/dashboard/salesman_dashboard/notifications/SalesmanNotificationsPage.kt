@@ -31,7 +31,6 @@ import java.util.*
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
-    val context = LocalContext.current
     val refreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing, { viewModel.loadItems() })
 
