@@ -80,4 +80,8 @@
     <string name="ReviewOrders">Review orders and try again</string>
     <string name="CreatedAt">Created at</string>
     <string name="MissingProducts">Order has products that are no longer available</string>
+    <string name="SearchClient">Search client…</string>
+    <string name="SortByOrders">Sort by orders</string>
+    <string name="ClearText">Clear text</string>
+    <string name="NoClients">No clients available</string>
 </resources>

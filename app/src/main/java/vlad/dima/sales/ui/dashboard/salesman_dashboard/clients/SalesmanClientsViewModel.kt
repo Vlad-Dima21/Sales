@@ -24,6 +24,7 @@ import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.room.user.User
+import vlad.dima.sales.ui.composables.SortState
 
 class SalesmanClientsViewModel(
     private val repository: UserRepository
@@ -35,17 +36,38 @@ class SalesmanClientsViewModel(
     private lateinit var currentUser: User
 
     private val _clients = MutableStateFlow(listOf<Client>())
-
     private val _orders = MutableStateFlow(emptyList<Order>())
-    val orders = _orders.asStateFlow()
+
+    private val _sort = MutableStateFlow(SortState.None)
+    val sort = _sort.asStateFlow()
+    private val _search = MutableStateFlow("")
+    var search by mutableStateOf("")
 
     val clients = combine(
         _clients,
-        _orders
-    ) { clients, orders ->
+        _orders,
+        _sort,
+        _search
+    ) { clients, orders, sort, search ->
         if (clients.isNotEmpty() && orders.isNotEmpty()) {
             val groupedOrders = orders.groupBy { it.clientId }
-            return@combine clients.map { client ->
+            return@combine clients
+                .let { cls ->
+                    var finalClientOrder = cls
+                    if (sort == SortState.Ascending) {
+                        finalClientOrder = finalClientOrder.sortedBy { groupedOrders[it.clientId]?.size ?: 0 }
+                    }
+                    if (sort == SortState.Descending) {
+                        finalClientOrder = finalClientOrder.sortedByDescending { groupedOrders[it.clientId]?.size ?: 0 }
+                    }
+                    if (search.isNotEmpty()) {
+                        finalClientOrder = finalClientOrder.filter {
+                            it.clientName.lowercase().contains(search.lowercase().trim())
+                        }
+                    }
+                    finalClientOrder
+                }
+                .map { client ->
                 ClientWithSaleInfo(
                     client = client,
                     numberOfSales = groupedOrders[client.clientId]?.size ?: 0
@@ -84,6 +106,14 @@ class SalesmanClientsViewModel(
               }
             }.toList()
         )
+    }
+
+    fun toggleSort() {
+        _sort.value = _sort.value.nextState()
+    }
+
+    fun changeSearch() {
+        _search.value = search
     }
 
     fun startCreatingOrder(client: Client) = viewModelScope.launch {

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -140,6 +141,7 @@ class NotificationChatActivity : ComponentActivity() {
                 }
                 val coroutineScope = rememberCoroutineScope()
                 val currentNotification by viewModel.currentNotification.collectAsState()
+                val focusManager = LocalFocusManager.current
                 LaunchedEffect(messages.size) {
                     val lastIndex = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
                     val itemsCount = scrollState.layoutInfo.totalItemsCount
@@ -382,6 +384,7 @@ class NotificationChatActivity : ComponentActivity() {
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     keyboardController?.hide()
+                                    focusManager.clearFocus()
                                 }
                             ),
                             shape = RoundedCornerShape(30.dp)
