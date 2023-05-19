@@ -12,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -27,30 +26,30 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import vlad.dima.sales.R
+import vlad.dima.sales.ui.composables.AsyncImage
 import vlad.dima.sales.ui.composables.IconLabeledFlexText
 import vlad.dima.sales.ui.composables.IconLabeledText
 import vlad.dima.sales.ui.composables.TextFieldWithValidation
-import vlad.dima.sales.ui.dashboard.common.products.Product
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProductItem(
     productItemHolder: PendingOrderViewModel.ProductItemHolder,
+    onImageClick: ((imageUri: Uri) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val cornerRadius = context.resources.getDimension(R.dimen.rounded_corner_radius)
     val selectedQuantity = productItemHolder.quantityString
     val validationMessage = productItemHolder.validationMessage
-    val product = productItemHolder.product
+    val product = remember { productItemHolder.product }
     val keyboardController = LocalSoftwareKeyboardController.current
     Card(
         modifier = modifier,
@@ -71,19 +70,18 @@ fun ProductItem(
                     .fillMaxWidth()
                     .height(IntrinsicSize.Max),
             ) {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(product.productImageUri)
-                        .crossfade(true)
-                        .build(),
+                AsyncImage(
+                    imageUri = product.productImageUri,
+                    shapeCrop = CircleShape,
+                    size = 80.dp,
                     contentDescription = product.productName,
                     contentScale = ContentScale.Crop,
                     loading = {
                         CircularProgressIndicator()
                     },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .size(80.dp)
+                    onClick = onImageClick?.let {
+                        { it(product.productImageUri) }
+                    }
                 )
                 Box(
                     Modifier
@@ -92,11 +90,13 @@ fun ProductItem(
                 ) {
                     Text(
                         modifier = Modifier
-                            .align(Alignment.Center),
+                            .align(Alignment.Center)
+                            .padding(horizontal = 8.dp),
                         text = product.productName,
                         color = MaterialTheme.colors.onSurface,
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -136,7 +136,10 @@ fun ProductItem(
                             IconLabeledText(
                                 icon = Icons.Outlined.Payment,
                                 label = stringResource(R.string.Price),
-                                text = stringResource(id = R.string.PriceFormat, ((product.price * 100.0f).roundToInt() / 100.0f).toString())
+                                text = stringResource(
+                                    id = R.string.PriceFormat,
+                                    ((product.price * 100.0f).roundToInt() / 100.0f).toString()
+                                )
                             )
                         }
                         Row(

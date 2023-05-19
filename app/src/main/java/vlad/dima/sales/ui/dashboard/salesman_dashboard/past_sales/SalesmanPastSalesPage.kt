@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -58,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -122,113 +125,128 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
         ) {
             Column {
                 SalesmanPastSalesAppBar(
-                    isHintVisible = pendingClients.isNotEmpty() && !isHintHidden,
+                    isHintVisible = (pendingClients.isNotEmpty() || pastSaleClients.isNotEmpty()) && !isHintHidden,
                     onHintClick = viewModel::hideHint
                 )
-                Box(
-                    modifier = Modifier.pullRefresh(pullRefreshState)
-                ) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .background(MaterialTheme.colors.background),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        state = lazyListState
+                Box {
+                    Box(
+                        modifier = Modifier.pullRefresh(pullRefreshState)
                     ) {
-                        if (pendingClients.isNotEmpty()) {
-                            stickyHeader {
-                                Text(
-                                    modifier = Modifier
-                                        .background(MaterialTheme.colors.background)
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    text = stringResource(id = R.string.PendingOrders),
-                                    color = MaterialTheme.colors.onBackground,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                            items(
-                                items = pendingClients,
-                                key = { "PendingClients${it.client.clientId}" }
-                            ) {
-                                SaleClient(
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp),
-                                    saleClient = it,
-                                    onOrderClick = { clientId, orderId ->
-                                        context.startActivity(
-                                            Intent(context, PendingOrderActivity::class.java)
-                                                .putExtra("clientId", clientId)
-                                                .putExtra("orderId", orderId)
-                                        )
-                                    },
-                                    onOrderOptionClick = { option, order ->
-                                        coroutineScope.launch {
-                                            scaffoldState.snackbarHostState.showSnackbar(
-                                                message = when (option) {
-                                                    OrderContextOption.Delete -> context.getString(
-                                                        R.string.OrderDeleted,
-                                                        order.orderId
-                                                    ).also { viewModel.falseDeleteOrder(order) }
-                                                },
-                                                actionLabel = context.getString(R.string.Undo)
-                                            ).let { result ->
-                                                when (result) {
-                                                    SnackbarResult.Dismissed -> viewModel.deleteOrder(
-                                                        order
-                                                    )
+                        LazyColumn(
+                            modifier = Modifier
+                                .background(MaterialTheme.colors.background),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            state = lazyListState
+                        ) {
+                            if (pendingClients.isNotEmpty()) {
+                                stickyHeader {
+                                    Text(
+                                        modifier = Modifier
+                                            .background(MaterialTheme.colors.background)
+                                            .fillMaxWidth()
+                                            .padding(8.dp),
+                                        text = stringResource(id = R.string.PendingOrders),
+                                        color = MaterialTheme.colors.onBackground,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                                items(
+                                    items = pendingClients,
+                                    key = { "PendingClients${it.client.clientId}" }
+                                ) {
+                                    SaleClient(
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp),
+                                        saleClient = it,
+                                        onOrderClick = { clientId, orderId ->
+                                            context.startActivity(
+                                                Intent(context, PendingOrderActivity::class.java)
+                                                    .putExtra("clientId", clientId)
+                                                    .putExtra("orderId", orderId)
+                                            )
+                                        },
+                                        onOrderOptionClick = { option, order ->
+                                            coroutineScope.launch {
+                                                scaffoldState.snackbarHostState.showSnackbar(
+                                                    message = when (option) {
+                                                        OrderContextOption.Delete -> context.getString(
+                                                            R.string.OrderDeleted,
+                                                            order.orderId
+                                                        ).also { viewModel.falseDeleteOrder(order) }
+                                                    },
+                                                    actionLabel = context.getString(R.string.Undo)
+                                                ).let { result ->
+                                                    when (result) {
+                                                        SnackbarResult.Dismissed -> viewModel.deleteOrder(
+                                                            order
+                                                        )
 
-                                                    SnackbarResult.ActionPerformed -> viewModel.undoFalseDelete(
-                                                        order
-                                                    )
+                                                        SnackbarResult.ActionPerformed -> viewModel.undoFalseDelete(
+                                                            order
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
+                                    )
+                                }
+                            }
+                            if (pastSaleClients.isNotEmpty()) {
+                                if (pendingClients.isNotEmpty()) {
+                                    stickyHeader {
+                                        Text(
+                                            modifier = Modifier
+                                                .background(MaterialTheme.colors.background)
+                                                .fillMaxWidth()
+                                                .padding(8.dp),
+                                            text = stringResource(id = R.string.DashboardSales),
+                                            color = MaterialTheme.colors.onBackground,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            textAlign = TextAlign.Center
+                                        )
                                     }
-                                )
+                                } else {
+                                    item {Spacer(Modifier.height(16.dp))}
+                                }
+                                items(
+                                    items = pastSaleClients,
+                                    key = { "PastSaleClients${it.client.clientId}" }
+                                ) {
+                                    SaleClient(
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp),
+                                        saleClient = it,
+                                        isPastSale = true
+                                    )
+                                }
                             }
+                            item { Spacer(modifier = Modifier) }
                         }
-                        if (pastSaleClients.isNotEmpty()) {
-                            stickyHeader {
-                                Text(
-                                    modifier = Modifier
-                                        .background(MaterialTheme.colors.background)
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    text = stringResource(id = R.string.DashboardSales),
-                                    color = MaterialTheme.colors.onBackground,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                            items(
-                                items = pastSaleClients,
-                                key = { "PastSaleClients${it.client.clientId}" }
-                            ) {
-                                SaleClient(
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp),
-                                    saleClient = it
-                                )
-                            }
-                        }
-                        item { Spacer(modifier = Modifier) }
-                    }
-                    PullRefreshIndicator(
-                        refreshing = isRefreshing,
-                        state = pullRefreshState,
-                        modifier = Modifier.align(
-                            Alignment.TopCenter
+                        PullRefreshIndicator(
+                            refreshing = isRefreshing,
+                            state = pullRefreshState,
+                            modifier = Modifier.align(
+                                Alignment.TopCenter
+                            )
                         )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .let { modifier ->
+                            if (uploadState != SalesmanPastSalesViewModel.UploadSaleState.Idle) modifier.background(
+                                Color.Black.copy(.5f)
+                            ) else modifier
+                        }
                     )
                 }
                 if (pendingClients.isEmpty()) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxSize()
                     ) {
                         Column(
@@ -305,8 +323,13 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
+                            .heightIn(max = 400.dp)
                             .animateContentSize(),
-                        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius))
+                        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            MaterialTheme.colors.secondary.copy(.7f)
+                        )
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -329,26 +352,27 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                 }
 
                                 SalesmanPastSalesViewModel.UploadSaleState.StockInvalid -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Warning,
+                                            contentDescription = stringResource(id = R.string.Warning),
+                                            tint = MaterialTheme.colors.extra
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(
+                                                id = R.string.OrdersStockInvalid,
+                                                uploadState.productCode
+                                            )
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
                                     Column(
                                         modifier = Modifier.verticalScroll(rememberScrollState())
+                                            .fillMaxWidth()
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Warning,
-                                                contentDescription = stringResource(id = R.string.Warning),
-                                                tint = MaterialTheme.colors.extra
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(
-                                                    id = R.string.OrdersStockInvalid,
-                                                    uploadState.productCode
-                                                )
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(16.dp))
                                         invalidStockOrders.forEach {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -373,26 +397,27 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                 }
 
                                 SalesmanPastSalesViewModel.UploadSaleState.ProductsInvalid -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Warning,
+                                            contentDescription = stringResource(id = R.string.Warning),
+                                            tint = MaterialTheme.colors.extra
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(id = R.string.OrdersProductsInvalid)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
                                     Column(
                                         modifier = Modifier.verticalScroll(rememberScrollState())
+                                            .fillMaxWidth()
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Warning,
-                                                contentDescription = stringResource(id = R.string.Warning),
-                                                tint = MaterialTheme.colors.extra
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(id = R.string.OrdersProductsInvalid)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(16.dp))
                                         invalidProductsOrders.forEach {
                                             Row(
-                                                modifier = Modifier.height(16.dp),
+                                                modifier = Modifier.padding(horizontal = 16.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Divider(

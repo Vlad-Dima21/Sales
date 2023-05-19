@@ -13,12 +13,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.repository.UserRepository
+import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.room.user.User
 
 class SalesmanClientsViewModel(
@@ -26,16 +30,34 @@ class SalesmanClientsViewModel(
 ): ViewModel() {
 
     private val clientCollection = Firebase.firestore.collection("clients")
+    private val orderCollection = Firebase.firestore.collection("orders")
     private val auth = FirebaseAuth.getInstance()
     private lateinit var currentUser: User
 
     private val _clients = MutableStateFlow(listOf<Client>())
-    val clients: StateFlow<List<Client>>
-        get() = _clients.asStateFlow()
+
+    private val _orders = MutableStateFlow(emptyList<Order>())
+    val orders = _orders.asStateFlow()
+
+    val clients = combine(
+        _clients,
+        _orders
+    ) { clients, orders ->
+        if (clients.isNotEmpty() && orders.isNotEmpty()) {
+            val groupedOrders = orders.groupBy { it.clientId }
+            return@combine clients.map { client ->
+                ClientWithSaleInfo(
+                    client = client,
+                    numberOfSales = groupedOrders[client.clientId]?.size ?: 0
+                )
+            }
+        }
+        emptyList()
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _isCreatingOrderIntent = MutableStateFlow<String?>(null)
-    val isCreatingOrderIntent: StateFlow<String?>
-        get() = _isCreatingOrderIntent.asStateFlow()
+    val isCreatingOrderIntent = _isCreatingOrderIntent.asStateFlow()
 
     var expandedClient = mutableStateOf(Client())
 
@@ -44,6 +66,11 @@ class SalesmanClientsViewModel(
             repository.getUserByUID(auth.currentUser!!.uid).collect { user ->
                 currentUser = user
                 loadClients()
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            _orders.value = orderCollection.whereEqualTo("salesmanUID", auth.currentUser!!.uid).get().await().documents.map { documentSnapshot ->
+                documentSnapshot.toObject(Order::class.java)!!
             }
         }
     }
@@ -64,6 +91,11 @@ class SalesmanClientsViewModel(
         delay(100)
         _isCreatingOrderIntent.emit(null)
     }
+
+    data class ClientWithSaleInfo(
+        val client: Client,
+        val numberOfSales: Int
+    )
 
     class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

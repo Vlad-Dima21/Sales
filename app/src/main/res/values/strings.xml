@@ -78,4 +78,6 @@
     <string name="OrdersProductsInvalid">Some products are no longer available. These are the affected orders.</string>
     <string name="OrdersUploaded">Orders successfully confirmed.</string>
     <string name="ReviewOrders">Review orders and try again</string>
+    <string name="CreatedAt">Created at</string>
+    <string name="MissingProducts">Order has products that are no longer available</string>
 </resources>

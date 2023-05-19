@@ -1,13 +1,20 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,8 +22,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -28,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.ui.composables.AsyncImage
 import vlad.dima.sales.ui.dashboard.common.products.Product
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.theme.SalesTheme
@@ -93,6 +104,9 @@ class PendingOrderActivity : ComponentActivity() {
                         }
                     }
                 }
+                var viewedImage by rememberSaveable {
+                    mutableStateOf(Uri.EMPTY)
+                }
                 Column(
                     modifier = Modifier.background(MaterialTheme.colors.background)
                 ) {
@@ -113,12 +127,50 @@ class PendingOrderActivity : ComponentActivity() {
                                 CircularProgressIndicator()
                             }
                         }
-                        items(items = products, key = { item: PendingOrderViewModel.ProductItemHolder -> item.product.productCode }) {
-                            ProductItem(productItemHolder = it, modifier = Modifier.animateItemPlacement(
-                                animationSpec = tween(600)
-                            ))
+                        items(
+                            items = products,
+                            key = { item: PendingOrderViewModel.ProductItemHolder -> item.product.productCode }) {
+                            ProductItem(
+                                productItemHolder = it,
+                                modifier = Modifier.animateItemPlacement(
+                                    animationSpec = tween(600)
+                                ),
+                                onImageClick = { imageUri ->
+                                    viewedImage = imageUri
+                                }
+                            )
                         }
                         item { Spacer(modifier = Modifier) }
+                    }
+                }
+                AnimatedVisibility(
+                    visible = viewedImage != Uri.EMPTY,
+                    enter = fadeIn(),
+                    exit = ExitTransition.None
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colors.background.copy(.8f)
+                            )
+                            .clickable(
+                                MutableInteractionSource(),
+                                indication = null
+                            ) {
+                                viewedImage = Uri.EMPTY
+                            }
+                    ) {
+                        AsyncImage(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(.6f)
+                                .align(Alignment.Center),
+                            imageUri = viewedImage,
+                            contentDescription = "",
+                            contentScale = ContentScale.Crop,
+                            loading = { CircularProgressIndicator() }
+                        )
                     }
                 }
             }

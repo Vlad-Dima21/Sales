@@ -70,8 +70,10 @@ fun IconLabeledText(
     iconColor: Color = MaterialTheme.colors.primaryVariant,
     label: String,
     labelColor: Color = MaterialTheme.colors.onSurface,
+    labelSize: TextUnit = 14.sp,
     text: String,
     textColor: Color = MaterialTheme.colors.onSurface,
+    textSize: TextUnit = 14.sp,
     oneLine: Boolean = false
 ) {
     Row(
@@ -85,7 +87,7 @@ fun IconLabeledText(
             tint = iconColor,
             modifier = Modifier.size(20.dp)
         )
-        Text(text = label, color = labelColor)
+        Text(text = label, color = labelColor, fontSize = labelSize)
         Divider(
             modifier = Modifier
                 .width(2.dp)
@@ -93,9 +95,9 @@ fun IconLabeledText(
             color = MaterialTheme.colors.onSurface
         )
         if (!oneLine) {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, fontSize = textSize)
         } else {
-            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = text, color = textColor, style = MaterialTheme.typography.italicText, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = textSize)
         }
     }
 }

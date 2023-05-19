@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
-    val context = LocalContext.current
     val clients by viewModel.clients.collectAsState()
     Column(
         modifier = Modifier
@@ -23,7 +22,7 @@ fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
     ) {
         SalesmanClientsAppBar()
         LazyColumn(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
@@ -31,9 +30,9 @@ fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
             }
             items(
                 items = clients,
-                key = {it.clientName}
-            ) {client ->
-                ClientCard(client = client, viewModel = viewModel)
+                key = {it.client.clientId}
+            ) {clientWithInfo ->
+                ClientCard(client = clientWithInfo.client, numberOfSales = clientWithInfo.numberOfSales, viewModel = viewModel)
             }
         }
     }

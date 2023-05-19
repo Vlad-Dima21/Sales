@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,9 @@ import androidx.compose.ui.window.PopupProperties
 import vlad.dima.sales.R
 import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.ui.composables.LabeledText
+import vlad.dima.sales.ui.theme.italicText
+import java.text.DateFormat
+import java.util.Calendar
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -29,6 +33,7 @@ import kotlin.math.roundToInt
 fun SaleClient(
     modifier: Modifier,
     saleClient: SaleClient,
+    isPastSale: Boolean = false,
     onOrderClick: ((clientId: String, orderId: Int) -> Unit)? = null,
     onOrderOptionClick: ((option: OrderContextOption, order: Order) -> Unit)? = null
 ) {
@@ -73,6 +78,7 @@ fun SaleClient(
                     SaleOrder(
                         modifier = Modifier.animateItemPlacement(),
                         saleOrder = it,
+                        isPastSale = isPastSale,
                         onOrderClick = onOrderClick,
                         onOrderOptionClick = onOrderOptionClick
                     )
@@ -87,6 +93,7 @@ fun SaleClient(
 private fun SaleOrder(
     modifier: Modifier = Modifier,
     saleOrder: SaleOrder,
+    isPastSale: Boolean = false,
     onOrderClick: ((clientId: String, orderId: Int) -> Unit)? = null,
     onOrderOptionClick: ((option: OrderContextOption, order: Order) -> Unit)? = null
 ) {
@@ -96,10 +103,14 @@ private fun SaleOrder(
     val interactionSource = remember {
         MutableInteractionSource()
     }
+    val createdDate = remember {
+        DateFormat.getDateInstance().format(saleOrder.order.createdDate)
+    }
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
-        color = MaterialTheme.colors.surface.copy(.5f)
+        color = MaterialTheme.colors.surface.copy(.5f),
+        border = if (!isPastSale && saleOrder.hasMissingProducts) BorderStroke(1.dp, MaterialTheme.colors.error) else null
     ) {
         Box(
             Modifier
@@ -138,13 +149,25 @@ private fun SaleOrder(
                         text = stringResource(id = R.string.OrderNumber, saleOrder.order.orderId),
                         color = MaterialTheme.colors.onSurface
                     )
-                    LabeledText(
-                        label = stringResource(id = R.string.TotalPrice),
-                        text = stringResource(
-                            id = R.string.PriceFormat,
-                            totalToString(saleOrder.order.total)
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        LabeledText(
+                            label = stringResource(id = R.string.TotalPrice),
+                            text = stringResource(
+                                id = R.string.PriceFormat,
+                                totalToString(saleOrder.order.total)
+                            )
                         )
-                    )
+                        if (isPastSale) {
+                            Text(
+                                modifier = Modifier.padding(start = 8.dp),
+                                text = createdDate,
+                                color = MaterialTheme.colors.onSurface.copy(.8f),
+                                style = MaterialTheme.typography.italicText
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(5.dp))
                 LazyRow(
@@ -163,6 +186,14 @@ private fun SaleOrder(
                     item {
                         Spacer(modifier = Modifier)
                     }
+                }
+                if (saleOrder.hasMissingProducts) {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = stringResource(id = R.string.MissingProducts),
+                        color = MaterialTheme.colors.onSurface.copy(.8f),
+                        style = MaterialTheme.typography.italicText
+                    )
                 }
             }
             if (onOrderOptionClick != null) {

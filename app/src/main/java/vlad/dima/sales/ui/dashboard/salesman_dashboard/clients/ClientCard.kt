@@ -28,7 +28,10 @@ import vlad.dima.sales.R
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ClientCard(
-    client: Client, modifier: Modifier = Modifier, viewModel: SalesmanClientsViewModel
+    modifier: Modifier = Modifier,
+    client: Client,
+    numberOfSales: Int,
+    viewModel: SalesmanClientsViewModel
 ) {
     val context = LocalContext.current
     var expandedClient by viewModel.expandedClient
@@ -65,7 +68,7 @@ fun ClientCard(
                 Text(
                     text = client.clientName, fontSize = 24.sp, modifier = Modifier.weight(1f)
                 )
-                IconText(icon = Icons.Filled.Payments, text = "${0}")
+                IconText(icon = Icons.Filled.Payments, text = "$numberOfSales")
             }
 
             AnimatedVisibility(

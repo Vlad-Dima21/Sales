@@ -75,14 +75,14 @@ class SalesmanPastSalesViewModel(
                                 orderProduct.orderId == order.orderId
                             }
                                 // some products may be deleted from the database in the meantime
-                                .mapNotNull { orderProduct ->
+                                .map { orderProduct ->
                                     products.find { it.productId == orderProduct.productId }
                                         ?.let { product ->
                                             SaleProduct(product, orderProduct.quantity)
                                         }
                                 }
-                                .sortedBy { it.product.productName }
-                            SaleOrder(order, saleProducts)
+                                .sortedBy { it?.product?.productName }
+                            SaleOrder(order, saleProducts.contains(null), saleProducts.filterNotNull())
                         }
                         .sortedByDescending { it.order.createdDate }
                     SaleClient(client, saleOrders)
@@ -131,13 +131,13 @@ class SalesmanPastSalesViewModel(
                         order.clientId == client.clientId
                     }
                         .map { order ->
-                            val saleProducts = order.products.mapNotNull { (productId, quantity) ->
+                            val saleProducts = order.products.map { (productId, quantity) ->
                                 products.find { it.productId == productId }?.let {
                                     return@let SaleProduct(it, quantity)
                                 }
                             }
-                                .sortedBy { it.product.productName }
-                            SaleOrder(order, saleProducts)
+                                .sortedBy { it?.product?.productName }
+                            SaleOrder(order, saleProducts.contains(null), saleProducts.filterNotNull())
                         }
                         .sortedByDescending { it.order.createdDate }
                     SaleClient(client, saleOrders)
@@ -182,7 +182,7 @@ class SalesmanPastSalesViewModel(
                     localOrderProducts.value = orderProducts
                 }
         }
-//        loadPastSales()
+        loadPastSales()
     }
 
     private suspend fun loadClients() {
@@ -286,6 +286,7 @@ class SalesmanPastSalesViewModel(
         }
         orderRepository.deleteOrders(*localOrders.value.toTypedArray())
         _uploadState.value = UploadSaleState.UploadSuccessful
+        loadPastSales()
     }
 
     fun dismissAlert() {
