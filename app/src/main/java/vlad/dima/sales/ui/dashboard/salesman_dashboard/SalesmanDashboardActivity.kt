@@ -67,13 +67,6 @@ class SalesmanDashboardActivity : ComponentActivity() {
         val orderRepository = SalesDatabase.getDatabase(this).run {
             OrderRepository(orderDao(), orderProductDao())
         }
-        lifecycleScope.launch(Dispatchers.IO) {
-            orderRepository.getAllOrders().collect { orders ->
-                orders.forEach {order ->
-                    Log.d("activitate", order.toString())
-                }
-            }
-        }
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
@@ -110,6 +103,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
         }
 
         notificationsInitialize(notificationsViewModel)
+        pastSalesInitialize(pastSalesViewModel, clientsViewModel)
         clientsInitialize(clientsViewModel)
 
         setContent {
@@ -164,6 +158,16 @@ class SalesmanDashboardActivity : ComponentActivity() {
             notificationsViewModel.isViewingNotificationIntent.collect {
                 if (it != null) {
                     notificationResultActivity.launch(it)
+                }
+            }
+        }
+    }
+
+    private fun pastSalesInitialize(pastSalesViewModel: SalesmanPastSalesViewModel, clientsViewModel: SalesmanClientsViewModel) {
+        lifecycleScope.launch {
+            pastSalesViewModel.newOrdersRefresh.collect {
+                if (it) {
+                    clientsViewModel.loadOrders()
                 }
             }
         }

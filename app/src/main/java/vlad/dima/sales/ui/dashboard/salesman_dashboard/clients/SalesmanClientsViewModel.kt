@@ -90,11 +90,7 @@ class SalesmanClientsViewModel(
                 loadClients()
             }
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            _orders.value = orderCollection.whereEqualTo("salesmanUID", auth.currentUser!!.uid).get().await().documents.map { documentSnapshot ->
-                documentSnapshot.toObject(Order::class.java)!!
-            }
-        }
+        loadOrders()
     }
 
     private fun loadClients() = viewModelScope.launch(Dispatchers.IO) {
@@ -106,6 +102,12 @@ class SalesmanClientsViewModel(
               }
             }.toList()
         )
+    }
+
+    fun loadOrders() = viewModelScope.launch(Dispatchers.IO) {
+        _orders.value = orderCollection.whereEqualTo("salesmanUID", auth.currentUser!!.uid).get().await().documents.map { documentSnapshot ->
+            documentSnapshot.toObject(Order::class.java)!!
+        }
     }
 
     fun toggleSort() {

@@ -84,4 +84,5 @@
     <string name="SortByOrders">Sort by orders</string>
     <string name="ClearText">Clear text</string>
     <string name="NoClients">No clients available</string>
+    <string name="OdrderInsufficientStock">Insufficient stock for some products</string>
 </resources>

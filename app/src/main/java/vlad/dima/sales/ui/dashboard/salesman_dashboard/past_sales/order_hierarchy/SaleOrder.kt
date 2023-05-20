@@ -6,5 +6,6 @@ import vlad.dima.sales.ui.dashboard.common.products.Product
 data class SaleOrder(
     val order: Order,
     val hasMissingProducts: Boolean,
+    val hasInsufficientStock: Boolean,
     val products: List<SaleProduct>
 )

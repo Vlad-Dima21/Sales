@@ -92,16 +92,9 @@ class PendingOrderActivity : ComponentActivity() {
                 val isLoading by viewModel.isLoading.collectAsState()
 
                 val scrollState = rememberLazyListState()
-                var previousScrollItem by remember { mutableStateOf(0) }
                 val isAppBarCollapsed by remember {
                     derivedStateOf {
-                        if (scrollState.firstVisibleItemIndex != 0) {
-                            (scrollState.firstVisibleItemIndex > previousScrollItem)
-                        } else {
-                            false
-                        }.also {
-                            previousScrollItem = scrollState.firstVisibleItemIndex
-                        }
+                        scrollState.firstVisibleItemIndex != 0 || scrollState.firstVisibleItemScrollOffset != 0
                     }
                 }
                 var viewedImage by rememberSaveable {
@@ -140,6 +133,7 @@ class PendingOrderActivity : ComponentActivity() {
                                 }
                             )
                         }
+                        item { Spacer(modifier = Modifier) }
                         item { Spacer(modifier = Modifier) }
                     }
                 }

@@ -86,7 +86,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
-        onRefresh = viewModel::loadPastSales
+        onRefresh = viewModel::refreshPastSales
     )
     val pendingClients by viewModel.pendingClients.collectAsState()
     val pastSaleClients by viewModel.pastSaleClients.collectAsState()
@@ -259,7 +259,6 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                 contentDescription = stringResource(id = R.string.NoOrders),
                                 colorFilter = ColorFilter.tint(color = MaterialTheme.colors.onBackground)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = stringResource(id = R.string.NoOrders),
                                 color = MaterialTheme.colors.onBackground

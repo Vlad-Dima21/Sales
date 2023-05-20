@@ -84,7 +84,7 @@ fun SalesmanClientsAppBar(
                     .clip(RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)))
                     .align(Alignment.CenterHorizontally)
                     .background(MaterialTheme.colors.surface)
-                    .padding(2.dp)
+                    .padding(4.dp)
                     .fillMaxWidth(.9f)
             ) {
                 Row(

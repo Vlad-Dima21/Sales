@@ -110,7 +110,7 @@ private fun SaleOrder(
         modifier = modifier,
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
         color = MaterialTheme.colors.surface.copy(.5f),
-        border = if (!isPastSale && saleOrder.hasMissingProducts) BorderStroke(1.dp, MaterialTheme.colors.error) else null
+        border = if (!isPastSale && (saleOrder.hasMissingProducts || saleOrder.hasInsufficientStock)) BorderStroke(1.dp, MaterialTheme.colors.error) else null
     ) {
         Box(
             Modifier
@@ -187,13 +187,47 @@ private fun SaleOrder(
                         Spacer(modifier = Modifier)
                     }
                 }
-                if (saleOrder.hasMissingProducts) {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = stringResource(id = R.string.MissingProducts),
-                        color = MaterialTheme.colors.onSurface.copy(.8f),
-                        style = MaterialTheme.typography.italicText
-                    )
+                if (saleOrder.hasMissingProducts || saleOrder.hasInsufficientStock) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (saleOrder.hasMissingProducts) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Divider(
+                                Modifier
+                                    .width(2.dp)
+                                    .height(2.dp),
+                                color = MaterialTheme.colors.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.MissingProducts),
+                                color = MaterialTheme.colors.onSurface.copy(.8f),
+                                style = MaterialTheme.typography.italicText
+                            )
+                        }
+                    }
+                    if (saleOrder.hasInsufficientStock) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Divider(
+                                Modifier
+                                    .width(2.dp)
+                                    .height(2.dp),
+                                color = MaterialTheme.colors.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.OdrderInsufficientStock),
+                                color = MaterialTheme.colors.onSurface.copy(.8f),
+                                style = MaterialTheme.typography.italicText
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
             if (onOrderOptionClick != null) {

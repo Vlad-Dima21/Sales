@@ -38,9 +38,9 @@ fun FilterButton(
     backgroundColor: Color = MaterialTheme.colors.surface,
     isEnabled: Boolean = true
 ) {
-    val finalDefaultColor = remember { if (isEnabled) defaultColor else defaultColor.copy(0.5f) }
-    val finalActiveColor = remember { if (isEnabled) activeColor else activeColor.copy(0.5f) }
-    val finalTextColor = remember { if (isEnabled) textColor else textColor.copy(0.5f) }
+    val finalDefaultColor = remember(isEnabled) { if (isEnabled) defaultColor else defaultColor.copy(0.5f) }
+    val finalActiveColor = remember(isEnabled) { if (isEnabled) activeColor else activeColor.copy(0.5f) }
+    val finalTextColor = remember(isEnabled) { if (isEnabled) textColor else textColor.copy(0.5f) }
 
     OutlinedButton(
         modifier = Modifier.heightIn(min = 48.dp),
@@ -103,9 +103,9 @@ fun SortButton(
     backgroundColor: Color = MaterialTheme.colors.surface,
     isEnabled: Boolean = true
 ) {
-    val finalDefaultColor = remember { if (isEnabled) defaultColor else defaultColor.copy(0.5f) }
-    val finalActiveColor = remember { if (isEnabled) activeColor else activeColor.copy(0.5f) }
-    val finalTextColor = remember { if (isEnabled) textColor else textColor.copy(0.5f) }
+    val finalDefaultColor = remember(isEnabled) { if (isEnabled) defaultColor else defaultColor.copy(0.5f) }
+    val finalActiveColor = remember(isEnabled) { if (isEnabled) activeColor else activeColor.copy(0.5f) }
+    val finalTextColor = remember(isEnabled) { if (isEnabled) textColor else textColor.copy(0.5f) }
 
     OutlinedButton(
         modifier = modifier.heightIn(min = 48.dp),
