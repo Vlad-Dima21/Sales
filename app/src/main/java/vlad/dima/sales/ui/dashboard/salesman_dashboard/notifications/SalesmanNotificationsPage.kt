@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Feedback
+import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -20,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.dashboard.common.notifications.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationCard
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
@@ -32,6 +37,7 @@ import java.util.*
 @Composable
 fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
     val refreshing by viewModel.isRefreshing.collectAsState()
+    val networkStatus by viewModel.networkStatus.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing, { viewModel.loadItems() })
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -39,7 +45,12 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
         Box(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
-                .pullRefresh(pullRefreshState)
+                .let {
+                    if (networkStatus == NetworkManager.NetworkStatus.Available) {
+                        return@let it.pullRefresh(pullRefreshState)
+                    }
+                    it
+                }
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -62,7 +73,7 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
 
                     if (previousIndex == -1 || DateFormat.getDateInstance().format(notification.createdDate) != DateFormat.getDateInstance().format(previousNotification.createdDate)) {
                         Box(
-                            modifier =Modifier.padding(top = 32.dp, bottom = 8.dp)
+                            modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
                         ) {
                             val isCurrentDate = DateFormat.getDateInstance().format(notification.createdDate) == DateFormat.getDateInstance().format(Date())
                             Text(
@@ -96,6 +107,22 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
                     Alignment.TopCenter
                 )
             )
+
+            if (viewModel.items.isEmpty()) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Feedback,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = MaterialTheme.colors.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = stringResource(id = R.string.NoNotifications), color = MaterialTheme.colors.onBackground)
+                }
+            }
         }
     }
 }

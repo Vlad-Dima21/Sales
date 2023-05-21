@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.repository.SettingsRepository
 import vlad.dima.sales.repository.UserRepository
@@ -34,7 +35,8 @@ import java.util.Date
 class SalesmanPastSalesViewModel(
     private val settingsRepository: SettingsRepository,
     private val userRepository: UserRepository,
-    private val orderRepository: OrderRepository
+    private val orderRepository: OrderRepository,
+    private val networkManager: NetworkManager
 ) : ViewModel() {
 
     private val isHintHiddenKey = booleanPreferencesKey("isPastSalesHintHidden")
@@ -43,7 +45,7 @@ class SalesmanPastSalesViewModel(
         private set
 
     private val currentUser = FirebaseAuth.getInstance().currentUser!!
-    private var currentUserWithDetails = User()
+    private var currentUserWithDetails = MutableStateFlow(User())
     private val clientsCollection = Firebase.firestore.collection("clients")
     private val productsCollection = Firebase.firestore.collection("products")
     private val ordersCollection = Firebase.firestore.collection("orders")
@@ -54,6 +56,7 @@ class SalesmanPastSalesViewModel(
     private val localOrders = MutableStateFlow(emptyList<Order>())
     private val falseDeletedLocalOrders = MutableStateFlow(emptyList<Order>())
     private val localOrderProducts = MutableStateFlow(emptyList<OrderProduct>())
+    val networkStatus = networkManager.currentConnection
 
     val pendingClients = combine(
         _clients,
@@ -129,9 +132,10 @@ class SalesmanPastSalesViewModel(
     val pastSaleClients = combine(
         _pastSales,
         _clients,
-        products
-    ) { pastSales, clients, products ->
-        if (pastSales.isNotEmpty() && clients.isNotEmpty() && products.isNotEmpty()) {
+        products,
+        networkStatus
+    ) { pastSales, clients, products, networkStatus ->
+        if (networkStatus == NetworkManager.NetworkStatus.Available && pastSales.isNotEmpty() && clients.isNotEmpty() && products.isNotEmpty()) {
             val clientIds = pastSales.map { it.clientId }.toSet()
             val saleClients = clients.filter { client -> clientIds.contains(client.clientId) }
                 .map { client ->
@@ -166,18 +170,33 @@ class SalesmanPastSalesViewModel(
                 isHintHidden = it == true
             }
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            _isRefreshing.value = true
-            products.value = productsCollection.get().await().documents.map { documentSnapshot ->
-                documentSnapshot.toObject(Product::class.java)!!.apply {
-                    productId = documentSnapshot.id
+        viewModelScope.launch {
+            networkStatus.combine(currentUserWithDetails) { status, currentUser ->
+                if (status == NetworkManager.NetworkStatus.Available) {
+                    if (products.value.isEmpty()) {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            _isRefreshing.value = true
+                            products.value =
+                                productsCollection.get().await().documents.map { documentSnapshot ->
+                                    documentSnapshot.toObject(Product::class.java)!!.apply {
+                                        productId = documentSnapshot.id
+                                    }
+                                }
+                        }
+                    }
+                    if (_pastSales.value.isEmpty()) {
+                        loadPastSales()
+                    }
+                    if (currentUser.userUID != "") {
+                        loadClients()
+                    }
                 }
             }
+                .stateIn(viewModelScope)
         }
         viewModelScope.launch(Dispatchers.IO) {
             userRepository.getUserByUID(currentUser.uid).collect { user ->
-                currentUserWithDetails = user
-                loadClients()
+                currentUserWithDetails.value = user
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -191,13 +210,12 @@ class SalesmanPastSalesViewModel(
                     localOrderProducts.value = orderProducts
                 }
         }
-        loadPastSales()
     }
 
 
-    private suspend fun loadClients() {
+    private fun loadClients() = viewModelScope.launch(Dispatchers.IO) {
         _clients.value =
-            clientsCollection.whereEqualTo("managerUID", currentUserWithDetails.managerUID).get()
+            clientsCollection.whereEqualTo("managerUID", currentUserWithDetails.value.managerUID).get()
                 .await().documents.map { documentSnapshot ->
                     documentSnapshot.toObject(Client::class.java)!!.apply {
                         clientId = documentSnapshot.id
@@ -318,19 +336,22 @@ class SalesmanPastSalesViewModel(
 
     fun refreshPastSales() = viewModelScope.launch(Dispatchers.IO) {
         _isRefreshing.value = true
-        products.value = productsCollection.get().await().documents.map { documentSnapshot ->
-            documentSnapshot.toObject(Product::class.java)!!.apply {
-                productId = documentSnapshot.id
+        if (networkStatus.value == NetworkManager.NetworkStatus.Available) {
+            products.value = productsCollection.get().await().documents.map { documentSnapshot ->
+                documentSnapshot.toObject(Product::class.java)!!.apply {
+                    productId = documentSnapshot.id
+                }
             }
+            loadPastSales()
         }
-        loadPastSales()
         _isRefreshing.value = false
     }
 
     class Factory(
         private val settingsRepository: SettingsRepository,
         private val userRepository: UserRepository,
-        private val orderRepository: OrderRepository
+        private val orderRepository: OrderRepository,
+        private val networkManager: NetworkManager
     ) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -338,7 +359,8 @@ class SalesmanPastSalesViewModel(
                 return SalesmanPastSalesViewModel(
                     settingsRepository,
                     userRepository,
-                    orderRepository
+                    orderRepository,
+                    networkManager
                 ) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")

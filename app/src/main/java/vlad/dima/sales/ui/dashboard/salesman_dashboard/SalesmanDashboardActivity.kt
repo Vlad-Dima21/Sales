@@ -10,13 +10,19 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -34,11 +40,13 @@ import vlad.dima.sales.ui.dashboard.SalesmanDashboardResources
 import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.repository.SettingsRepository
 import vlad.dima.sales.repository.UserRepository
@@ -67,19 +75,20 @@ class SalesmanDashboardActivity : ComponentActivity() {
         val orderRepository = SalesDatabase.getDatabase(this).run {
             OrderRepository(orderDao(), orderProductDao())
         }
+        val networkManager = NetworkManager(applicationContext)
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
-            factory = SalesmanNotificationsViewModel.Factory(userRepository)
+            factory = SalesmanNotificationsViewModel.Factory(userRepository, networkManager)
         )[SalesmanNotificationsViewModel::class.java]
         val pastSalesViewModel: SalesmanPastSalesViewModel =
             ViewModelProvider(
                 owner = this,
-                factory = SalesmanPastSalesViewModel.Factory(settingsRepository, userRepository, orderRepository)
+                factory = SalesmanPastSalesViewModel.Factory(settingsRepository, userRepository, orderRepository, networkManager)
             )[SalesmanPastSalesViewModel::class.java]
         val clientsViewModel: SalesmanClientsViewModel = ViewModelProvider(
             owner = this,
-            factory = SalesmanClientsViewModel.Factory(userRepository)
+            factory = SalesmanClientsViewModel.Factory(userRepository, networkManager)
         )[SalesmanClientsViewModel::class.java]
 
         var navController: NavHostController? = null
@@ -107,21 +116,42 @@ class SalesmanDashboardActivity : ComponentActivity() {
         clientsInitialize(clientsViewModel)
 
         setContent {
-            SalesTheme {
+            SalesTheme(defaultSystemBarsColor = false) {
                 navController = rememberAnimatedNavController()
 
+                val uiController = rememberSystemUiController()
+                val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
+                val systemBarsColor by animateColorAsState(
+                    if (networkStatus != NetworkManager.NetworkStatus.Available) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                    label = "statusBarColor"
+                )
+                uiController.setStatusBarColor(systemBarsColor)
+                uiController.setNavigationBarColor(MaterialTheme.colors.background)
                 Scaffold(
                     bottomBar = {
                         SalesmanDashboardBottomNavigation(navController = navController!!)
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        SalesmanDashboardNavigation(
-                            navController = navController!!,
-                            notificationsViewModel = notificationsViewModel,
-                            pastSalesViewModel = pastSalesViewModel,
-                            clientsViewModel = clientsViewModel
-                        )
+                    Column(modifier = Modifier.padding(innerPadding)) {
+                        AnimatedVisibility(visible = networkStatus != NetworkManager.NetworkStatus.Available) {
+                            Text(
+                                text = stringResource(id = R.string.CheckConnection),
+                                color = MaterialTheme.colors.onError,
+                                fontSize = 12.sp,
+                                modifier = Modifier.fillMaxWidth()
+                                    .background(systemBarsColor)
+                                    .padding(8.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        Box {
+                            SalesmanDashboardNavigation(
+                                navController = navController!!,
+                                notificationsViewModel = notificationsViewModel,
+                                pastSalesViewModel = pastSalesViewModel,
+                                clientsViewModel = clientsViewModel
+                            )
+                        }
                     }
                 }
             }

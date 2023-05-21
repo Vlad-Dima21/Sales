@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.theme.DarkSurface
@@ -42,7 +43,8 @@ fun ErrorPopup(
             modifier = Modifier
                 .padding(10.dp)
                 .align(Alignment.Center),
-            color = if (isSystemInDarkTheme()) Color.White else Color.Black
+            color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+            textAlign = TextAlign.Center
         )
     }
 }

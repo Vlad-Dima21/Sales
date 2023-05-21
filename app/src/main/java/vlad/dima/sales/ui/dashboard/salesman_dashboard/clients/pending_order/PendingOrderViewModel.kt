@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.repository.OrderRepository
 import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.room.order.OrderProduct
@@ -29,7 +30,8 @@ import kotlin.math.roundToInt
 class PendingOrderViewModel(
     private val clientId: String,
     private val orderId: Int?,
-    private val repository: OrderRepository
+    private val repository: OrderRepository,
+    private val networkManager: NetworkManager
 ) : ViewModel() {
 
     private val _client = MutableStateFlow(Client())
@@ -46,6 +48,7 @@ class PendingOrderViewModel(
     val isLoading = _isLoading.asStateFlow()
 
     private var _products = MutableStateFlow(listOf<ProductItemHolder>())
+    private val networkStatus = networkManager.currentConnection
 
     private var _totalPrice = MutableStateFlow(0f)
     var totalPrice: Flow<String> = _totalPrice.map {
@@ -84,7 +87,13 @@ class PendingOrderViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), listOf())
 
     init {
-        loadClientAndProducts()
+        viewModelScope.launch {
+            networkStatus.collect { status ->
+                if (_products.value.isEmpty() && status == NetworkManager.NetworkStatus.Available) {
+                    loadClientAndProducts()
+                }
+            }
+        }
         if (orderId != null) {
             combine(_order, _orderProducts) { order, orderProducts ->
                 if (order != null && orderProducts.isNotEmpty()) {
@@ -275,12 +284,13 @@ class PendingOrderViewModel(
     class Factory(
         private val clientId: String,
         private val orderId: Int?,
-        private val repository: OrderRepository
+        private val repository: OrderRepository,
+        private val networkManager: NetworkManager
     ) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PendingOrderViewModel::class.java)) {
-                return PendingOrderViewModel(clientId, orderId, repository) as T
+                return PendingOrderViewModel(clientId, orderId, repository, networkManager) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

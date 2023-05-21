@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,6 +20,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -42,6 +44,9 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
     var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
+    val buttonEnabled by viewModel.areButtonsEnabled.collectAsState()
+    val inputError by viewModel.inputError.collectAsState()
+    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     // gradient colors used for card header text
     val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
@@ -75,10 +80,9 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 label = {
                     Text(stringResource(id = R.string.Email))
                 },
-
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
-                isError = viewModel.inputError,
+                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Email),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -92,6 +96,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
+                    focusManager.clearFocus()
                     viewModel.loginUser()
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
@@ -107,7 +112,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                     }
                 },
                 singleLine = true,
-                isError = viewModel.inputError,
+                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Password),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
@@ -121,8 +126,10 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
             ) {
                 Button(
                     onClick = {
+                        focusManager.clearFocus()
                         viewModel.loginUser()
                     },
+                    enabled = buttonEnabled
                 ) {
                     Text(
                         text = stringResource(R.string.Login),
@@ -135,8 +142,7 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                         text = AnnotatedString(stringResource(R.string.SignUp)),
                         style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
                         onClick = {
-                            viewModel.inputError = false
-                            errorMessage = ""
+                            viewModel.switchPage()
                             navController.navigate(Screen.SignUpScreen.route) {
                                 popUpTo(Screen.LoginScreen.route) { inclusive = true }
                             }

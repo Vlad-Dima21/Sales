@@ -14,15 +14,18 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.tasks.await
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.user.User
 import vlad.dima.sales.ui.dashboard.common.notifications.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
-class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsViewModel, ViewModel() {
+class SalesmanNotificationsViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): NotificationsViewModel, ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
@@ -35,13 +38,32 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     var items by mutableStateOf(listOf<Notification>())
 
     private val _isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
-    val isViewingNotificationIntent = _isViewingNotificationIntent.asStateFlow()
+    val networkStatus = networkManager.currentConnection
+    val isViewingNotificationIntent = combine(
+        _isViewingNotificationIntent,
+        networkStatus
+    ) { isViewingNotificationIntent, networkStatus ->
+        if (networkStatus != NetworkManager.NetworkStatus.Available) {
+            null
+        } else {
+            isViewingNotificationIntent
+        }
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             repository.getUserByUID(auth.currentUser!!.uid).collect { user ->
                 currentUser = user
                 loadItems()
+            }
+        }
+
+        viewModelScope.launch {
+            networkStatus.collect { status ->
+                if (::currentUser.isInitialized && status == NetworkManager.NetworkStatus.Available && items.isEmpty()) {
+                    loadItems()
+                }
             }
         }
     }
@@ -52,13 +74,17 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
     }
 
     override fun loadItems() = viewModelScope.launch(Dispatchers.IO) {
-        _isRefreshing.emit(true)
-        items = notificationsCollection.whereEqualTo("managerUID", currentUser.managerUID).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList().map {
-            val notification = it.toObject(Notification::class.java)!!
-            notification.id = it.id
-            return@map notification
+        if (networkStatus.value == NetworkManager.NetworkStatus.Available) {
+            _isRefreshing.emit(true)
+            items = notificationsCollection.whereEqualTo("managerUID", currentUser.managerUID)
+                .orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList()
+                .map {
+                    val notification = it.toObject(Notification::class.java)!!
+                    notification.id = it.id
+                    return@map notification
+                }
+            _isRefreshing.emit(false)
         }
-        _isRefreshing.emit(false)
     }
 
     override fun viewNotification(intent: Intent) = viewModelScope.launch {
@@ -66,10 +92,10 @@ class SalesmanNotificationsViewModel(repository: UserRepository): NotificationsV
         delay(100)
         _isViewingNotificationIntent.emit(null)
     }
-    class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
+    class Factory(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SalesmanNotificationsViewModel::class.java)) {
-               return SalesmanNotificationsViewModel(repository) as T
+               return SalesmanNotificationsViewModel(repository, networkManager) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

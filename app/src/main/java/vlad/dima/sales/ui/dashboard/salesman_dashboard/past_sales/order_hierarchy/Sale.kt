@@ -14,18 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import vlad.dima.sales.R
 import vlad.dima.sales.room.order.Order
 import vlad.dima.sales.ui.composables.LabeledText
 import vlad.dima.sales.ui.theme.italicText
 import java.text.DateFormat
-import java.util.Calendar
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -221,7 +218,7 @@ private fun SaleOrder(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(id = R.string.OdrderInsufficientStock),
+                                text = stringResource(id = R.string.OrderInsufficientStock),
                                 color = MaterialTheme.colors.onSurface.copy(.8f),
                                 style = MaterialTheme.typography.italicText
                             )

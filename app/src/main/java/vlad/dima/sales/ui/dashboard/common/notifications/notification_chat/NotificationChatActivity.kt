@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -70,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -79,6 +81,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.repository.UserRepository
 import vlad.dima.sales.room.SalesDatabase
 import vlad.dima.sales.ui.theme.SalesTheme
@@ -93,6 +96,7 @@ class NotificationChatActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
+        val networkManager = NetworkManager(applicationContext)
 
         viewModel = ViewModelProvider(
             this, NotificationChatViewModel.Factory(intent.getStringExtra("id") ?: "", repository)
@@ -130,8 +134,14 @@ class NotificationChatActivity : ComponentActivity() {
 
         setContent {
             SalesTheme(defaultSystemBarsColor = false) {
+                val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
+                val systemBarsColor by animateColorAsState(
+                    if (networkStatus != NetworkManager.NetworkStatus.Available) MaterialTheme.colors.error else MaterialTheme.colors.surface,
+                    label = "statusBarColor"
+                )
+
                 val uiController = rememberSystemUiController()
-                uiController.setStatusBarColor(MaterialTheme.colors.surface)
+                uiController.setStatusBarColor(systemBarsColor)
                 uiController.setNavigationBarColor(MaterialTheme.colors.surface)
 
                 val currentUser by viewModel.currentUser.collectAsState()
@@ -201,7 +211,18 @@ class NotificationChatActivity : ComponentActivity() {
                         .systemBarsPadding()
                         .imePadding()
                 ) {
-                    androidx.compose.animation.AnimatedVisibility(
+                    AnimatedVisibility(visible = networkStatus != NetworkManager.NetworkStatus.Available) {
+                        Text(
+                            text = stringResource(id = R.string.CheckConnection),
+                            color = MaterialTheme.colors.onError,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth()
+                                .background(systemBarsColor)
+                                .padding(8.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    AnimatedVisibility(
                         visible = isRefreshing,
                         enter = slideInVertically { -16 } + fadeIn(),
                         exit = slideOutVertically { -16 } + fadeOut(),
@@ -213,7 +234,7 @@ class NotificationChatActivity : ComponentActivity() {
                         CircularProgressIndicator()
                     }
 
-                    androidx.compose.animation.AnimatedVisibility(
+                    AnimatedVisibility(
                         modifier = Modifier.weight(1f),
                         visible = !isRefreshing,
                         enter = slideInVertically { 16 } + fadeIn(),
@@ -421,14 +442,20 @@ class NotificationChatActivity : ComponentActivity() {
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
                             IconButton(
-                                modifier = Modifier.background(color = MaterialTheme.colors.primaryVariant, shape = CircleShape),
+                                modifier = Modifier.background(
+                                    color = when(networkStatus == NetworkManager.NetworkStatus.Available) {
+                                        true -> MaterialTheme.colors.primaryVariant
+                                        else -> MaterialTheme.colors.primaryVariant.copy(.5f)
+                                    },
+                                    shape = CircleShape
+                                ),
                                 onClick = {
                                     coroutineScope.launch {
                                         oldMessageSize++
                                         viewModel.sendMessage().join()
                                     }
                                 },
-                                enabled = viewModel.message.isNotEmpty()
+                                enabled = viewModel.message.isNotEmpty() && networkStatus == NetworkManager.NetworkStatus.Available
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Send,

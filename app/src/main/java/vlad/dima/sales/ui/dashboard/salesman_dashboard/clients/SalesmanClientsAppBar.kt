@@ -42,6 +42,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
@@ -119,7 +120,12 @@ fun SalesmanClientsAppBar(
                         maxLines = 1,
                         singleLine = true,
                         placeholder = {
-                            Text(stringResource(id = R.string.SearchClient))
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(id = R.string.SearchClient),
+                                maxLines = 1,
+                                overflow = TextOverflow.Visible
+                            )
                         },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,

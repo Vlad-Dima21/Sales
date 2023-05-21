@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NoPhotography
+import androidx.compose.material.icons.filled.SignalWifiBad
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +36,9 @@ fun AsyncImage(
     loading: @Composable () -> Unit,
     onClick: (() -> Unit)? = null
 ) {
+    var isError by rememberSaveable {
+        mutableStateOf(false)
+    }
     if (imageUri != Uri.EMPTY) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -48,14 +56,50 @@ fun AsyncImage(
                     if (shapeCrop != null) {
                         modifier1 = modifier1.clip(shapeCrop)
                     }
-                    if (onClick != null) {
+                    if (onClick != null && !isError) {
                         modifier1 = modifier1.clickable(onClick = onClick)
                     }
                     if (size != null) {
                         modifier1 = modifier1.size(size)
                     }
                     modifier1
+                },
+            error = {
+                Box(
+                    modifier = modifier
+                        .let {
+                            var modifier1 = it
+                            if (shapeCrop != null) {
+                                modifier1 = modifier1.clip(shapeCrop)
+                            }
+                            if (size != null) {
+                                modifier1 = modifier1.size(size)
+                            }
+                            modifier1
+                        }
+                        .background(Color.White)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.SignalWifiBad,
+                        contentDescription = contentDescription,
+                        modifier = modifier
+                            .align(Alignment.Center)
+                            .let {
+                                if (size != null) {
+                                    return@let it.size(size / 2)
+                                }
+                                it
+                            },
+                        tint = Color.Black
+                    )
                 }
+            },
+            onError = {
+                isError = true
+            },
+            onSuccess = {
+                isError = false
+            }
         )
     } else {
         Box(

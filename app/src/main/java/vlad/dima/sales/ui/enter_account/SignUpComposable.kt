@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,6 +20,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -42,6 +44,9 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
     var passwordVisibleState by rememberSaveable {
         mutableStateOf(false)
     }
+    val buttonEnabled by viewModel.areButtonsEnabled.collectAsState()
+    val inputError by viewModel.inputError.collectAsState()
+    val focusManager = LocalFocusManager.current
     val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
     val virtualKeyboard = LocalSoftwareKeyboardController.current
     Column(
@@ -76,7 +81,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
 
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
-                isError = viewModel.inputError,
+                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Email),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -89,7 +94,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 singleLine = true,
-                isError = viewModel.inputError,
+                isError = inputError == EnterAccountViewModel.InvalidFields.All,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
@@ -105,6 +110,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
                     virtualKeyboard?.hide()
+                    focusManager.clearFocus()
                     viewModel.signUpUser()
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
@@ -120,7 +126,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                     }
                 },
                 singleLine = true,
-                isError = viewModel.inputError,
+                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Password),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
@@ -133,7 +139,11 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = { viewModel.signUpUser() },
+                    onClick = {
+                        viewModel.signUpUser()
+                        focusManager.clearFocus()
+                    },
+                    enabled = buttonEnabled
                 ) {
                     Text(
                         text = stringResource(R.string.SignUp),
@@ -146,8 +156,7 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                         text = AnnotatedString(stringResource(R.string.Login)),
                         style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
                         onClick = {
-                            errorMessage = ""
-                            viewModel.inputError = false
+                            viewModel.switchPage()
                             navController.navigate(Screen.LoginScreen.route) {
                                 popUpTo(Screen.SignUpScreen.route) { inclusive = true }
                             }

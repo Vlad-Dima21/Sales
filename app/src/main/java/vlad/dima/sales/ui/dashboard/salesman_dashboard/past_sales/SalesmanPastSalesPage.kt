@@ -1,6 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -73,6 +74,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.PendingOrderActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.OrderContextOption
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleClient
@@ -88,6 +90,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
         refreshing = isRefreshing,
         onRefresh = viewModel::refreshPastSales
     )
+    val networkStatus by viewModel.networkStatus.collectAsState()
     val pendingClients by viewModel.pendingClients.collectAsState()
     val pastSaleClients by viewModel.pastSaleClients.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
@@ -128,13 +131,17 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                     isHintVisible = (pendingClients.isNotEmpty() || pastSaleClients.isNotEmpty()) && !isHintHidden,
                     onHintClick = viewModel::hideHint
                 )
-                Box {
+                Box(
+                    modifier = Modifier.weight(1f, false)
+                ) {
                     Box(
                         modifier = Modifier.pullRefresh(pullRefreshState)
+                            .fillMaxSize()
                     ) {
                         LazyColumn(
                             modifier = Modifier
-                                .background(MaterialTheme.colors.background),
+                                .background(MaterialTheme.colors.background)
+                                .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             state = lazyListState
@@ -161,13 +168,13 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                         modifier = Modifier
                                             .padding(horizontal = 8.dp),
                                         saleClient = it,
-                                        onOrderClick = { clientId, orderId ->
+                                        onOrderClick = if (networkStatus == NetworkManager.NetworkStatus.Available) { clientId, orderId ->
                                             context.startActivity(
                                                 Intent(context, PendingOrderActivity::class.java)
                                                     .putExtra("clientId", clientId)
                                                     .putExtra("orderId", orderId)
                                             )
-                                        },
+                                        } else null,
                                         onOrderOptionClick = { option, order ->
                                             coroutineScope.launch {
                                                 scaffoldState.snackbarHostState.showSnackbar(
@@ -254,7 +261,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Image(
-                                modifier = Modifier.sizeIn(maxWidth = 100.dp),
+                                modifier = Modifier.sizeIn(maxWidth = 80.dp),
                                 painter = painterResource(id = R.drawable.empty_box),
                                 contentDescription = stringResource(id = R.string.NoOrders),
                                 colorFilter = ColorFilter.tint(color = MaterialTheme.colors.onBackground)
@@ -267,7 +274,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                     }
                 }
             }
-            if (pendingClients.isNotEmpty() && uploadState == SalesmanPastSalesViewModel.UploadSaleState.Idle) {
+            if (networkStatus == NetworkManager.NetworkStatus.Available && pendingClients.isNotEmpty() && uploadState == SalesmanPastSalesViewModel.UploadSaleState.Idle) {
                 Box(
                     modifier = Modifier
                         .padding(16.dp)
@@ -369,7 +376,8 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                     }
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Column(
-                                        modifier = Modifier.verticalScroll(rememberScrollState())
+                                        modifier = Modifier
+                                            .verticalScroll(rememberScrollState())
                                             .fillMaxWidth()
                                     ) {
                                         invalidStockOrders.forEach {
@@ -411,7 +419,8 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                     }
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Column(
-                                        modifier = Modifier.verticalScroll(rememberScrollState())
+                                        modifier = Modifier
+                                            .verticalScroll(rememberScrollState())
                                             .fillMaxWidth()
                                     ) {
                                         invalidProductsOrders.forEach {

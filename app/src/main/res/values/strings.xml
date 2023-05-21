@@ -84,5 +84,9 @@
     <string name="SortByOrders">Sort by orders</string>
     <string name="ClearText">Clear text</string>
     <string name="NoClients">No clients available</string>
-    <string name="OdrderInsufficientStock">Insufficient stock for some products</string>
+    <string name="OrderInsufficientStock">Insufficient stock for some products</string>
+    <string name="CheckConnection">No internet connection available</string>
+    <string name="InvalidEmail">Invalid email</string>
+    <string name="PasswordIsTooWeak">Password is too weak</string>
+    <string name="NoNotifications">Future notifications will be shown here</string>
 </resources>
