@@ -97,7 +97,9 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
-                    viewModel.loginUser()
+                    if (buttonEnabled) {
+                        viewModel.loginUser()
+                    }
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {

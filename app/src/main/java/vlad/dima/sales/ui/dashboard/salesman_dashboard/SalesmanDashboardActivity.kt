@@ -1,9 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -23,11 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -41,8 +35,7 @@ import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
@@ -58,7 +51,6 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNot
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 import vlad.dima.sales.ui.enter_account.dataStore
-import java.util.prefs.Preferences
 
 class SalesmanDashboardActivity : ComponentActivity() {
 
@@ -108,11 +100,12 @@ class SalesmanDashboardActivity : ComponentActivity() {
         ) { result ->
             if (result.resultCode == RESULT_OK) {
                 navController?.navigate(SalesmanDashboardResources.PastSales.route)
+                result.data?.getStringExtra("clientId")?.let { pastSalesViewModel.scrollTo(it) }
             }
         }
 
         notificationsInitialize(notificationsViewModel)
-        pastSalesInitialize(pastSalesViewModel, clientsViewModel)
+        pastSalesInitialize(pastSalesViewModel, clientsViewModel, networkManager.currentConnection)
         clientsInitialize(clientsViewModel)
 
         setContent {
@@ -193,10 +186,14 @@ class SalesmanDashboardActivity : ComponentActivity() {
         }
     }
 
-    private fun pastSalesInitialize(pastSalesViewModel: SalesmanPastSalesViewModel, clientsViewModel: SalesmanClientsViewModel) {
+    private fun pastSalesInitialize(
+        pastSalesViewModel: SalesmanPastSalesViewModel,
+        clientsViewModel: SalesmanClientsViewModel,
+        currentConnection: StateFlow<NetworkManager.NetworkStatus>
+    ) {
         lifecycleScope.launch {
             pastSalesViewModel.newOrdersRefresh.collect {
-                if (it) {
+                if (it && currentConnection.value == NetworkManager.NetworkStatus.Available) {
                     clientsViewModel.loadOrders()
                 }
             }

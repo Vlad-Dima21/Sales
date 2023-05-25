@@ -111,7 +111,9 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                 keyboardActions = KeyboardActions(onDone = {
                     virtualKeyboard?.hide()
                     focusManager.clearFocus()
-                    viewModel.signUpUser()
+                    if (buttonEnabled) {
+                        viewModel.signUpUser()
+                    }
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {

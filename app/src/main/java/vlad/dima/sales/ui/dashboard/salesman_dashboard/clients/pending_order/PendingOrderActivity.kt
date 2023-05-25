@@ -187,7 +187,7 @@ class PendingOrderActivity : ComponentActivity() {
                                 .align(Alignment.Center),
                             imageUri = viewedImage,
                             contentDescription = "",
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             loading = { CircularProgressIndicator() }
                         )
                     }

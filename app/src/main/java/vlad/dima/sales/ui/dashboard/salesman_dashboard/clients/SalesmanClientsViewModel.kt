@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +40,7 @@ class SalesmanClientsViewModel(
 
     private val _clients = MutableStateFlow(listOf<Client>())
     private val _orders = MutableStateFlow(emptyList<Order>())
-    private val networkStatus = networkManager.currentConnection
+    val networkStatus = networkManager.currentConnection
 
     private val _sort = MutableStateFlow(SortState.None)
     val sort = _sort.asStateFlow()
@@ -50,10 +51,9 @@ class SalesmanClientsViewModel(
         _clients,
         _orders,
         _sort,
-        _search,
-        networkStatus
-    ) { clients, orders, sort, search, networkStatus ->
-        if (networkStatus == NetworkManager.NetworkStatus.Available && clients.isNotEmpty() && orders.isNotEmpty()) {
+        _search
+    ) { clients, orders, sort, search ->
+        if (clients.isNotEmpty()) {
             val groupedOrders = orders.groupBy { it.clientId }
             return@combine clients
                 .let { cls ->
@@ -85,7 +85,7 @@ class SalesmanClientsViewModel(
     private val _isCreatingOrderIntent = MutableStateFlow<String?>(null)
     val isCreatingOrderIntent = _isCreatingOrderIntent.asStateFlow()
 
-    var expandedClient = mutableStateOf(Client())
+    var expandedClient by mutableStateOf(Client())
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -95,7 +95,7 @@ class SalesmanClientsViewModel(
         }
         viewModelScope.launch {
             networkStatus.combine(currentUser) { status, user ->
-                if (status == NetworkManager.NetworkStatus.Available) {
+                if (status == NetworkManager.NetworkStatus.Available && _clients.value.isEmpty()) {
                     loadClients()
                     if (user.userUID != "") {
                         loadOrders()
@@ -108,7 +108,7 @@ class SalesmanClientsViewModel(
 
     private fun loadClients() = viewModelScope.launch(Dispatchers.IO) {
         val managerUID = currentUser.value.managerUID.ifEmpty { currentUser.value.userUID }
-        _clients.emit(clientCollection.whereEqualTo("managerUID", managerUID).get().await().map { document ->
+        _clients.emit(clientCollection.whereEqualTo("managerUID", managerUID).orderBy("clientName", Query.Direction.ASCENDING).get().await().map { document ->
               document.toObject(Client::class.java).apply {
                   clientId = document.id
               }

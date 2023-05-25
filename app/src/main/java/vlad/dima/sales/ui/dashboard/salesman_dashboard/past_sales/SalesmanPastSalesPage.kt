@@ -54,6 +54,7 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -92,6 +93,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
     )
     val networkStatus by viewModel.networkStatus.collectAsState()
     val pendingClients by viewModel.pendingClients.collectAsState()
+    val scrollToClient by viewModel.scrollToClient.collectAsState()
     val pastSaleClients by viewModel.pastSaleClients.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
     val invalidStockOrders by viewModel.ordersWithInsufficientStock.collectAsState()
@@ -105,6 +107,11 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
     val isFabExtended by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemScrollOffset == 0 && lazyListState.firstVisibleItemIndex == 0
+        }
+    }
+    LaunchedEffect(scrollToClient) {
+        if (scrollToClient > 0) {
+            lazyListState.animateScrollToItem(scrollToClient)
         }
     }
     Scaffold(
@@ -135,7 +142,8 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                     modifier = Modifier.weight(1f, false)
                 ) {
                     Box(
-                        modifier = Modifier.pullRefresh(pullRefreshState)
+                        modifier = Modifier
+                            .pullRefresh(pullRefreshState)
                             .fillMaxSize()
                     ) {
                         LazyColumn(
@@ -150,7 +158,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                 stickyHeader {
                                     Text(
                                         modifier = Modifier
-                                            .background(MaterialTheme.colors.background)
+                                            .background(MaterialTheme.colors.background.copy(.7f))
                                             .fillMaxWidth()
                                             .padding(8.dp),
                                         text = stringResource(id = R.string.PendingOrders),
@@ -206,7 +214,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                     stickyHeader {
                                         Text(
                                             modifier = Modifier
-                                                .background(MaterialTheme.colors.background)
+                                                .background(MaterialTheme.colors.background.copy(.7f))
                                                 .fillMaxWidth()
                                                 .padding(8.dp),
                                             text = stringResource(id = R.string.DashboardSales),
@@ -251,7 +259,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                         }
                     )
                 }
-                if (pendingClients.isEmpty()) {
+                if (pendingClients.isEmpty() && pastSaleClients.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

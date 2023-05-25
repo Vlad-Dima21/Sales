@@ -31,23 +31,12 @@ fun ClientCard(
     modifier: Modifier = Modifier,
     client: Client,
     numberOfSales: Int,
-    viewModel: SalesmanClientsViewModel
+    isExpanded: Boolean,
+    onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    var expandedClient by viewModel.expandedClient
-    val isExpanded by remember {
-        derivedStateOf {
-            expandedClient == client
-        }
-    }
     Card(
-        onClick = {
-            if (!isExpanded) {
-                expandedClient = client
-            } else {
-                viewModel.startCreatingOrder(client)
-            }
-        },
+        onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
         contentColor = contentColorFor(backgroundColor = MaterialTheme.colors.surface),

@@ -1,5 +1,6 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -61,10 +62,9 @@ fun SalesmanPastSalesAppBar(
                     .padding(16.dp)
             )
         }
-        if (isHintVisible) {
-            Spacer(modifier = Modifier.height(8.dp))
+        AnimatedVisibility(visible = isHintVisible) {
             Box(
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -93,5 +93,5 @@ fun SalesmanPastSalesAppBar(
                 }
             }
         }
+        }
     }
-}

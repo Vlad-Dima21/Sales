@@ -49,14 +49,16 @@ class SalesmanPastSalesViewModel(
     private val clientsCollection = Firebase.firestore.collection("clients")
     private val productsCollection = Firebase.firestore.collection("products")
     private val ordersCollection = Firebase.firestore.collection("orders")
+    val networkStatus = networkManager.currentConnection
 
     // all products and clients are loaded at once so as not to send multiple requests for each order
+    private val _scrollToClient = MutableStateFlow(0)
+    val scrollToClient = _scrollToClient.asStateFlow()
     private val _clients = MutableStateFlow(emptyList<Client>())
     private val products = MutableStateFlow(emptyList<Product>())
     private val localOrders = MutableStateFlow(emptyList<Order>())
     private val falseDeletedLocalOrders = MutableStateFlow(emptyList<Order>())
     private val localOrderProducts = MutableStateFlow(emptyList<OrderProduct>())
-    val networkStatus = networkManager.currentConnection
 
     val pendingClients = combine(
         _clients,
@@ -132,10 +134,9 @@ class SalesmanPastSalesViewModel(
     val pastSaleClients = combine(
         _pastSales,
         _clients,
-        products,
-        networkStatus
-    ) { pastSales, clients, products, networkStatus ->
-        if (networkStatus == NetworkManager.NetworkStatus.Available && pastSales.isNotEmpty() && clients.isNotEmpty() && products.isNotEmpty()) {
+        products
+    ) { pastSales, clients, products ->
+        if (pastSales.isNotEmpty() && clients.isNotEmpty() && products.isNotEmpty()) {
             val clientIds = pastSales.map { it.clientId }.toSet()
             val saleClients = clients.filter { client -> clientIds.contains(client.clientId) }
                 .map { client ->
@@ -345,6 +346,13 @@ class SalesmanPastSalesViewModel(
             loadPastSales()
         }
         _isRefreshing.value = false
+    }
+
+    // used to scroll to the client with the pending order
+    fun scrollTo(clientId: String) = viewModelScope.launch {
+        _scrollToClient.value = pendingClients.value.indexOfFirst { it.client.clientId == clientId } + 1
+        delay(100)
+        _scrollToClient.value = 0
     }
 
     class Factory(

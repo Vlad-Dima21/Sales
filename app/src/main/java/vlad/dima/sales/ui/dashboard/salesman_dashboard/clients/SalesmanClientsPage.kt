@@ -16,10 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import vlad.dima.sales.R
+import vlad.dima.sales.network.NetworkManager
 
 @Composable
 fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
     val clients by viewModel.clients.collectAsState()
+    val networkStatus by viewModel.networkStatus.collectAsState()
     Column(
         modifier = Modifier
             .background(MaterialTheme.colors.background)
@@ -45,8 +47,18 @@ fun SalesmanClientsPage(viewModel: SalesmanClientsViewModel) {
                     ClientCard(
                         client = clientWithInfo.client,
                         numberOfSales = clientWithInfo.numberOfSales,
-                        viewModel = viewModel
+                        isExpanded = viewModel.expandedClient == clientWithInfo.client,
+                        onClick = {
+                            if (viewModel.expandedClient != clientWithInfo.client) {
+                                viewModel.expandedClient = clientWithInfo.client
+                            } else if (networkStatus == NetworkManager.NetworkStatus.Available) {
+                                viewModel.startCreatingOrder(clientWithInfo.client)
+                            }
+                        }
                     )
+                }
+                item {
+                    Spacer(modifier = Modifier)
                 }
             }
             if (clients.isEmpty()) {
