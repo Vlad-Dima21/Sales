@@ -10,22 +10,20 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import vlad.dima.sales.model.Client
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.room.user.User
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.Order
+import vlad.dima.sales.model.User
 import vlad.dima.sales.ui.composables.SortState
 
 class SalesmanClientsViewModel(

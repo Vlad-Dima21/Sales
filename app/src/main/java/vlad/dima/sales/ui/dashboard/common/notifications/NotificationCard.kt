@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.composables.IconLabeledText
 import vlad.dima.sales.ui.dashboard.common.notifications.notification_chat.NotificationChatActivity
 import vlad.dima.sales.ui.theme.Orange

@@ -1,9 +1,8 @@
-package vlad.dima.sales.repository
+package vlad.dima.sales.model.repository
 
-import androidx.lifecycle.LiveData
 import kotlinx.coroutines.flow.Flow
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.room.user.UserDao
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.room.user.UserDao
 
 class UserRepository(private val userDao: UserDao) {
 

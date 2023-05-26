@@ -1,4 +1,4 @@
-package vlad.dima.sales.room.order
+package vlad.dima.sales.model.room.order
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import vlad.dima.sales.model.Order
 
 @Dao
 interface OrderDao {

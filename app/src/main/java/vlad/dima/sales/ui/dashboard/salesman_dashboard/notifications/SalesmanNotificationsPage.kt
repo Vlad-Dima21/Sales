@@ -7,8 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -18,14 +16,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationCard
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsAppBar

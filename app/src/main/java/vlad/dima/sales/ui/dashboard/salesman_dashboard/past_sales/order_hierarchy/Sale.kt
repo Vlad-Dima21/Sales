@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
-import vlad.dima.sales.room.order.Order
+import vlad.dima.sales.model.Order
 import vlad.dima.sales.ui.composables.LabeledText
 import vlad.dima.sales.ui.theme.italicText
 import java.text.DateFormat

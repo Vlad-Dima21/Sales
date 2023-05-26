@@ -19,18 +19,46 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.OrderRepository
-import vlad.dima.sales.repository.SettingsRepository
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.room.order.OrderProduct
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.ui.dashboard.common.products.Product
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
+import vlad.dima.sales.model.repository.OrderRepository
+import vlad.dima.sales.model.repository.SettingsRepository
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.Order
+import vlad.dima.sales.model.OrderProduct
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.Product
+import vlad.dima.sales.model.Client
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleClient
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleOrder
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy.SaleProduct
 import java.util.Date
+
+
+/**
+ * https://stackoverflow.com/questions/65356805/kotlin-flow-why-the-function-combine-can-only-take-maximum-5-flows-in-paramet
+ */
+inline fun <T1, T2, T3, T4, T5, T6, T7, R> multipleCombine(
+    flow: Flow<T1>,
+    flow2: Flow<T2>,
+    flow3: Flow<T3>,
+    flow4: Flow<T4>,
+    flow5: Flow<T5>,
+    flow6: Flow<T6>,
+    flow7: Flow<T7>,
+    crossinline transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
+): Flow<R> {
+    return combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<*> ->
+        @Suppress("UNCHECKED_CAST")
+        transform(
+            args[0] as T1,
+            args[1] as T2,
+            args[2] as T3,
+            args[3] as T4,
+            args[4] as T5,
+            args[5] as T6,
+            args[6] as T7
+        )
+    }
+}
 
 class SalesmanPastSalesViewModel(
     private val settingsRepository: SettingsRepository,
@@ -59,6 +87,10 @@ class SalesmanPastSalesViewModel(
     private val localOrders = MutableStateFlow(emptyList<Order>())
     private val falseDeletedLocalOrders = MutableStateFlow(emptyList<Order>())
     private val localOrderProducts = MutableStateFlow(emptyList<OrderProduct>())
+    private val _ordersWithInsufficientStock = MutableStateFlow(emptyList<Int>())
+    val ordersWithInsufficientStock = _ordersWithInsufficientStock.asStateFlow()
+    private val _ordersWithRemovedProducts = MutableStateFlow(emptyList<Int>())
+    val ordersWithRemovedProducts = _ordersWithRemovedProducts.asStateFlow()
 
     val pendingClients = combine(
         _clients,
@@ -117,10 +149,6 @@ class SalesmanPastSalesViewModel(
 
     private val _uploadState = MutableStateFlow(UploadSaleState.Idle)
     val uploadState = _uploadState.asStateFlow()
-    private val _ordersWithInsufficientStock = MutableStateFlow(emptyList<Int>())
-    val ordersWithInsufficientStock = _ordersWithInsufficientStock.asStateFlow()
-    private val _ordersWithRemovedProducts = MutableStateFlow(emptyList<Int>())
-    val ordersWithRemovedProducts = _ordersWithRemovedProducts.asStateFlow()
     private val _newOrdersRefresh = MutableStateFlow(false)                     // used to broadcast to the activity if there are new orders
     val newOrdersRefresh = _newOrdersRefresh.asStateFlow()
 
@@ -353,6 +381,15 @@ class SalesmanPastSalesViewModel(
         _scrollToClient.value = pendingClients.value.indexOfFirst { it.client.clientId == clientId } + 1
         delay(100)
         _scrollToClient.value = 0
+    }
+
+    fun resetInvalidOrders() = viewModelScope.launch(Dispatchers.IO) {
+        products.value =
+            productsCollection.get().await().documents.map { documentSnapshot ->
+                documentSnapshot.toObject(Product::class.java)!!.apply {
+                    productId = documentSnapshot.id
+                }
+            }
     }
 
     class Factory(

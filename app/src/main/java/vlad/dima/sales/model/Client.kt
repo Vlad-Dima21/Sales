@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients
+package vlad.dima.sales.model
 
 import com.google.firebase.firestore.Exclude
 data class Client(

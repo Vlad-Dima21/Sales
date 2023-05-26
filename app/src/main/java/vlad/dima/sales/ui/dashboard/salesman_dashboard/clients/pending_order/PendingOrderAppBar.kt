@@ -2,7 +2,6 @@ package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.app.Activity
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -26,7 +25,6 @@ import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.FilterButton
 import vlad.dima.sales.ui.composables.LabeledText
 import vlad.dima.sales.ui.composables.LoadingButton
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.theme.extra
 
 @OptIn(ExperimentalAnimationApi::class)

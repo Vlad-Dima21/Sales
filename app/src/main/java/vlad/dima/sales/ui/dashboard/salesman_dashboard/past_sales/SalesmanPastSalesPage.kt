@@ -177,6 +177,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                             .padding(horizontal = 8.dp),
                                         saleClient = it,
                                         onOrderClick = if (networkStatus == NetworkManager.NetworkStatus.Available) { clientId, orderId ->
+                                            viewModel.resetInvalidOrders()
                                             context.startActivity(
                                                 Intent(context, PendingOrderActivity::class.java)
                                                     .putExtra("clientId", clientId)
@@ -294,6 +295,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                         contentColor = MaterialTheme.colors.onSecondary,
                         elevation = dimensionResource(id = R.dimen.standard_elevation),
                         onClick = {
+                            viewModel.hideHint()
                             viewModel.placeLocalOrders()
                         }
                     ) {

@@ -25,8 +25,8 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.user.User
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.User
 
 class EnterAccountViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModel() {
     
@@ -146,7 +146,8 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
                     auth.currentUser?.let { user ->
                         withContext(Dispatchers.IO) {
                             val db = Firebase.firestore.collection("users")
-                            val userFromDb = db.whereEqualTo("userUID", user.uid).get().await().documents[0].toObject(User::class.java)
+                            val userFromDb = db.whereEqualTo("userUID", user.uid).get().await().documents[0].toObject(
+                                User::class.java)
                             val newUser = User(
                                 fullName = userFromDb!!.fullName,
                                 userUID = user.uid,

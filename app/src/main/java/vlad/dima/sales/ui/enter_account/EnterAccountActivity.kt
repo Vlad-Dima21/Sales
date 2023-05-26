@@ -2,9 +2,7 @@ package vlad.dima.sales.ui.enter_account
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -13,18 +11,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -39,8 +34,8 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.manager_dashboard.ManagerDashboardActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.SalesmanDashboardActivity
 import vlad.dima.sales.ui.theme.*

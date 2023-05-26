@@ -1,8 +1,8 @@
-package vlad.dima.sales.room.user
+package vlad.dima.sales.model.room.user
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import vlad.dima.sales.model.User
 
 @Dao
 interface UserDao {

@@ -23,9 +23,8 @@ import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.IconLabeledFlexText
 import vlad.dima.sales.ui.composables.IconLabeledText
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.theme.Orange
-import vlad.dima.sales.ui.theme.italicText
 import java.util.*
 
 @Composable

@@ -20,9 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.Notification
 
 class NotificationChatViewModel(
     private val notificationId: String,

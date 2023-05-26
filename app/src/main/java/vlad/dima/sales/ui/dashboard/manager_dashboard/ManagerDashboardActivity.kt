@@ -26,8 +26,8 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage

@@ -1,4 +1,4 @@
-package vlad.dima.sales.room
+package vlad.dima.sales.model.room
 
 import android.content.Context
 import androidx.room.Database
@@ -7,12 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.room.order.OrderDao
-import vlad.dima.sales.room.order.OrderProduct
-import vlad.dima.sales.room.order.OrderProductDao
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.room.user.UserDao
+import vlad.dima.sales.model.Order
+import vlad.dima.sales.model.room.order.OrderDao
+import vlad.dima.sales.model.OrderProduct
+import vlad.dima.sales.model.room.order.OrderProductDao
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.room.user.UserDao
 
 @Database(
     entities = [User::class, Order::class, OrderProduct::class],

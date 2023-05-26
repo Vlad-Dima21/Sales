@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.common.notifications
+package vlad.dima.sales.model
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat

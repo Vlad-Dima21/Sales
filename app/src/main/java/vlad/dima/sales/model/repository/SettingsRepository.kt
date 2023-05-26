@@ -1,4 +1,4 @@
-package vlad.dima.sales.repository
+package vlad.dima.sales.model.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences

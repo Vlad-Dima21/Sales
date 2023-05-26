@@ -12,7 +12,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +19,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
 class ManagerNotificationsViewModel(repository: UserRepository): NotificationsViewModel, ViewModel() {

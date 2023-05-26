@@ -1,4 +1,4 @@
-package vlad.dima.sales.room.user
+package vlad.dima.sales.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

@@ -20,11 +20,11 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.OrderRepository
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.room.order.OrderProduct
-import vlad.dima.sales.ui.dashboard.common.products.Product
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
+import vlad.dima.sales.model.repository.OrderRepository
+import vlad.dima.sales.model.Order
+import vlad.dima.sales.model.OrderProduct
+import vlad.dima.sales.model.Product
+import vlad.dima.sales.model.Client
 import kotlin.math.roundToInt
 
 class PendingOrderViewModel(

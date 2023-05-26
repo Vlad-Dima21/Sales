@@ -1,10 +1,10 @@
-package vlad.dima.sales.repository
+package vlad.dima.sales.model.repository
 
 import kotlinx.coroutines.flow.Flow
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.room.order.OrderDao
-import vlad.dima.sales.room.order.OrderProduct
-import vlad.dima.sales.room.order.OrderProductDao
+import vlad.dima.sales.model.Order
+import vlad.dima.sales.model.room.order.OrderDao
+import vlad.dima.sales.model.OrderProduct
+import vlad.dima.sales.model.room.order.OrderProductDao
 
 class OrderRepository(private val orderDao: OrderDao, private val orderProductDao: OrderProductDao) {
 

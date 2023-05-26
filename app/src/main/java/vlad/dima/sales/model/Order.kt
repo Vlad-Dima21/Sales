@@ -1,7 +1,6 @@
-package vlad.dima.sales.room.order
+package vlad.dima.sales.model
 
 import androidx.room.*
-import vlad.dima.sales.room.user.User
 import java.util.Date
 
 @Entity(

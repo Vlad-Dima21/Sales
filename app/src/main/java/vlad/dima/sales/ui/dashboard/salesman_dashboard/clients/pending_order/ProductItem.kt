@@ -1,6 +1,7 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*

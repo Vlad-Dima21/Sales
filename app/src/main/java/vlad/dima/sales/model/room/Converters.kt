@@ -1,4 +1,4 @@
-package vlad.dima.sales.room
+package vlad.dima.sales.model.room
 
 import androidx.room.TypeConverter
 import java.util.Date

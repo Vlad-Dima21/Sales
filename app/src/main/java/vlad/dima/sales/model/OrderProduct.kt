@@ -1,4 +1,4 @@
-package vlad.dima.sales.room.order
+package vlad.dima.sales.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

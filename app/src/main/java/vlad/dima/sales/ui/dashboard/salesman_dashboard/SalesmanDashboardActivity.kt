@@ -40,10 +40,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.OrderRepository
-import vlad.dima.sales.repository.SettingsRepository
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.model.repository.OrderRepository
+import vlad.dima.sales.model.repository.SettingsRepository
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.PendingOrderActivity

@@ -21,11 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationCard
 import java.lang.Integer.max
 import java.text.DateFormat

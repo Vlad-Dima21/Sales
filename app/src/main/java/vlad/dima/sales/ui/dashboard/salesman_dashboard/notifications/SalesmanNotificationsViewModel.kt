@@ -20,9 +20,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.user.User
-import vlad.dima.sales.ui.dashboard.common.notifications.Notification
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.Notification
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
 class SalesmanNotificationsViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): NotificationsViewModel, ViewModel() {

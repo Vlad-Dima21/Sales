@@ -1,7 +1,6 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.order_hierarchy
 
-import vlad.dima.sales.room.order.Order
-import vlad.dima.sales.ui.dashboard.common.products.Product
+import vlad.dima.sales.model.Order
 
 data class SaleOrder(
     val order: Order,

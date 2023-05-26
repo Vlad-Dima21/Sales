@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.common.products
+package vlad.dima.sales.model
 
 import android.net.Uri
 import com.google.firebase.firestore.Exclude

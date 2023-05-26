@@ -82,8 +82,8 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.UserRepository
-import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.model.repository.UserRepository
+import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.theme.SalesTheme
 import vlad.dima.sales.ui.theme.extra
 

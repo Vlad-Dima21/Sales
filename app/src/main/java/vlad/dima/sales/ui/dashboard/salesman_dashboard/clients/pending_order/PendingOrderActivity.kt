@@ -11,7 +11,6 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +26,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -36,18 +34,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.repository.OrderRepository
-import vlad.dima.sales.room.SalesDatabase
+import vlad.dima.sales.model.repository.OrderRepository
+import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.composables.AsyncImage
-import vlad.dima.sales.ui.dashboard.common.products.Product
-import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.Client
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class PendingOrderActivity : ComponentActivity() {
@@ -138,6 +130,7 @@ class PendingOrderActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 8.dp)
+                            .imePadding()
                     ) {
                         item { Spacer(modifier = Modifier) }
                         if (isLoading) {
@@ -151,7 +144,7 @@ class PendingOrderActivity : ComponentActivity() {
                             ProductItem(
                                 productItemHolder = it,
                                 modifier = Modifier.animateItemPlacement(
-                                    animationSpec = tween(600)
+                                    animationSpec = tween(400)
                                 ),
                                 onImageClick = { imageUri ->
                                     viewedImage = imageUri
