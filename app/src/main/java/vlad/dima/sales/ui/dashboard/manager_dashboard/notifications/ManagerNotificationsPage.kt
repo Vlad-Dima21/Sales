@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.model.Notification
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationCard
 import java.lang.Integer.max
 import java.text.DateFormat
@@ -32,8 +33,8 @@ import java.util.*
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val networkStatus by viewModel.networkStatus.collectAsState()
     val refreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing, { viewModel.loadItems() })
     val lazyListState = rememberLazyListState()
@@ -66,9 +67,8 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                     items = viewModel.items,
                     key = { it.createdDate }
                 ) { notification ->
-                    var previousNotification: Notification
                     val previousIndex = viewModel.items.indexOf(notification) - 1
-                    previousNotification = viewModel.items[max(previousIndex, 0)]
+                    val previousNotification = viewModel.items[max(previousIndex, 0)]
 
                     if (previousIndex == -1 || DateFormat.getDateInstance()
                             .format(notification.createdDate) != DateFormat.getDateInstance()
@@ -117,7 +117,7 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp),
-                visible = fabIsVisible,
+                visible = fabIsVisible && networkStatus == NetworkManager.NetworkStatus.Available,
                 enter = slideInVertically(initialOffsetY = { 50 }) + fadeIn(),
                 exit = fadeOut() + slideOutVertically(targetOffsetY = { 50 })
             ) {

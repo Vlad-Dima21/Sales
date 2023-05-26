@@ -6,17 +6,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
@@ -24,10 +32,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.room.SalesDatabase
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
@@ -48,30 +59,52 @@ class ManagerDashboardActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
+        val networkManager = NetworkManager(applicationContext)
         notificationsViewModel = ViewModelProvider(
             owner = this,
-            factory = ManagerNotificationsViewModel.Factory(repository)
+            factory = ManagerNotificationsViewModel.Factory(repository, networkManager)
         )[ManagerNotificationsViewModel::class.java]
 
         addedActivityResult = registerAddedActivityResult()
         deletedActivityResult = registerDeletedActivityResult()
 
+        var navController: NavHostController?
+
         notificationsInitialize(notificationsViewModel)
 
         setContent {
             SalesTheme {
-                val navController = rememberAnimatedNavController()
-
+                navController = rememberAnimatedNavController()
+                val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
+                val uiController = rememberSystemUiController()
+                val systemBarsColor by animateColorAsState(
+                    if (networkStatus != NetworkManager.NetworkStatus.Available) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                    label = "statusBarColor"
+                )
+                uiController.setStatusBarColor(systemBarsColor)
+                uiController.setNavigationBarColor(MaterialTheme.colors.background)
                 Scaffold(
                     bottomBar = {
-                        ManagerDashboardBottomNavigation(navController = navController)
+                        ManagerDashboardBottomNavigation(navController = navController!!)
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-//                        ManagerDashboardNavigation(
-//                            navController = navController,
-//                            notificationsViewModel = notificationsViewModel
-//                        )
+                    Column(modifier = Modifier.padding(innerPadding)) {
+                        AnimatedVisibility(visible = networkStatus != NetworkManager.NetworkStatus.Available) {
+                            Text(
+                                text = stringResource(id = R.string.CheckConnection),
+                                color = MaterialTheme.colors.onError,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(systemBarsColor)
+                                    .padding(8.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        ManagerDashboardNavigation(
+                            navController = navController!!,
+                            notificationsViewModel = notificationsViewModel
+                        )
                         ManagerNotificationsPage(viewModel = notificationsViewModel)
                     }
                 }
@@ -159,7 +192,6 @@ fun ManagerDashboardNavigation(
 
 @Composable
 fun ManagerDashboardBottomNavigation(navController: NavHostController) {
-    val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
     val selectedPage = ManagerDashboardResources.Notifications
 
@@ -171,10 +203,11 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
         AnimatedBottomNavigationItem(
             isSelected = ManagerDashboardResources.Notifications == selectedPage,
             onClick = {
-//                val previousRoute = selectedPage.route
-//                navController.navigate(ManagerDashboardResources.Notifications.route) {
-//                    popUpTo(previousRoute) { inclusive = true }
-//                }
+                val previousRoute = selectedPage.route
+                navController.navigate(ManagerDashboardResources.Notifications.route) {
+                    popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
+                }
             },
             resource = ManagerDashboardResources.Notifications
         )

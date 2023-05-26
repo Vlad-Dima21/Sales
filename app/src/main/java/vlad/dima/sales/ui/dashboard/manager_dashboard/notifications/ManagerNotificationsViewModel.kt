@@ -22,15 +22,18 @@ import kotlinx.coroutines.tasks.await
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
+import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
-class ManagerNotificationsViewModel(repository: UserRepository): NotificationsViewModel, ViewModel() {
+class ManagerNotificationsViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): NotificationsViewModel, ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
 
     val isUserLoggedIn = MutableLiveData<Boolean>(true)
     private lateinit var currentUser: User
+
+    val networkStatus = networkManager.currentConnection
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean>
@@ -68,9 +71,11 @@ class ManagerNotificationsViewModel(repository: UserRepository): NotificationsVi
     }
 
     override fun viewNotification(intent: Intent) = viewModelScope.launch {
-        _isViewingNotification.emit(intent)
-        delay(100)
-        _isViewingNotification.emit(null)
+        if (networkStatus.value == NetworkManager.NetworkStatus.Available) {
+            _isViewingNotification.emit(intent)
+            delay(100)
+            _isViewingNotification.emit(null)
+        }
     }
 
     fun createNewNotification() = viewModelScope.launch {
@@ -79,10 +84,10 @@ class ManagerNotificationsViewModel(repository: UserRepository): NotificationsVi
         _isCreatingNewNotification.value = false
     }
 
-    class Factory(private val repository: UserRepository): ViewModelProvider.Factory {
+    class Factory(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(ManagerNotificationsViewModel::class.java)) {
-                return ManagerNotificationsViewModel(repository) as T
+                return ManagerNotificationsViewModel(repository, networkManager) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

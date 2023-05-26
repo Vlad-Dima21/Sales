@@ -237,7 +237,6 @@ fun SalesmanDashboardNavigation(
 
 @Composable
 fun SalesmanDashboardBottomNavigation(navController: NavHostController) {
-    val context = LocalContext.current
     val backStackEntry = navController.currentBackStackEntryAsState()
     val selectedPage = listOf(
         SalesmanDashboardResources.Notifications,
