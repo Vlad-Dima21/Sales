@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -35,10 +37,14 @@ import vlad.dima.sales.ui.theme.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import vlad.dima.sales.R
+import vlad.dima.sales.model.User
 import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.model.repository.OrderRepository
 import vlad.dima.sales.model.repository.SettingsRepository
@@ -49,6 +55,7 @@ import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.SalesmanClientsVi
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.clients.pending_order.PendingOrderActivity
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.notifications.SalesmanNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.salesman_dashboard.past_sales.SalesmanPastSalesViewModel
+import vlad.dima.sales.ui.dashboard.salesman_dashboard.unassigned.UnassignedUserPage
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 import vlad.dima.sales.ui.enter_account.dataStore
 
@@ -68,6 +75,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
             OrderRepository(orderDao(), orderProductDao())
         }
         val networkManager = NetworkManager(applicationContext)
+        val currentUser = userRepository.getUserByUID(FirebaseAuth.getInstance().currentUser!!.uid)
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
@@ -114,15 +122,25 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
                 val uiController = rememberSystemUiController()
                 val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
+                val currentUser by currentUser.collectAsState(User())
+                val newUser by remember {
+                    derivedStateOf { currentUser.managerUID == "unassigned" }
+                }
                 val systemBarsColor by animateColorAsState(
-                    if (networkStatus != NetworkManager.NetworkStatus.Available) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                    when {
+                        networkStatus != NetworkManager.NetworkStatus.Available -> MaterialTheme.colors.error
+                        newUser -> MaterialTheme.colors.background
+                        else -> MaterialTheme.colors.primary
+                    },
                     label = "statusBarColor"
                 )
                 uiController.setStatusBarColor(systemBarsColor)
                 uiController.setNavigationBarColor(MaterialTheme.colors.background)
                 Scaffold(
                     bottomBar = {
-                        SalesmanDashboardBottomNavigation(navController = navController!!)
+                        if (!newUser) {
+                            SalesmanDashboardBottomNavigation(navController = navController!!)
+                        }
                     }
                 ) { innerPadding ->
                     Column(modifier = Modifier.padding(innerPadding)) {
@@ -131,19 +149,30 @@ class SalesmanDashboardActivity : ComponentActivity() {
                                 text = stringResource(id = R.string.CheckConnection),
                                 color = MaterialTheme.colors.onError,
                                 fontSize = 12.sp,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
                                     .background(systemBarsColor)
                                     .padding(8.dp),
                                 textAlign = TextAlign.Center
                             )
                         }
-                        Box {
-                            SalesmanDashboardNavigation(
-                                navController = navController!!,
-                                notificationsViewModel = notificationsViewModel,
-                                pastSalesViewModel = pastSalesViewModel,
-                                clientsViewModel = clientsViewModel
-                            )
+                        if (newUser) {
+                            UnassignedUserPage(currentUser) {
+                                FirebaseAuth.getInstance().signOut()
+                                this@SalesmanDashboardActivity.startActivity(
+                                    Intent(this@SalesmanDashboardActivity, EnterAccountActivity::class.java)
+                                )
+                                finish()
+                            }
+                        } else {
+                            Box {
+                                SalesmanDashboardNavigation(
+                                    navController = navController!!,
+                                    notificationsViewModel = notificationsViewModel,
+                                    pastSalesViewModel = pastSalesViewModel,
+                                    clientsViewModel = clientsViewModel
+                                )
+                            }
                         }
                     }
                 }
@@ -209,8 +238,6 @@ fun SalesmanDashboardNavigation(
     pastSalesViewModel: SalesmanPastSalesViewModel,
     clientsViewModel: SalesmanClientsViewModel
 ) {
-    val context = LocalContext.current
-
     AnimatedNavHost(
         navController = navController as NavHostController,
         startDestination = SalesmanDashboardResources.Notifications.route,

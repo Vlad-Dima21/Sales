@@ -43,7 +43,7 @@ fun SalesmanNotificationsAppBar(
             )
             ClickableText(
                 text = AnnotatedString(
-                    text = "Logout"
+                    text = stringResource(id = R.string.LogOut)
                 ),
                 onClick = { viewModel.logout() },
                 modifier = Modifier
