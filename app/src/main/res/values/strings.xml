@@ -92,4 +92,12 @@
     <string name="Welcome">Welcome</string>
     <string name="UnassignedDescription">You have not been assigned to a team yet. Once that happens, you will be able to register your own sales and contact other team members.\nNo further actions are required, you just need to wait for your manager to confirm your account.</string>
     <string name="LogOut">Log out</string>
+    <string name="DashboardProductsStats">Products stats</string>
+    <string name="Last7Days">7 days</string>
+    <string name="Last30Days">30 days</string>
+    <string name="BestSellingProducts">Best selling products</string>
+    <string name="NoProductStatsAvailable">No product stats available</string>
+    <string name="SalesForProduct">Sales for %1$s\n(%2$s)</string>
+    <string name="MostProfitableProducts">Most profitable products</string>
+    <string name="ProfitsForProduct">Profits for %1$s\n(%2$s)</string>
 </resources>

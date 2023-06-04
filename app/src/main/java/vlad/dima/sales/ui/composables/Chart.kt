@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.lang.Integer.max
+import java.lang.Math.min
 
 
 data class ChartData(
@@ -70,7 +71,9 @@ fun Chart(
                 textAlign = TextAlign.Center
             )
         ).size
-        val yLabelCount = ((size.height - 2 * chartPadding - xLabelSize.height) / (yLabelSize.height + minLabelDistance)).toInt()
+        val yLabelCount =
+            ((size.height - chartPadding - yLabelSize.height / 2 - xLabelSize.height) / (yLabelSize.height + minLabelDistance)).toInt()
+                .coerceAtMost(5)
         val yLabelMax = run {
             var max = yMax
             var yStep = max(max / (yLabelCount - 1), 1)
@@ -97,7 +100,7 @@ fun Chart(
         val xLabels = run {
             data.map {
                 textMeasurer.measure(
-                    text = it.x.toString(),
+                    text = it.x.toString().padStart(2, '0'),
                     style = TextStyle(
                         color = infoColor,
                         fontSize = infoSize,
@@ -130,15 +133,22 @@ fun Chart(
         val xLabelsYOffset = run {
             chartPadding + (yLabels.size - 1) * spaceBetweenYLabels + yLabelSize.height / 2
         }
-        val spaceBetweenXLabels = (size.width - xLabelsXOffset - 3 * chartPadding) / (xLabels.size - 1)
+        val spaceBetweenXLabels = (size.width - xLabelsXOffset - chartPadding - xLabelSize.height) / (xLabels.size - 1)
+        var xStep = 1
+        when {
+            data.size == 30 -> xStep = 3
+            data.size > 7 -> xStep = 2
+        }
         xLabels.forEachIndexed { index, result ->
-            drawText(
-                textLayoutResult = result,
-                topLeft = Offset(
-                    x = xLabelsXOffset + index * spaceBetweenXLabels,
-                    y = xLabelsYOffset.toFloat() + chartPadding * 2
+            if ((xLabels.indices step xStep).contains(index)) {
+                drawText(
+                    textLayoutResult = result,
+                    topLeft = Offset(
+                        x = xLabelsXOffset + index * spaceBetweenXLabels,
+                        y = xLabelsYOffset.toFloat() + chartPadding * 2
+                    )
                 )
-            )
+            }
         }
 
         val contentOffset = chartPadding + yLabelSize.height / 2
@@ -146,25 +156,16 @@ fun Chart(
         fun yValueToContent(value: Int): Float = contentHeight - (value * contentHeight / yLabelMax)
         val chartPath = Path()
         chartPath.moveTo(
-            x = xLabelsXOffset.toFloat(),
+            x = (xLabelsXOffset + xLabelSize.height / 2).toFloat(),
             y = contentOffset + yValueToContent(data.first().y)
         )
 
         data.forEachIndexed { index, data ->
             chartPath.lineTo(
-                x = xLabelsXOffset + index * spaceBetweenXLabels,
+                x = xLabelsXOffset + index * spaceBetweenXLabels + xLabels[index].size.height / 2,
                 y = contentOffset + yValueToContent(data.y)
             )
         }
-        drawPath(
-            path = chartPath,
-            color = contentColor,
-            style = Stroke(
-                width = 8f,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round
-            )
-        )
 
         drawLine(
             color = infoColor,
@@ -186,6 +187,16 @@ fun Chart(
             end = Offset(
                 x = size.width - chartPadding,
                 y = xLabelsYOffset.toFloat()
+            )
+        )
+
+        drawPath(
+            path = chartPath,
+            color = contentColor,
+            style = Stroke(
+                width = 8f,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
             )
         )
     }

@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -27,13 +26,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.composable
+import com.google.accompanist.navigation.animation.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import vlad.dima.sales.R
 import vlad.dima.sales.model.repository.UserRepository
@@ -44,12 +43,15 @@ import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
+import vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats.ProductsStatsPage
+import vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats.ProductsStatsViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class ManagerDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationsViewModel: ManagerNotificationsViewModel
+    private lateinit var productsStatsViewModel: ProductsStatsViewModel
 
     private lateinit var addedActivityResult: ActivityResultLauncher<Intent>
     private lateinit var deletedActivityResult: ActivityResultLauncher<Intent>
@@ -64,6 +66,11 @@ class ManagerDashboardActivity : ComponentActivity() {
             owner = this,
             factory = ManagerNotificationsViewModel.Factory(repository, networkManager)
         )[ManagerNotificationsViewModel::class.java]
+
+        productsStatsViewModel = ViewModelProvider(
+            owner = this,
+            factory = ProductsStatsViewModel.Factory(networkManager)
+        )[ProductsStatsViewModel::class.java]
 
         addedActivityResult = registerAddedActivityResult()
         deletedActivityResult = registerDeletedActivityResult()
@@ -103,9 +110,9 @@ class ManagerDashboardActivity : ComponentActivity() {
                         }
                         ManagerDashboardNavigation(
                             navController = navController!!,
-                            notificationsViewModel = notificationsViewModel
+                            notificationsViewModel = notificationsViewModel,
+                            productsStatsViewModel = productsStatsViewModel
                         )
-                        ManagerNotificationsPage(viewModel = notificationsViewModel)
                     }
                 }
             }
@@ -169,13 +176,12 @@ class ManagerDashboardActivity : ComponentActivity() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ManagerDashboardNavigation(
-    navController: NavHostController,
-    notificationsViewModel: ManagerNotificationsViewModel
+    navController: NavController,
+    notificationsViewModel: ManagerNotificationsViewModel,
+    productsStatsViewModel: ProductsStatsViewModel
 ) {
-    val context = LocalContext.current
-
     AnimatedNavHost(
-        navController = navController,
+        navController = navController as NavHostController,
         startDestination = ManagerDashboardResources.Notifications.route,
         enterTransition = {
             fadeIn(initialAlpha = 1f)
@@ -185,7 +191,10 @@ fun ManagerDashboardNavigation(
         }
     ) {
         composable(route = ManagerDashboardResources.Notifications.route) {
-            ManagerNotificationsPage(notificationsViewModel)
+            ManagerNotificationsPage(viewModel = notificationsViewModel)
+        }
+        composable(route = ManagerDashboardResources.ProductsStats.route) {
+            ProductsStatsPage(viewModel = productsStatsViewModel)
         }
     }
 }
@@ -193,7 +202,11 @@ fun ManagerDashboardNavigation(
 @Composable
 fun ManagerDashboardBottomNavigation(navController: NavHostController) {
     val backStackEntry = navController.currentBackStackEntryAsState()
-    val selectedPage = ManagerDashboardResources.Notifications
+    val selectedPage = listOf(
+        ManagerDashboardResources.Notifications,
+        ManagerDashboardResources.ProductsStats
+    )
+        .find { it.route == backStackEntry.value?.destination?.route }
 
     BottomNavigation(
         modifier = Modifier.height(80.dp),
@@ -203,13 +216,24 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
         AnimatedBottomNavigationItem(
             isSelected = ManagerDashboardResources.Notifications == selectedPage,
             onClick = {
-                val previousRoute = selectedPage.route
+                val previousRoute = selectedPage?.route
                 navController.navigate(ManagerDashboardResources.Notifications.route) {
-                    popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    if(previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
                     restoreState = true
                 }
             },
             resource = ManagerDashboardResources.Notifications
+        )
+        AnimatedBottomNavigationItem(
+            isSelected = ManagerDashboardResources.ProductsStats == selectedPage,
+            onClick = {
+                val previousRoute = selectedPage?.route
+                navController.navigate(ManagerDashboardResources.ProductsStats.route) {
+                    if(previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
+                }
+            },
+            resource = ManagerDashboardResources.ProductsStats
         )
     }
 }

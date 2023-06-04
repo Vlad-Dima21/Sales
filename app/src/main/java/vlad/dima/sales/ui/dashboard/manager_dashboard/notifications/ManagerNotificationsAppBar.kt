@@ -21,7 +21,6 @@ import vlad.dima.sales.R
 
 @Composable
 fun ManagerNotificationsAppBar(viewModel: ManagerNotificationsViewModel) {
-    val localContext = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()

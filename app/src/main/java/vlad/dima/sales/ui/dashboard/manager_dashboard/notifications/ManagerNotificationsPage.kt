@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -112,6 +113,22 @@ fun ManagerNotificationsPage(viewModel: ManagerNotificationsViewModel) {
                     Alignment.TopCenter
                 )
             )
+
+            if (viewModel.items.isEmpty()) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Feedback,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = MaterialTheme.colors.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = stringResource(id = R.string.NoNotifications), color = MaterialTheme.colors.onBackground)
+                }
+            }
 
             androidx.compose.animation.AnimatedVisibility(
                 modifier = Modifier
