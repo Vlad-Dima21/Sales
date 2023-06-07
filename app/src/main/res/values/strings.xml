@@ -100,4 +100,8 @@
     <string name="SalesForProduct">Sales for %1$s\n(%2$s)</string>
     <string name="MostProfitableProducts">Most profitable products</string>
     <string name="ProfitsForProduct">Profits for %1$s\n(%2$s)</string>
+    <string name="DashboardSalesmenStats">Salesmen stats</string>
+    <string name="NoSalesmenStatsAvailable">No salesmen stats available</string>
+    <string name="SalesmenWithMostSales">Salesmen with most sales</string>
+    <string name="SalesmenWithMostProfits">Salesmen with most profits</string>
 </resources>

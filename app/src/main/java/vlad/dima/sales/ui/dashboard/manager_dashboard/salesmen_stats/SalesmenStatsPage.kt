@@ -1,6 +1,5 @@
-package vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats
+package vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,13 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -29,6 +25,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.ShowChart
+import androidx.compose.material.icons.rounded.GroupOff
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -38,41 +35,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
-import vlad.dima.sales.ui.composables.AsyncImage
 import vlad.dima.sales.ui.composables.Chart
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
+fun SalesmenStatsPage(viewModel: SalesmenStatsViewModel) {
     val networkStatus by viewModel.networkStatus.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val statsInterval by viewModel.statsInterval.collectAsState()
-    val selectedProductSelling by viewModel.selectedProductSelling.collectAsState()
-    val selectedProductProfitable by viewModel.selectedProductProfitable.collectAsState()
-    val topSellingProducts by viewModel.topSellingProducts.collectAsState()
-    val topSellingChartData by viewModel.topSellingProductsChartData.collectAsState()
-    val topProfitableProducts by viewModel.topProfitableProducts.collectAsState()
-    val topProfitableChartData by viewModel.topProfitableChartData.collectAsState()
+    val selectedSalesmanBySales by viewModel.selectedSalesmanSelling.collectAsState()
+    val selectedSalesmanByProfit by viewModel.selectedSalesmanProfitable.collectAsState()
+    val topSalesmenBySales by viewModel.salesmenBySales.collectAsState()
+    val salesmenBySalesChartData by viewModel.salesmenBySalesChartData.collectAsState()
+    val salesmenByProfitChartData by viewModel.salesmenByProfitChartData.collectAsState()
+    val topSalesmenByProfit by viewModel.salesmenByProfit.collectAsState()
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isLoading,
-        onRefresh = viewModel::loadOrdersAndProducts)
+        onRefresh = viewModel::loadOrdersAndSalesmen
+    )
 
     Column(
         modifier = Modifier
             .background(MaterialTheme.colors.background)
             .fillMaxSize()
     ) {
-        ProductsStatsAppBar(onSelectInterval = { interval ->
+        SalesmenStatsAppBar(onSelectInterval = { interval ->
             viewModel.changeInterval(interval)
         })
         Box(
@@ -89,9 +83,9 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = if (topSellingProducts.isEmpty()) Arrangement.Center else Arrangement.Top
+                verticalArrangement = if (topSalesmenBySales.isEmpty() && topSalesmenByProfit.isEmpty()) Arrangement.Center else Arrangement.Top
             ) {
-                if (topSellingProducts.isEmpty() && topProfitableProducts.isEmpty()) {
+                if (topSalesmenBySales.isEmpty() && topSalesmenByProfit.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -100,14 +94,14 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                             modifier = Modifier.align(Alignment.Center),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(
-                                modifier = Modifier.sizeIn(maxWidth = 80.dp),
-                                painter = painterResource(id = R.drawable.empty_box),
-                                contentDescription = stringResource(id = R.string.NoProductStatsAvailable),
-                                colorFilter = ColorFilter.tint(color = MaterialTheme.colors.onBackground)
+                            Icon(
+                                modifier = Modifier.size(80.dp),
+                                imageVector = Icons.Rounded.GroupOff,
+                                contentDescription = stringResource(id = R.string.NoSalesmenStatsAvailable),
+                                tint = MaterialTheme.colors.onBackground
                             )
                             Text(
-                                text = stringResource(id = R.string.NoProductStatsAvailable),
+                                text = stringResource(id = R.string.NoSalesmenStatsAvailable),
                                 color = MaterialTheme.colors.onBackground
                             )
                         }
@@ -126,13 +120,13 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Equalizer,
-                                    contentDescription = stringResource(R.string.BestSellingProducts),
+                                    contentDescription = stringResource(R.string.SalesmenWithMostSales),
                                     modifier = Modifier.size(30.dp),
                                     tint = MaterialTheme.colors.onBackground
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = stringResource(id = R.string.BestSellingProducts),
+                                    text = stringResource(id = R.string.SalesmenWithMostSales),
                                     color = MaterialTheme.colors.onBackground,
                                     fontSize = 28.sp,
                                 )
@@ -141,16 +135,16 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                 Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colors.onBackground.copy(.7f)
                             )
-                            topSellingProducts.forEachIndexed { index, product ->
+                            topSalesmenBySales.forEachIndexed { index, salesman ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)))
                                         .clickable {
-                                            viewModel.setSellingProduct(product)
+                                            viewModel.setSellingSalesman(salesman)
                                         }
                                         .let {
-                                            if (product == selectedProductSelling) {
+                                            if (salesman == selectedSalesmanBySales) {
                                                 return@let it.border(
                                                     1.dp,
                                                     MaterialTheme.colors.secondaryVariant,
@@ -163,30 +157,22 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                         .padding(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    AsyncImage(
-                                        imageUri = product.productImageUri,
-                                        contentDescription = product.productName,
-                                        contentScale = ContentScale.Crop,
-                                        loading = { CircularProgressIndicator() },
-                                        shapeCrop = CircleShape,
-                                        size = 70.dp
-                                    )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = "${index + 1}. ${product.productName}",
+                                        text = "${index + 1}. ${salesman.fullName}",
                                         color = MaterialTheme.colors.onSurface,
                                         fontSize = 20.sp
                                     )
                                 }
                             }
                             Spacer(modifier = Modifier)
-                            if (selectedProductSelling != null) {
+                            if (selectedSalesmanBySales != null) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.ShowChart,
-                                        contentDescription = stringResource(R.string.BestSellingProducts),
+                                        contentDescription = stringResource(R.string.SalesmenWithMostSales),
                                         modifier = Modifier.size(25.dp),
                                         tint = MaterialTheme.colors.onBackground
                                     )
@@ -194,7 +180,7 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                     Text(
                                         text = stringResource(
                                             id = R.string.SalesForProduct,
-                                            selectedProductSelling!!.productName,
+                                            selectedSalesmanBySales!!.fullName,
                                             run {
                                                 val currentDate = Calendar.getInstance()
                                                 val xDaysAgo = Calendar.getInstance()
@@ -222,7 +208,7 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                     )
                                 }
                                 Chart(
-                                    data = topSellingChartData, modifier = Modifier
+                                    data = salesmenBySalesChartData, modifier = Modifier
                                         .fillMaxWidth()
                                         .height(200.dp)
                                 )
@@ -243,13 +229,13 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Equalizer,
-                                    contentDescription = stringResource(R.string.MostProfitableProducts),
+                                    contentDescription = stringResource(R.string.SalesmenWithMostProfits),
                                     modifier = Modifier.size(30.dp),
                                     tint = MaterialTheme.colors.onBackground
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = stringResource(id = R.string.MostProfitableProducts),
+                                    text = stringResource(id = R.string.SalesmenWithMostProfits),
                                     color = MaterialTheme.colors.onBackground,
                                     fontSize = 28.sp,
                                 )
@@ -258,16 +244,16 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                 Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colors.onBackground.copy(.7f)
                             )
-                            topProfitableProducts.forEachIndexed { index, product ->
+                            topSalesmenByProfit.forEachIndexed { index, salesman ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)))
                                         .clickable {
-                                            viewModel.setProfitableProduct(product)
+                                            viewModel.setProfitableSalesman(salesman)
                                         }
                                         .let {
-                                            if (product == selectedProductProfitable) {
+                                            if (salesman == selectedSalesmanByProfit) {
                                                 return@let it.border(
                                                     1.dp,
                                                     MaterialTheme.colors.secondaryVariant,
@@ -280,30 +266,22 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                         .padding(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    AsyncImage(
-                                        imageUri = product.productImageUri,
-                                        contentDescription = product.productName,
-                                        contentScale = ContentScale.Crop,
-                                        loading = { CircularProgressIndicator() },
-                                        shapeCrop = CircleShape,
-                                        size = 70.dp
-                                    )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = "${index + 1}. ${product.productName}",
+                                        text = "${index + 1}. ${salesman.fullName}",
                                         color = MaterialTheme.colors.onSurface,
                                         fontSize = 20.sp
                                     )
                                 }
                             }
                             Spacer(modifier = Modifier)
-                            if (selectedProductProfitable != null) {
+                            if (selectedSalesmanByProfit != null) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.ShowChart,
-                                        contentDescription = stringResource(R.string.MostProfitableProducts),
+                                        contentDescription = stringResource(R.string.SalesmenWithMostProfits),
                                         modifier = Modifier.size(25.dp),
                                         tint = MaterialTheme.colors.onBackground
                                     )
@@ -311,7 +289,7 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                     Text(
                                         text = stringResource(
                                             id = R.string.ProfitsForProduct,
-                                            selectedProductProfitable!!.productName,
+                                            selectedSalesmanByProfit!!.fullName,
                                             run {
                                                 val currentDate = Calendar.getInstance()
                                                 val xDaysAgo = Calendar.getInstance()
@@ -339,7 +317,7 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                                     )
                                 }
                                 Chart(
-                                    data = topProfitableChartData, modifier = Modifier
+                                    data = salesmenByProfitChartData, modifier = Modifier
                                         .fillMaxWidth()
                                         .height(200.dp)
                                 )
@@ -349,8 +327,11 @@ fun ProductsStatsPage(viewModel: ProductsStatsViewModel) {
                     }
                 }
             }
-            PullRefreshIndicator(refreshing = isLoading, state = pullRefreshState, modifier = Modifier.align(
-                Alignment.TopCenter))
+            PullRefreshIndicator(
+                refreshing = isLoading, state = pullRefreshState, modifier = Modifier.align(
+                    Alignment.TopCenter
+                )
+            )
         }
     }
 }

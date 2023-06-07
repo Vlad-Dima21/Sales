@@ -3,8 +3,10 @@ package vlad.dima.sales.ui.dashboard
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.People
 import androidx.compose.ui.graphics.vector.ImageVector
 import vlad.dima.sales.R
 
@@ -19,4 +21,7 @@ sealed class ManagerDashboardResources (
 
     object ProductsStats: ManagerDashboardResources("productsStats",
         R.string.DashboardProductsStats, Icons.Outlined.Inventory2, Icons.Filled.Inventory2)
+
+    object SalesmenStats: ManagerDashboardResources("salesmenStats",
+        R.string.DashboardSalesmenStats, Icons.Outlined.People, Icons.Filled.People)
 }

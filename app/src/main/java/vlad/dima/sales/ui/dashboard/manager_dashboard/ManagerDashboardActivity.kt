@@ -43,8 +43,10 @@ import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
-import vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats.ProductsStatsPage
-import vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats.ProductsStatsViewModel
+import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsPage
+import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsViewModel
+import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.SalesmenStatsPage
+import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.SalesmenStatsViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 import vlad.dima.sales.ui.theme.SalesTheme
 
@@ -52,6 +54,7 @@ class ManagerDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationsViewModel: ManagerNotificationsViewModel
     private lateinit var productsStatsViewModel: ProductsStatsViewModel
+    private lateinit var salesmenStatsViewmodel: SalesmenStatsViewModel
 
     private lateinit var addedActivityResult: ActivityResultLauncher<Intent>
     private lateinit var deletedActivityResult: ActivityResultLauncher<Intent>
@@ -62,6 +65,7 @@ class ManagerDashboardActivity : ComponentActivity() {
 
         val repository = UserRepository(SalesDatabase.getDatabase(this).userDao())
         val networkManager = NetworkManager(applicationContext)
+
         notificationsViewModel = ViewModelProvider(
             owner = this,
             factory = ManagerNotificationsViewModel.Factory(repository, networkManager)
@@ -71,6 +75,11 @@ class ManagerDashboardActivity : ComponentActivity() {
             owner = this,
             factory = ProductsStatsViewModel.Factory(networkManager)
         )[ProductsStatsViewModel::class.java]
+
+        salesmenStatsViewmodel = ViewModelProvider(
+            owner = this,
+            factory = SalesmenStatsViewModel.Factory(networkManager)
+        )[SalesmenStatsViewModel::class.java]
 
         addedActivityResult = registerAddedActivityResult()
         deletedActivityResult = registerDeletedActivityResult()
@@ -111,7 +120,8 @@ class ManagerDashboardActivity : ComponentActivity() {
                         ManagerDashboardNavigation(
                             navController = navController!!,
                             notificationsViewModel = notificationsViewModel,
-                            productsStatsViewModel = productsStatsViewModel
+                            productsStatsViewModel = productsStatsViewModel,
+                            salesmenStatsViewModel = salesmenStatsViewmodel
                         )
                     }
                 }
@@ -178,7 +188,8 @@ class ManagerDashboardActivity : ComponentActivity() {
 fun ManagerDashboardNavigation(
     navController: NavController,
     notificationsViewModel: ManagerNotificationsViewModel,
-    productsStatsViewModel: ProductsStatsViewModel
+    productsStatsViewModel: ProductsStatsViewModel,
+    salesmenStatsViewModel: SalesmenStatsViewModel
 ) {
     AnimatedNavHost(
         navController = navController as NavHostController,
@@ -196,6 +207,9 @@ fun ManagerDashboardNavigation(
         composable(route = ManagerDashboardResources.ProductsStats.route) {
             ProductsStatsPage(viewModel = productsStatsViewModel)
         }
+        composable(route = ManagerDashboardResources.SalesmenStats.route) {
+            SalesmenStatsPage(viewModel = salesmenStatsViewModel)
+        }
     }
 }
 
@@ -204,7 +218,8 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
     val backStackEntry = navController.currentBackStackEntryAsState()
     val selectedPage = listOf(
         ManagerDashboardResources.Notifications,
-        ManagerDashboardResources.ProductsStats
+        ManagerDashboardResources.ProductsStats,
+        ManagerDashboardResources.SalesmenStats
     )
         .find { it.route == backStackEntry.value?.destination?.route }
 
@@ -234,6 +249,17 @@ fun ManagerDashboardBottomNavigation(navController: NavHostController) {
                 }
             },
             resource = ManagerDashboardResources.ProductsStats
+        )
+        AnimatedBottomNavigationItem(
+            isSelected = ManagerDashboardResources.SalesmenStats == selectedPage,
+            onClick = {
+                val previousRoute = selectedPage?.route
+                navController.navigate(ManagerDashboardResources.SalesmenStats.route) {
+                    if(previousRoute != null) popUpTo(previousRoute) { inclusive = true; saveState = true }
+                    restoreState = true
+                }
+            },
+            resource = ManagerDashboardResources.SalesmenStats
         )
     }
 }

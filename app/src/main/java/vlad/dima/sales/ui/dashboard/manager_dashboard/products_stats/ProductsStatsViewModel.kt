@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats
+package vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

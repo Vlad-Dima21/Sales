@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.manager_dashboard.productsStats
+package vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,7 +32,7 @@ import androidx.compose.ui.zIndex
 import vlad.dima.sales.R
 
 @Composable
-fun ProductsStatsAppBar(
+fun SalesmenStatsAppBar(
     onSelectInterval: (interval: Int) -> Unit
 ) {
     var selectedInterval by rememberSaveable {
@@ -49,7 +49,7 @@ fun ProductsStatsAppBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = stringResource(id = R.string.DashboardProductsStats),
+                text = stringResource(id = R.string.DashboardSalesmenStats),
                 fontSize = 20.sp,
                 modifier = Modifier
                     .padding(16.dp)
