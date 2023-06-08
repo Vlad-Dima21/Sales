@@ -23,6 +23,7 @@ import vlad.dima.sales.R
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
+import vlad.dima.sales.model.NotificationMessage
 
 class NotificationChatViewModel(
     private val notificationId: String,

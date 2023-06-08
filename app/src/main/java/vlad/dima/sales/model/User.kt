@@ -8,5 +8,6 @@ import androidx.room.PrimaryKey
 data class User(
     var fullName: String = "",
     var managerUID: String = "unassigned",
+    var email: String = "",
     @PrimaryKey var userUID: String = ""
 )

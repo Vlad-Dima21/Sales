@@ -1,4 +1,4 @@
-package vlad.dima.sales.ui.dashboard.common.notifications.notification_chat
+package vlad.dima.sales.model
 
 import java.util.*
 

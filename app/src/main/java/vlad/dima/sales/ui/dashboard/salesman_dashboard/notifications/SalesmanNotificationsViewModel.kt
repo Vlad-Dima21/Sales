@@ -23,19 +23,33 @@ import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
+import vlad.dima.sales.model.repository.SettingsRepository
 import vlad.dima.sales.ui.dashboard.common.notifications.NotificationsViewModel
 
-class SalesmanNotificationsViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): NotificationsViewModel, ViewModel() {
+class SalesmanNotificationsViewModel(
+    private val repository: UserRepository,
+    private val networkManager: NetworkManager,
+    private val settingsRepository: SettingsRepository
+): NotificationsViewModel, ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val notificationsCollection = Firebase.firestore.collection("notifications")
 
-    val isUserLoggedIn = MutableLiveData(true)
     private lateinit var currentUser: User
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
-    var items by mutableStateOf(listOf<Notification>())
+
+    private val _preferredImportance = settingsRepository.salesmanPreferredImportance()
+//    var items by mutableStateOf(listOf<Notification>())
+    private val _notifications = MutableStateFlow(emptyList<Notification>())
+    val notifications = combine(
+        _notifications,
+        _preferredImportance
+    ) { notifications, importance ->
+        notifications.filter { it.importance >= importance.number }
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _isViewingNotificationIntent = MutableStateFlow<Intent?>(null)
     val networkStatus = networkManager.currentConnection
@@ -61,22 +75,17 @@ class SalesmanNotificationsViewModel(private val repository: UserRepository, pri
 
         viewModelScope.launch {
             networkStatus.collect { status ->
-                if (::currentUser.isInitialized && status == NetworkManager.NetworkStatus.Available && items.isEmpty()) {
+                if (::currentUser.isInitialized && status == NetworkManager.NetworkStatus.Available && _notifications.value.isEmpty()) {
                     loadItems()
                 }
             }
         }
     }
 
-    fun logout() {
-        FirebaseAuth.getInstance().signOut()
-        isUserLoggedIn.postValue(false)
-    }
-
     override fun loadItems() = viewModelScope.launch(Dispatchers.IO) {
         if (networkStatus.value == NetworkManager.NetworkStatus.Available) {
             _isRefreshing.emit(true)
-            items = notificationsCollection.whereEqualTo("managerUID", currentUser.managerUID)
+            _notifications.value = notificationsCollection.whereEqualTo("managerUID", currentUser.managerUID)
                 .orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.toList()
                 .map {
                     val notification = it.toObject(Notification::class.java)!!
@@ -92,10 +101,14 @@ class SalesmanNotificationsViewModel(private val repository: UserRepository, pri
         delay(100)
         _isViewingNotificationIntent.emit(null)
     }
-    class Factory(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModelProvider.Factory {
+    class Factory(
+        private val repository: UserRepository,
+        private val networkManager: NetworkManager,
+        private val settingsRepository: SettingsRepository
+    ): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SalesmanNotificationsViewModel::class.java)) {
-               return SalesmanNotificationsViewModel(repository, networkManager) as T
+               return SalesmanNotificationsViewModel(repository, networkManager, settingsRepository) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

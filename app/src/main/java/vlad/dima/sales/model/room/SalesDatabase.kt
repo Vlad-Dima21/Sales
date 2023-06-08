@@ -16,7 +16,7 @@ import vlad.dima.sales.model.room.user.UserDao
 
 @Database(
     entities = [User::class, Order::class, OrderProduct::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -67,6 +67,14 @@ abstract class SalesDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE user ADD COLUMN `email` TEXT NOT NULL"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): SalesDatabase {
             if (instance != null) {
                 return instance as SalesDatabase
@@ -77,7 +85,7 @@ abstract class SalesDatabase : RoomDatabase() {
                     SalesDatabase::class.java,
                     "sales_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                 Companion.instance = instance
                 return instance

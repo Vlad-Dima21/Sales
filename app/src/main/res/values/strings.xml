@@ -104,4 +104,19 @@
     <string name="NoSalesmenStatsAvailable">No salesmen stats available</string>
     <string name="SalesmenWithMostSales">Salesmen with most sales</string>
     <string name="SalesmenWithMostProfits">Salesmen with most profits</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="Options">Options</string>
+    <string name="AddNewMembers">Add salesmen to your team</string>
+    <string name="ManageTeam">Manage team</string>
+    <string name="AddMember">Add %1$s to your team?</string>
+    <string name="Yes">Yes</string>
+    <string name="Cancel">Cancel</string>
+    <string name="SendEmail">Do you want to notify %1$s via email?</string>
+    <string name="EmailTemplateSubject">You have been added to a team</string>
+    <string name="EmailTemplateBody">Hello %1$s,\n\nYou are now part of a team. Open the app to view more.\n\n%2$s</string>
+    <string name="NoAvailableSalesmen">There are no unassigned salesmen</string>
+    <string name="NoSalesmenInTeam">You have no salesmen in your team</string>
+    <string name="NoEmailAppFound">No email app found</string>
+    <string name="ShowNotificationsWithImportance">Minimum importance level</string>
+    <string name="ViewTeamMembers">View team members</string>
 </resources>

@@ -35,6 +35,7 @@ import java.util.*
 fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
     val refreshing by viewModel.isRefreshing.collectAsState()
     val networkStatus by viewModel.networkStatus.collectAsState()
+    val notifications by viewModel.notifications.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing, { viewModel.loadItems() })
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -61,12 +62,12 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
                     Spacer(modifier = Modifier)
                 }
                 items(
-                    items = viewModel.items,
+                    items = notifications,
                     key = { it.createdDate }
                 ) { notification ->
                     val previousNotification: Notification
-                    val previousIndex = viewModel.items.indexOf(notification) - 1
-                    previousNotification = viewModel.items[max(previousIndex, 0)]
+                    val previousIndex = notifications.indexOf(notification) - 1
+                    previousNotification = notifications[max(previousIndex, 0)]
 
                     if (previousIndex == -1 || DateFormat.getDateInstance().format(notification.createdDate) != DateFormat.getDateInstance().format(previousNotification.createdDate)) {
                         Box(
@@ -105,7 +106,7 @@ fun SalesmanNotificationsPage(viewModel: SalesmanNotificationsViewModel) {
                 )
             )
 
-            if (viewModel.items.isEmpty()) {
+            if (notifications.isEmpty()) {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally

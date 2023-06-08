@@ -76,7 +76,7 @@ class SalesmanDashboardActivity : ComponentActivity() {
 
         val notificationsViewModel: SalesmanNotificationsViewModel = ViewModelProvider(
             owner = this,
-            factory = SalesmanNotificationsViewModel.Factory(userRepository, networkManager)
+            factory = SalesmanNotificationsViewModel.Factory(userRepository, networkManager, settingsRepository)
         )[SalesmanNotificationsViewModel::class.java]
         val pastSalesViewModel: SalesmanPastSalesViewModel =
             ViewModelProvider(
@@ -190,19 +190,6 @@ class SalesmanDashboardActivity : ComponentActivity() {
         }
 
     private fun notificationsInitialize(notificationsViewModel: SalesmanNotificationsViewModel) {
-        // logout functionality
-        notificationsViewModel.isUserLoggedIn.observe(this) { isUserLoggedIn ->
-            if (!isUserLoggedIn) {
-                runBlocking {
-                    dataStore.edit {
-                        it.clear()
-                    }
-                }
-                startActivity(Intent(this, EnterAccountActivity::class.java))
-                finish()
-            }
-        }
-
         lifecycleScope.launch {
             notificationsViewModel.isViewingNotificationIntent.collect {
                 if (it != null) {

@@ -83,7 +83,8 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
                         withContext(Dispatchers.IO) {
                             val newUser = User(
                                 fullName = fullNameFieldState,
-                                userUID = user.uid
+                                userUID = user.uid,
+                                email = emailFieldState
                             )
                             try {
                                 userCollectionRef.add(
@@ -151,7 +152,8 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
                             val newUser = User(
                                 fullName = userFromDb!!.fullName,
                                 userUID = user.uid,
-                                managerUID = userFromDb!!.managerUID
+                                managerUID = userFromDb!!.managerUID,
+                                email = userFromDb.email
                             )
                             repository.upsertUser(newUser)
                         }
@@ -162,8 +164,10 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
                             else -> AccountStatus(R.string.LogInUnsuccessfull, false)
                         }
                 } catch (e: FirebaseAuthInvalidCredentialsException) {
-                    _actionResult.value = AccountStatus(R.string.PasswordIsTooWeak, false)
-                    _inputError.value = InvalidFields.Password
+//                    _actionResult.value = AccountStatus(R.string.PasswordIsTooWeak, false)
+//                    _inputError.value = InvalidFields.Password
+                    _actionResult.value = AccountStatus(R.string.InvalidCredentials, false)
+                    _inputError.value = InvalidFields.All
                 } catch (e: FirebaseAuthInvalidUserException) {
                     _actionResult.value = AccountStatus(R.string.InvalidCredentials, false)
                     _inputError.value = InvalidFields.All

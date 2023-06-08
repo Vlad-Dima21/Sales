@@ -89,7 +89,7 @@ class ManagerDashboardActivity : ComponentActivity() {
         notificationsInitialize(notificationsViewModel)
 
         setContent {
-            SalesTheme {
+            SalesTheme(defaultSystemBarsColor = false) {
                 navController = rememberAnimatedNavController()
                 val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
                 val uiController = rememberSystemUiController()

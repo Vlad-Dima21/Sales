@@ -85,7 +85,7 @@ class EnterAccountActivity : ComponentActivity() {
             }
         }
 
-        // set the app to be in fullscreen (can draw behind status bar)
+        // set the activity to be in fullscreen (can draw behind status bar)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // the activity observes the results of viewModel operations

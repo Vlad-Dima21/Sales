@@ -1,5 +1,6 @@
 package vlad.dima.sales.ui.dashboard.salesman_dashboard.clients
 
+import android.content.Intent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +38,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
@@ -47,12 +50,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import vlad.dima.sales.R
 import vlad.dima.sales.ui.composables.SortButton
+import vlad.dima.sales.ui.settings.SettingsActivity
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SalesmanClientsAppBar(
     viewModel: SalesmanClientsViewModel
 ) {
+    val localContext = LocalContext.current
     val sort by viewModel.sort.collectAsState()
     val searchText = viewModel.search
     var searchExtended by rememberSaveable {
@@ -73,12 +78,26 @@ fun SalesmanClientsAppBar(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = stringResource(R.string.DashboardClients),
-                fontSize = 20.sp,
-                modifier = Modifier
-                    .padding(16.dp)
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.DashboardClients),
+                    fontSize = 20.sp,
+                    modifier = Modifier
+                        .padding(16.dp)
+                )
+                IconButton(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    onClick = {
+                        localContext.startActivity(
+                            Intent(localContext, SettingsActivity::class.java)
+                        )
+                    }
+                ) {
+                    Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(id = R.string.Options))
+                }
+            }
             Spacer(modifier = Modifier.height(5.dp))
             Box(
                 modifier = Modifier
