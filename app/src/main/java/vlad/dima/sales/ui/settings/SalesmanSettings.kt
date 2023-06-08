@@ -65,11 +65,20 @@ fun ColumnScope.SalesmanSettings(
             .padding(horizontal = 8.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = stringResource(id = R.string.ShowNotificationsWithImportance),
-            modifier = Modifier.weight(1f),
-            fontSize = 20.sp
-        )
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = stringResource(id = R.string.ShowNotificationsWithImportance),
+                fontSize = 20.sp
+            )
+            Text(
+                text = stringResource(id = R.string.NotificationImportanceDetails),
+                color = MaterialTheme.colors.onSurface.copy(.7f),
+                fontSize = 12.sp
+            )
+        }
+        Spacer(modifier = Modifier.width(5.dp))
         Box {
             Row(
                 modifier = Modifier
@@ -198,7 +207,13 @@ fun SalesmanViewTeam(
                                 try {
                                     localContext.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(localContext, R.string.NoEmailAppFound, Toast.LENGTH_SHORT).show()
+                                    Toast
+                                        .makeText(
+                                            localContext,
+                                            R.string.NoEmailAppFound,
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        .show()
                                 }
                             }
                             .padding(vertical = 8.dp, horizontal = 8.dp),
