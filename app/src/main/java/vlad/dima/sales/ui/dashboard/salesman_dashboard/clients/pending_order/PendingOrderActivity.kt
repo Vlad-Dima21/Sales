@@ -11,6 +11,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -106,6 +107,9 @@ class PendingOrderActivity : ComponentActivity() {
                 var viewedImage by rememberSaveable {
                     mutableStateOf(Uri.EMPTY)
                 }
+                var isImageViewed by rememberSaveable {
+                    mutableStateOf(false)
+                }
                 Column(
                     modifier = Modifier.background(MaterialTheme.colors.background)
                 ) {
@@ -114,7 +118,8 @@ class PendingOrderActivity : ComponentActivity() {
                             text = stringResource(id = R.string.CheckConnection),
                             color = MaterialTheme.colors.onError,
                             fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .background(systemBarsColor)
                                 .padding(8.dp),
                             textAlign = TextAlign.Center
@@ -148,6 +153,7 @@ class PendingOrderActivity : ComponentActivity() {
                                 ),
                                 onImageClick = { imageUri ->
                                     viewedImage = imageUri
+                                    isImageViewed = true
                                 }
                             )
                         }
@@ -156,9 +162,9 @@ class PendingOrderActivity : ComponentActivity() {
                     }
                 }
                 AnimatedVisibility(
-                    visible = viewedImage != Uri.EMPTY,
+                    visible = isImageViewed,
                     enter = fadeIn(),
-                    exit = ExitTransition.None
+                    exit = fadeOut()
                 ) {
                     Box(
                         modifier = Modifier
@@ -170,7 +176,7 @@ class PendingOrderActivity : ComponentActivity() {
                                 MutableInteractionSource(),
                                 indication = null
                             ) {
-                                viewedImage = Uri.EMPTY
+                                isImageViewed = false
                             }
                     ) {
                         AsyncImage(

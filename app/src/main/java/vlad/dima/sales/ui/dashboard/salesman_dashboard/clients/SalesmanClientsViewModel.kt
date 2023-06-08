@@ -100,7 +100,7 @@ class SalesmanClientsViewModel(
                     }
                 }
             }
-                .stateIn(viewModelScope)
+                .stateIn(viewModelScope, SharingStarted.Eagerly, Unit)
         }
     }
 
