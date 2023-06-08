@@ -31,6 +31,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 import vlad.dima.sales.R
 import vlad.dima.sales.network.NetworkManager
@@ -55,7 +57,7 @@ class EnterAccountActivity : ComponentActivity() {
 
         viewModel = ViewModelProvider(
             this,
-            EnterAccountViewModel.Factory(repository, networkManager)
+            EnterAccountViewModel.Factory(repository, networkManager, FirebaseAuth.getInstance(), Firebase.firestore.collection("users"))
         )[EnterAccountViewModel::class.java]
 
         if (viewModel.isLoggedIn()) {

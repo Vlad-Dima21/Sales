@@ -194,9 +194,11 @@ class ProductsStatsViewModel (
                 snapshot.toObject(User::class.java)!!
             }
             val salesmenUIDs = _salesmen.value.map { it.userUID }
-            _orders.value = ordersCollection.whereIn("salesmanUID", salesmenUIDs).get()
-                .await().documents.map { snapshot ->
-                snapshot.toObject(Order::class.java)!!
+            if (salesmenUIDs.isNotEmpty()) {
+                _orders.value = ordersCollection.whereIn("salesmanUID", salesmenUIDs).get()
+                    .await().documents.map { snapshot ->
+                        snapshot.toObject(Order::class.java)!!
+                    }
             }
             _products.value = productsCollection.get().await().documents.map { snapshot ->
                 snapshot.toObject(Product::class.java)!!.apply { productId = snapshot.id }

@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,12 @@ import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 
-class EnterAccountViewModel(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModel() {
+class EnterAccountViewModel(
+    private val repository: UserRepository,
+    private val networkManager: NetworkManager,
+    private val auth: FirebaseAuth,
+    private val userCollectionRef: CollectionReference
+): ViewModel() {
     
     private val AUTH_TAG = "Firebase_auth_error"
 
@@ -46,9 +52,6 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
 
     private val _actionResult = MutableStateFlow<AccountStatus?>(null)
     val actionResult = _actionResult.asStateFlow()
-
-    private val auth = FirebaseAuth.getInstance()
-    private val userCollectionRef = Firebase.firestore.collection("users")
 
     private val operationInProgress = MutableStateFlow(false)
     val areButtonsEnabled = combine(
@@ -146,13 +149,12 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
                     auth.signInWithEmailAndPassword(emailFieldState, passwordFieldState).await()
                     auth.currentUser?.let { user ->
                         withContext(Dispatchers.IO) {
-                            val db = Firebase.firestore.collection("users")
-                            val userFromDb = db.whereEqualTo("userUID", user.uid).get().await().documents[0].toObject(
+                            val userFromDb = userCollectionRef.whereEqualTo("userUID", user.uid).get().await().documents[0].toObject(
                                 User::class.java)
                             val newUser = User(
                                 fullName = userFromDb!!.fullName,
                                 userUID = user.uid,
-                                managerUID = userFromDb!!.managerUID,
+                                managerUID = userFromDb.managerUID,
                                 email = userFromDb.email
                             )
                             repository.upsertUser(newUser)
@@ -205,10 +207,15 @@ class EnterAccountViewModel(private val repository: UserRepository, private val 
         All
     }
 
-    class Factory(private val repository: UserRepository, private val networkManager: NetworkManager): ViewModelProvider.Factory {
+    class Factory(
+        private val repository: UserRepository,
+        private val networkManager: NetworkManager,
+        private val auth: FirebaseAuth,
+        private val userCollectionRef: CollectionReference
+    ): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(EnterAccountViewModel::class.java)) {
-                return EnterAccountViewModel(repository, networkManager) as T
+                return EnterAccountViewModel(repository, networkManager, auth, userCollectionRef) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }
