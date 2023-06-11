@@ -33,7 +33,7 @@
             android:theme="@style/Theme.Sales"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification"
+            android:name=".ui.dashboard.manager_dashboard.notifications.new_notification.NewNotificationActivity"
             android:exported="false"
             android:label="@string/title_activity_new_notification"
             android:theme="@style/Theme.Sales" />

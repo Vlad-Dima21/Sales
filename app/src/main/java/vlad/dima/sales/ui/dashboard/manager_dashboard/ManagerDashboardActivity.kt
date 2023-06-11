@@ -42,7 +42,7 @@ import vlad.dima.sales.ui.dashboard.ManagerDashboardResources
 import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
-import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotification
+import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotificationActivity
 import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.SalesmenStatsPage
@@ -54,7 +54,7 @@ class ManagerDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationsViewModel: ManagerNotificationsViewModel
     private lateinit var productsStatsViewModel: ProductsStatsViewModel
-    private lateinit var salesmenStatsViewmodel: SalesmenStatsViewModel
+    private lateinit var salesmenStatsViewModel: SalesmenStatsViewModel
 
     private lateinit var addedActivityResult: ActivityResultLauncher<Intent>
     private lateinit var deletedActivityResult: ActivityResultLauncher<Intent>
@@ -76,7 +76,7 @@ class ManagerDashboardActivity : ComponentActivity() {
             factory = ProductsStatsViewModel.Factory(networkManager)
         )[ProductsStatsViewModel::class.java]
 
-        salesmenStatsViewmodel = ViewModelProvider(
+        salesmenStatsViewModel = ViewModelProvider(
             owner = this,
             factory = SalesmenStatsViewModel.Factory(networkManager)
         )[SalesmenStatsViewModel::class.java]
@@ -121,7 +121,7 @@ class ManagerDashboardActivity : ComponentActivity() {
                             navController = navController!!,
                             notificationsViewModel = notificationsViewModel,
                             productsStatsViewModel = productsStatsViewModel,
-                            salesmenStatsViewModel = salesmenStatsViewmodel
+                            salesmenStatsViewModel = salesmenStatsViewModel
                         )
                     }
                 }
@@ -167,7 +167,7 @@ class ManagerDashboardActivity : ComponentActivity() {
             notificationsViewModel.isCreatingNewNotification.collect {
                 if (it) {
                     addedActivityResult.launch(
-                        Intent(this@ManagerDashboardActivity, NewNotification::class.java)
+                        Intent(this@ManagerDashboardActivity, NewNotificationActivity::class.java)
                     )
                 }
             }

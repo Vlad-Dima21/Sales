@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -53,7 +52,7 @@ import vlad.dima.sales.network.NetworkManager
 import vlad.dima.sales.ui.theme.*
 
 const val NOTIFICATION_ERROR = "Post notification error"
-class NewNotification : ComponentActivity() {
+class NewNotificationActivity : ComponentActivity() {
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,7 +132,7 @@ class NewNotification : ComponentActivity() {
                                             } catch (e: Exception) {
                                                 Log.d(NOTIFICATION_ERROR, e.stackTraceToString())
                                                 Toast.makeText(
-                                                    this@NewNotification,
+                                                    this@NewNotificationActivity,
                                                     R.string.SystemError,
                                                     Toast.LENGTH_SHORT
                                                 ).show()

@@ -4,10 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.CollectionReference
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -32,7 +30,7 @@ class EnterAccountUnitTests {
     private lateinit var enterAccountViewModel: EnterAccountViewModel
 
     @Before
-    fun createTestDatabase() {
+    fun createDependencies() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.inMemoryDatabaseBuilder(context, SalesDatabase::class.java).build()
 

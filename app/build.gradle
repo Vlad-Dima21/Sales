@@ -21,6 +21,12 @@ android {
         }
     }
 
+    testOptions  {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -64,6 +70,8 @@ dependencies {
     testImplementation "org.mockito:mockito-core:5.3.1"
     testImplementation "org.mockito.kotlin:mockito-kotlin:5.0.0"
     testImplementation "io.mockk:mockk:1.13.5"
+    testImplementation 'app.cash.turbine:turbine:0.13.0'
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
 
     def nav_version = "2.5.3"
 
