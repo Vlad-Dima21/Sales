@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import vlad.dima.sales.ui.dashboard.DashboardResource
 import vlad.dima.sales.ui.theme.GreenPrimary
 import vlad.dima.sales.R
@@ -50,7 +51,8 @@ fun RowScope.AnimatedBottomNavigationItem(
                 ) {
                     Text(
                         text = title,
-                        color = GreenPrimary
+                        color = GreenPrimary,
+                        textAlign = TextAlign.Center
                     )
                 }
             }

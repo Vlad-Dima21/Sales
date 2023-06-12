@@ -5,7 +5,6 @@
     <string name="Password">Password</string>
     <string name="ToggleVisibility">Toggle visibility</string>
     <string name="SignUp">Sign up</string>
-    <string name="Instead"> instead</string>
     <string name="title_activity_sign_up">SignUp</string>
     <string name="SignUpSuccessful">User signed up</string>
     <string name="SignUpUnsuccessful">User didn\'t sign up</string>

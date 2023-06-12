@@ -107,7 +107,7 @@ fun NotificationCard(
             }
             Row(
                 modifier = Modifier
-                    .widthIn(min = 75.dp)
+                    .widthIn(min = 85.dp)
                     .padding(start = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
