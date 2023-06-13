@@ -39,7 +39,7 @@ import vlad.dima.sales.R
 import vlad.dima.sales.ui.settings.SettingsActivity
 
 @Composable
-fun SalesmenStatsAppBar(
+fun ManagerSalesmenStatsAppBar(
     onSelectInterval: (interval: Int) -> Unit
 ) {
     val localContext = LocalContext.current

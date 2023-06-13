@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -99,40 +100,65 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             )
-            OutlinedTextField(
-                value = viewModel.passwordFieldState,
-                onValueChange = {
-                    viewModel.passwordFieldState = it
-                },
-                label = {
-                    Text(stringResource(R.string.Password))
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = {
-                    virtualKeyboard?.hide()
-                    focusManager.clearFocus()
-                    if (buttonEnabled) {
-                        viewModel.signUpUser()
+            Column {
+                OutlinedTextField(
+                    value = viewModel.passwordFieldState,
+                    onValueChange = {
+                        if (!it.contains(" ")) {
+                            viewModel.passwordFieldState = it
+                        }
+                    },
+                    label = {
+                        Text(stringResource(R.string.Password))
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = {
+                        virtualKeyboard?.hide()
+                        focusManager.clearFocus()
+                        if (buttonEnabled) {
+                            viewModel.signUpUser()
+                        }
+                    }),
+                    visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val toggle =
+                            if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = {
+                            passwordVisibleState = !passwordVisibleState
+                        }) {
+                            Icon(
+                                imageVector = toggle,
+                                contentDescription = stringResource(R.string.ToggleVisibility)
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    isError = inputError in listOf(
+                        EnterAccountViewModel.InvalidFields.All,
+                        EnterAccountViewModel.InvalidFields.Password
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                )
+                stringArrayResource(R.array.PasswordRequirements).forEach {
+                    Row(
+                        modifier = Modifier.padding(top = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Divider(
+                            Modifier
+                                .height(2.dp)
+                                .width(2.dp),
+                            MaterialTheme.colors.onSurface)
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(text = it, fontSize = 12.sp)
                     }
-                }),
-                visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = {
-                        passwordVisibleState = !passwordVisibleState
-                    }) {
-                        Icon(
-                            imageVector = toggle,
-                            contentDescription = stringResource(R.string.ToggleVisibility)
-                        )
-                    }
-                },
-                singleLine = true,
-                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Password),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp)
-            )
+                }
+            }
             Row(
                 modifier = Modifier
                     .padding(top = 50.dp)

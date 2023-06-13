@@ -46,7 +46,7 @@ import java.util.Calendar
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SalesmenStatsPage(viewModel: SalesmenStatsViewModel) {
+fun ManagerSalesmenStatsPage(viewModel: ManagerSalesmenStatsViewModel) {
     val networkStatus by viewModel.networkStatus.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val statsInterval by viewModel.statsInterval.collectAsState()
@@ -66,7 +66,7 @@ fun SalesmenStatsPage(viewModel: SalesmenStatsViewModel) {
             .background(MaterialTheme.colors.background)
             .fillMaxSize()
     ) {
-        SalesmenStatsAppBar(onSelectInterval = { interval ->
+        ManagerSalesmenStatsAppBar(onSelectInterval = { interval ->
             viewModel.changeInterval(interval)
         })
         Box(

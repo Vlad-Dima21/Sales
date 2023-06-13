@@ -120,4 +120,9 @@
     <string name="ShowNotificationsWithImportance">Nivel minim importanță</string>
     <string name="ViewTeamMembers">Vezi membri echipă</string>
     <string name="NotificationImportanceDetails">Filtrează notificări</string>
+    <string-array name="PasswordRequirements">
+        <item>Minim 8 caractere</item>
+        <item>Caractere alfanumerice</item>
+        <item>Cel puțin un caracter special</item>
+    </string-array>
 </resources>

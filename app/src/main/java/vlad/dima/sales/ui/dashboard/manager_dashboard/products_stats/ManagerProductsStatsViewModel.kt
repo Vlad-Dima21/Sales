@@ -23,7 +23,7 @@ import vlad.dima.sales.ui.composables.ChartData
 import java.util.Calendar
 import kotlin.math.min
 
-class ProductsStatsViewModel (
+class ManagerProductsStatsViewModel (
     private val networkManager: NetworkManager
 ): ViewModel() {
 
@@ -226,8 +226,8 @@ class ProductsStatsViewModel (
 
     class Factory(private val networkManager: NetworkManager): ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(ProductsStatsViewModel::class.java)) {
-                return ProductsStatsViewModel(networkManager) as T
+            if (modelClass.isAssignableFrom(ManagerProductsStatsViewModel::class.java)) {
+                return ManagerProductsStatsViewModel(networkManager) as T
             }
             throw IllegalArgumentException("Wrong viewModel type")
         }

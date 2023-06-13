@@ -43,18 +43,18 @@ import vlad.dima.sales.ui.dashboard.common.AnimatedBottomNavigationItem
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsPage
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.ManagerNotificationsViewModel
 import vlad.dima.sales.ui.dashboard.manager_dashboard.notifications.new_notification.NewNotificationActivity
-import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsPage
-import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ProductsStatsViewModel
-import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.SalesmenStatsPage
-import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.SalesmenStatsViewModel
+import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ManagerProductsStatsPage
+import vlad.dima.sales.ui.dashboard.manager_dashboard.products_stats.ManagerProductsStatsViewModel
+import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.ManagerSalesmenStatsPage
+import vlad.dima.sales.ui.dashboard.manager_dashboard.salesmen_stats.ManagerSalesmenStatsViewModel
 import vlad.dima.sales.ui.enter_account.EnterAccountActivity
 import vlad.dima.sales.ui.theme.SalesTheme
 
 class ManagerDashboardActivity : ComponentActivity() {
 
     private lateinit var notificationsViewModel: ManagerNotificationsViewModel
-    private lateinit var productsStatsViewModel: ProductsStatsViewModel
-    private lateinit var salesmenStatsViewModel: SalesmenStatsViewModel
+    private lateinit var productsStatsViewModel: ManagerProductsStatsViewModel
+    private lateinit var managerSalesmenStatsViewModel: ManagerSalesmenStatsViewModel
 
     private lateinit var addedActivityResult: ActivityResultLauncher<Intent>
     private lateinit var deletedActivityResult: ActivityResultLauncher<Intent>
@@ -73,13 +73,13 @@ class ManagerDashboardActivity : ComponentActivity() {
 
         productsStatsViewModel = ViewModelProvider(
             owner = this,
-            factory = ProductsStatsViewModel.Factory(networkManager)
-        )[ProductsStatsViewModel::class.java]
+            factory = ManagerProductsStatsViewModel.Factory(networkManager)
+        )[ManagerProductsStatsViewModel::class.java]
 
-        salesmenStatsViewModel = ViewModelProvider(
+        managerSalesmenStatsViewModel = ViewModelProvider(
             owner = this,
-            factory = SalesmenStatsViewModel.Factory(networkManager)
-        )[SalesmenStatsViewModel::class.java]
+            factory = ManagerSalesmenStatsViewModel.Factory(networkManager)
+        )[ManagerSalesmenStatsViewModel::class.java]
 
         addedActivityResult = registerAddedActivityResult()
         deletedActivityResult = registerDeletedActivityResult()
@@ -121,7 +121,7 @@ class ManagerDashboardActivity : ComponentActivity() {
                             navController = navController!!,
                             notificationsViewModel = notificationsViewModel,
                             productsStatsViewModel = productsStatsViewModel,
-                            salesmenStatsViewModel = salesmenStatsViewModel
+                            managerSalesmenStatsViewModel = managerSalesmenStatsViewModel
                         )
                     }
                 }
@@ -188,8 +188,8 @@ class ManagerDashboardActivity : ComponentActivity() {
 fun ManagerDashboardNavigation(
     navController: NavController,
     notificationsViewModel: ManagerNotificationsViewModel,
-    productsStatsViewModel: ProductsStatsViewModel,
-    salesmenStatsViewModel: SalesmenStatsViewModel
+    productsStatsViewModel: ManagerProductsStatsViewModel,
+    managerSalesmenStatsViewModel: ManagerSalesmenStatsViewModel
 ) {
     AnimatedNavHost(
         navController = navController as NavHostController,
@@ -205,10 +205,10 @@ fun ManagerDashboardNavigation(
             ManagerNotificationsPage(viewModel = notificationsViewModel)
         }
         composable(route = ManagerDashboardResources.ProductsStats.route) {
-            ProductsStatsPage(viewModel = productsStatsViewModel)
+            ManagerProductsStatsPage(viewModel = productsStatsViewModel)
         }
         composable(route = ManagerDashboardResources.SalesmenStats.route) {
-            SalesmenStatsPage(viewModel = salesmenStatsViewModel)
+            ManagerSalesmenStatsPage(viewModel = managerSalesmenStatsViewModel)
         }
     }
 }

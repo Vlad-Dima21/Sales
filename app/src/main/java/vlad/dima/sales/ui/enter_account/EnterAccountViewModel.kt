@@ -42,6 +42,9 @@ class EnterAccountViewModel(
         pattern = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}\$",
         option = RegexOption.IGNORE_CASE
     )
+    private val passwordRegex = Regex(
+        pattern = "^(?=.+[0-9])(?=.+[a-z])(?=.+[A-z]).{8,}"
+    )
     var emailFieldState by mutableStateOf("")
     var fullNameFieldState by mutableStateOf("")
     var passwordFieldState by mutableStateOf("")
@@ -73,6 +76,16 @@ class EnterAccountViewModel(
                 viewModelScope.launch {
                     _inputError.value = InvalidFields.Email
                     _actionResult.value = AccountStatus(R.string.InvalidEmail, false)
+                    operationInProgress.value = false
+                    delay(errorDelay)
+                    _actionResult.value = null
+                }
+                return
+            }
+            if (!passwordRegex.matches(passwordFieldState)) {
+                viewModelScope.launch {
+                    _inputError.value = InvalidFields.Password
+                    _actionResult.value = AccountStatus(R.string.PasswordIsTooWeak, false)
                     operationInProgress.value = false
                     delay(errorDelay)
                     _actionResult.value = null
@@ -166,8 +179,6 @@ class EnterAccountViewModel(
                             else -> AccountStatus(R.string.LogInUnsuccessfull, false)
                         }
                 } catch (e: FirebaseAuthInvalidCredentialsException) {
-//                    _actionResult.value = AccountStatus(R.string.PasswordIsTooWeak, false)
-//                    _inputError.value = InvalidFields.Password
                     _actionResult.value = AccountStatus(R.string.InvalidCredentials, false)
                     _inputError.value = InvalidFields.All
                 } catch (e: FirebaseAuthInvalidUserException) {

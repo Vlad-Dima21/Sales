@@ -119,4 +119,9 @@
     <string name="ShowNotificationsWithImportance">Minimum importance level</string>
     <string name="ViewTeamMembers">View team members</string>
     <string name="NotificationImportanceDetails">Filter notifications</string>
+    <string-array name="PasswordRequirements">
+        <item>Minimum length of 8</item>
+        <item>Alphanumerical characters</item>
+        <item>At least one special character</item>
+    </string-array>
 </resources>
