@@ -55,7 +55,7 @@ fun Chart(
     Canvas(modifier = modifier) {
         val chartPadding = 10
         val minLabelDistance = 50
-        val yLabelSize = textMeasurer.measure(
+        var yLabelSize = textMeasurer.measure(
             text = yMax.toString(),
             style = TextStyle(
                 color = infoColor,
@@ -77,10 +77,18 @@ fun Chart(
         val yLabelMax = run {
             var max = yMax
             var yStep = max(max / (yLabelCount - 1), 1)
-            while ((max downTo 0 step yStep).last != 0) {
+            while ((max downTo 0 step yStep).last != 0 || (max downTo 0 step yStep).toList().size > 5) {
                 max++
                 yStep = max(max / (yLabelCount - 1), 1)
             }
+            yLabelSize = textMeasurer.measure(
+                text = max.toString(),
+                style = TextStyle(
+                    color = infoColor,
+                    fontSize = infoSize,
+                    textAlign = TextAlign.Center
+                )
+            ).size
             max
         }
         val yStep = max(yLabelMax / (yLabelCount - 1), 1)

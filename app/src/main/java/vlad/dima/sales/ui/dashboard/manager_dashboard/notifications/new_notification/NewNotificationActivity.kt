@@ -291,7 +291,7 @@ fun OptionGroup(
                 } else {
                     Modifier.background(color = MaterialTheme.colors.background)
                 }
-                    .width(80.dp)
+                    .width(100.dp)
                     .padding(10.dp),
                 style = TextStyle(
                     color = if (index == selectedIndex.value) Color.Black else MaterialTheme.colors.onBackground,

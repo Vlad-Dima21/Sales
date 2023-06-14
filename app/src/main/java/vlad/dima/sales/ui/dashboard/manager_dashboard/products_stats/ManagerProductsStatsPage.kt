@@ -134,7 +134,7 @@ fun ManagerProductsStatsPage(viewModel: ManagerProductsStatsViewModel) {
                                 Text(
                                     text = stringResource(id = R.string.BestSellingProducts),
                                     color = MaterialTheme.colors.onBackground,
-                                    fontSize = 28.sp,
+                                    fontSize = 24.sp,
                                 )
                             }
                             Divider(
@@ -251,7 +251,7 @@ fun ManagerProductsStatsPage(viewModel: ManagerProductsStatsViewModel) {
                                 Text(
                                     text = stringResource(id = R.string.MostProfitableProducts),
                                     color = MaterialTheme.colors.onBackground,
-                                    fontSize = 28.sp,
+                                    fontSize = 24.sp,
                                 )
                             }
                             Divider(

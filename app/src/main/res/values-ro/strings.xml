@@ -81,7 +81,7 @@
     <string name="CreatedAt">Creat la</string>
     <string name="MissingProducts">Oferta are produse care nu mai sunt dispobibile</string>
     <string name="SearchClient">Caută client…</string>
-    <string name="SortByOrders">Ordonează după vânzări</string>
+    <string name="SortByOrders">Sortare vânzări</string>
     <string name="ClearText">Șterge</string>
     <string name="NoClients">Niciun client disponibil</string>
     <string name="OrderInsufficientStock">Stoc insuficient pentru anumite produse</string>

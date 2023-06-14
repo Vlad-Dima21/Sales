@@ -404,7 +404,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                                 Spacer(modifier = Modifier.width(5.dp))
                                                 Text(
                                                     text = stringResource(
-                                                        id = R.string.OrderNumber,
+                                                        id = R.string.PendingOrderNumber,
                                                         it
                                                     )
                                                 )
@@ -447,7 +447,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
                                                 Spacer(modifier = Modifier.width(5.dp))
                                                 Text(
                                                     text = stringResource(
-                                                        id = R.string.OrderNumber,
+                                                        id = R.string.PendingOrderNumber,
                                                         it
                                                     )
                                                 )

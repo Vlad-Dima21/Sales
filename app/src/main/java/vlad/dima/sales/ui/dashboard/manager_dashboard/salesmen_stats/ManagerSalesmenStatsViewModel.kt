@@ -138,7 +138,7 @@ class ManagerSalesmenStatsViewModel(
 
     val salesmenByProfitChartData = combine(
         _orders,
-        _selectedSalesmanSelling,
+        _selectedSalesmanProfitable,
         _statsInterval
     ) { orders, salesman, interval ->
         if (orders.isNotEmpty() && salesman != null) {
