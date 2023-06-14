@@ -143,7 +143,13 @@ private fun SaleOrder(
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = stringResource(id = R.string.OrderNumber, saleOrder.order.orderId),
+                        text = stringResource(
+                            id = when(onOrderClick == null) {
+                                true -> R.string.OrderNumber
+                                else -> R.string.PendingOrderNumber
+                            },
+                            saleOrder.order.orderId
+                        ),
                         color = MaterialTheme.colors.onSurface
                     )
                     Column(

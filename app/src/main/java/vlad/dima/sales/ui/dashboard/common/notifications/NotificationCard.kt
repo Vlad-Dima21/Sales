@@ -36,14 +36,14 @@ fun NotificationCard(
 ) {
     val context = LocalContext.current
     val surfaceColor = MaterialTheme.colors.onSurface
-    val importanceColor = remember {
+    val importanceColor = remember(notification) {
         when (notification.importance) {
             1 -> Orange
             2 -> Color.Red
             else -> surfaceColor
         }
     }
-    val importanceText = remember {
+    val importanceText = remember(notification) {
         when (notification.importance) {
             1 -> context.getString(R.string.HightImportance)
             2 -> context.getString(R.string.AlertImportance)
