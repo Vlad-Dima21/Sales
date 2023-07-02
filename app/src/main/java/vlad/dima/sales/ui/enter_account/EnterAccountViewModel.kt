@@ -43,7 +43,7 @@ class EnterAccountViewModel(
         option = RegexOption.IGNORE_CASE
     )
     private val passwordRegex = Regex(
-        pattern = "^(?=.+[0-9])(?=.+[a-z])(?=.+[A-z]).{8,}"
+        pattern = """^(?=.+[0-9])(?=.+[a-zA-Z])(?=.+[*.!@$%^"'&(){}\[\]:;<>,?~_+-]).{8,}$"""
     )
     var emailFieldState by mutableStateOf("")
     var fullNameFieldState by mutableStateOf("")

@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
@@ -173,7 +174,9 @@ fun ManagerAddSalesmanPopup(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "(${it.email})",
-                            color = MaterialTheme.colors.onSurface.copy(.7f)
+                            color = MaterialTheme.colors.onSurface.copy(.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

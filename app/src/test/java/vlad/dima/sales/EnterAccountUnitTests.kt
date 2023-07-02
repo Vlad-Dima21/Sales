@@ -15,6 +15,7 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.network.NetworkManager
@@ -22,6 +23,7 @@ import vlad.dima.sales.ui.enter_account.EnterAccountViewModel
 import java.io.IOException
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [31])
 class EnterAccountUnitTests {
 
     private lateinit var userRepository: UserRepository
@@ -67,6 +69,17 @@ class EnterAccountUnitTests {
             passwordFieldState = "password"
         }.loginUser()
         Assert.assertSame(inputError.value, EnterAccountViewModel.InvalidFields.Email)
+    }
+
+    @Test
+    fun check_signUpWeakPassword() {
+        val inputError = enterAccountViewModel.inputError
+        enterAccountViewModel.apply {
+            emailFieldState = "email@email.com"
+            fullNameFieldState = "name"
+            passwordFieldState = "password"
+        }.signUpUser()
+        Assert.assertSame(inputError.value, EnterAccountViewModel.InvalidFields.Password)
     }
 
     @Test

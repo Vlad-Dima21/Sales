@@ -128,7 +128,7 @@ fun ManagerSalesmenStatsPage(viewModel: ManagerSalesmenStatsViewModel) {
                                 Text(
                                     text = stringResource(id = R.string.SalesmenWithMostSales),
                                     color = MaterialTheme.colors.onBackground,
-                                    fontSize = 24.sp,
+                                    fontSize = 22.sp,
                                 )
                             }
                             Divider(
@@ -237,7 +237,7 @@ fun ManagerSalesmenStatsPage(viewModel: ManagerSalesmenStatsViewModel) {
                                 Text(
                                     text = stringResource(id = R.string.SalesmenWithMostProfits),
                                     color = MaterialTheme.colors.onBackground,
-                                    fontSize = 24.sp,
+                                    fontSize = 22.sp,
                                 )
                             }
                             Divider(

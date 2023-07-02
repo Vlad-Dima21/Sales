@@ -24,6 +24,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,14 +56,7 @@ fun Chart(
     Canvas(modifier = modifier) {
         val chartPadding = 10
         val minLabelDistance = 50
-        var yLabelSize = textMeasurer.measure(
-            text = yMax.toString(),
-            style = TextStyle(
-                color = infoColor,
-                fontSize = infoSize,
-                textAlign = TextAlign.Center
-            )
-        ).size
+        var yLabelSize: IntSize
         val xLabelSize = textMeasurer.measure(
             text = data.last().toString(),
             style = TextStyle(
@@ -71,15 +65,10 @@ fun Chart(
                 textAlign = TextAlign.Center
             )
         ).size
-        val yLabelCount =
-            ((size.height - chartPadding - yLabelSize.height / 2 - xLabelSize.height) / (yLabelSize.height + minLabelDistance)).toInt()
-                .coerceAtMost(5)
         val yLabelMax = run {
-            var max = yMax
-            var yStep = max(max / (yLabelCount - 1), 1)
-            while ((max downTo 0 step yStep).last != 0 || (max downTo 0 step yStep).toList().size > 5) {
-                max++
-                yStep = max(max / (yLabelCount - 1), 1)
+            var max = max(yMax, 4)
+            if (max % 4 != 0) {
+                max = (max / 4 + 1) * 4
             }
             yLabelSize = textMeasurer.measure(
                 text = max.toString(),
@@ -91,7 +80,7 @@ fun Chart(
             ).size
             max
         }
-        val yStep = max(yLabelMax / (yLabelCount - 1), 1)
+        val yStep = max(yLabelMax / 4, 1)
         val yLabels = run {
             (yLabelMax downTo 0 step yStep).map {
                 textMeasurer.measure(

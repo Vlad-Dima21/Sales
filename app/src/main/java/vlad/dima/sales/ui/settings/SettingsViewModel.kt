@@ -98,6 +98,7 @@ class SettingsViewModel(
             ).get().await().documents.map {
                 it.toObject(User::class.java)!!
             }
+                .filter { it.userUID != currentUserUID }
                 .sortedWith(compareBy({ it.managerUID }, { it.fullName }))
         }
     }

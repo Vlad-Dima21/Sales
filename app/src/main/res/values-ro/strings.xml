@@ -108,7 +108,7 @@
     <string name="Options">Opțiuni</string>
     <string name="AddNewMembers">Adaugă agenți în echipă</string>
     <string name="ManageTeam">Gestionează echipă</string>
-    <string name="AddMember">Adaugi utilizatoru%1$s în echipa ta?</string>
+    <string name="AddMember">Adaugi utilizatorul %1$s în echipa ta?</string>
     <string name="Yes">Da</string>
     <string name="Cancel">Anulare</string>
     <string name="SendEmail">Notifici agentul %1$s prin email?</string>

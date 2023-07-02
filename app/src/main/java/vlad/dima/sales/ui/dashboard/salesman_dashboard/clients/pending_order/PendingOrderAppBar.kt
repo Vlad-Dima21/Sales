@@ -95,13 +95,15 @@ fun PendingOrderAppBar(
                     AnimatedVisibility(visible = orderStatus == PendingOrderViewModel.OrderStatus.INVALID) {
                         Text(
                             color = Color.Red,
-                            text = stringResource(id = R.string.CheckFields)
+                            text = stringResource(id = R.string.CheckFields),
+                            fontSize = 12.sp
                         )
                     }
                     AnimatedVisibility(visible = orderStatus == PendingOrderViewModel.OrderStatus.FAILED) {
                         Text(
                             color = Color.Red,
-                            text = stringResource(id = R.string.SystemError)
+                            text = stringResource(id = R.string.SystemError),
+                            fontSize = 12.sp
                         )
                     }
 
