@@ -54,6 +54,7 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -112,6 +113,11 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
     LaunchedEffect(scrollToClient) {
         if (scrollToClient > 0) {
             lazyListState.animateScrollToItem(scrollToClient)
+        }
+    }
+    DisposableEffect(scaffoldState) {
+        onDispose {
+            viewModel.deleteAllOrders()
         }
     }
     Scaffold(

@@ -95,7 +95,12 @@ class SalesmanPastSalesViewModel(
                                         }
                                 }
                                 .sortedBy { it?.product?.productName }
-                            SaleOrder(order, saleProducts.contains(null), noStock, saleProducts.filterNotNull())
+                            SaleOrder(
+                                order,
+                                saleProducts.contains(null),
+                                noStock,
+                                saleProducts.filterNotNull()
+                            )
                         }
                         .sortedByDescending { it.order.createdDate }
                     SaleClient(client, saleOrders)
@@ -120,9 +125,9 @@ class SalesmanPastSalesViewModel(
 
     private val _uploadState = MutableStateFlow(UploadSaleState.Idle)
     val uploadState = _uploadState.asStateFlow()
-    private val _newOrdersRefresh = MutableStateFlow(false)                     // used to broadcast to the activity if there are new orders
+    private val _newOrdersRefresh =
+        MutableStateFlow(false)                     // used to broadcast to the activity if there are new orders
     val newOrdersRefresh = _newOrdersRefresh.asStateFlow()
-
 
 
     //past sales
@@ -150,7 +155,12 @@ class SalesmanPastSalesViewModel(
                             }
                                 .sortedBy { it?.product?.productName }
                             // insufficient stock is not important for past sales
-                            SaleOrder(order, saleProducts.contains(null), false, saleProducts.filterNotNull())
+                            SaleOrder(
+                                order,
+                                saleProducts.contains(null),
+                                false,
+                                saleProducts.filterNotNull()
+                            )
                         }
                         .sortedByDescending { it.order.createdDate }
                     SaleClient(client, saleOrders)
@@ -215,7 +225,8 @@ class SalesmanPastSalesViewModel(
 
     private fun loadClients() = viewModelScope.launch(Dispatchers.IO) {
         _clients.value =
-            clientsCollection.whereEqualTo("managerUID", currentUserWithDetails.value.managerUID).get()
+            clientsCollection.whereEqualTo("managerUID", currentUserWithDetails.value.managerUID)
+                .get()
                 .await().documents.map { documentSnapshot ->
                     documentSnapshot.toObject(Client::class.java)!!.apply {
                         clientId = documentSnapshot.id
@@ -225,7 +236,9 @@ class SalesmanPastSalesViewModel(
 
     private fun loadPastSales() = viewModelScope.launch(Dispatchers.IO) {
         _isRefreshing.value = true
-        _pastSales.value = ordersCollection.whereEqualTo("salesmanUID", currentUser.uid).orderBy("createdDate", Query.Direction.DESCENDING).get().await().documents.map { documentSnapshot ->
+        _pastSales.value = ordersCollection.whereEqualTo("salesmanUID", currentUser.uid)
+            .orderBy("createdDate", Query.Direction.DESCENDING).get()
+            .await().documents.map { documentSnapshot ->
             documentSnapshot.toObject(Order::class.java)!!
         }
         _isRefreshing.value = false
@@ -246,6 +259,11 @@ class SalesmanPastSalesViewModel(
             falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
     }
 
+    fun deleteAllOrders() = viewModelScope.launch(Dispatchers.IO) {
+        orderRepository.deleteOrders(*falseDeletedLocalOrders.value.toTypedArray())
+        falseDeletedLocalOrders.value = emptyList()
+    }
+
     fun undoFalseDelete(order: Order) {
         falseDeletedLocalOrders.value =
             falseDeletedLocalOrders.value.toMutableList().apply { remove(order) }
@@ -255,41 +273,69 @@ class SalesmanPastSalesViewModel(
         _uploadState.value = UploadSaleState.Loading
         _ordersWithInsufficientStock.value = emptyList()
         _ordersWithRemovedProducts.value = emptyList()
+        orderRepository.deleteOrders(*falseDeletedLocalOrders.value.toTypedArray())
+        falseDeletedLocalOrders.value = emptyList()
+
         withContext(Dispatchers.IO) {
+            productsLock(true)
             products.value = productsCollection.get().await().documents.map { documentSnapshot ->
                 documentSnapshot.toObject(Product::class.java)!!.apply {
                     productId = documentSnapshot.id
                 }
             }
         }
+
         // used to update products stock
         val productQuantities = mutableMapOf<String, Int>()
-        localOrderProducts.value.groupBy { it.productId }
-            .forEach { (productId, orderProducts) ->
-                val product = products.value.find { it.productId == productId }
-                if (product != null) {
-                    val productQuantity =
-                        orderProducts.fold(0) { sum: Int, orderProduct: OrderProduct ->
-                            sum + orderProduct.quantity
+        val confirmFailed = run {
+            localOrderProducts.value.groupBy { it.productId }
+                .forEach { (productId, orderProducts) ->
+                    val product = products.value.find { it.productId == productId }
+                    if (product != null) {
+                        val productQuantity =
+                            orderProducts.fold(0) { sum: Int, orderProduct: OrderProduct ->
+                                sum + orderProduct.quantity
+                            }
+                        if (productQuantity > product.stock) {
+                            _ordersWithInsufficientStock.value =
+                                _ordersWithInsufficientStock.value.toMutableList()
+                                    .apply { addAll(orderProducts.map { it.orderId }) }
+                            _uploadState.value = UploadSaleState.StockInvalid.apply {
+                                this.productCode = product.productCode
+                            }
+                            return@run true
                         }
-                    if (productQuantity > product.stock) {
-                        _ordersWithInsufficientStock.value =
-                            _ordersWithInsufficientStock.value.toMutableList()
+                        productQuantities[productId] = productQuantity
+                    } else {
+                        _ordersWithRemovedProducts.value =
+                            _ordersWithRemovedProducts.value.toMutableList()
                                 .apply { addAll(orderProducts.map { it.orderId }) }
-                        _uploadState.value = UploadSaleState.StockInvalid.apply {
-                            this.productCode = product.productCode
-                        }
-                        return@launch
+                        _uploadState.value = UploadSaleState.ProductsInvalid
+                        return@run true
                     }
-                    productQuantities[productId] = productQuantity
-                } else {
-                    _ordersWithRemovedProducts.value =
-                        _ordersWithRemovedProducts.value.toMutableList()
-                            .apply { addAll(orderProducts.map { it.orderId }) }
-                    _uploadState.value = UploadSaleState.ProductsInvalid
-                    return@launch
                 }
+            false
+        }
+        if (confirmFailed) {
+            withContext(Dispatchers.IO) {
+                productsLock(false)
             }
+            return@launch
+        }
+
+        withContext(Dispatchers.IO) {
+            productQuantities.forEach { (productId, quantity) ->
+                productsCollection.document(productId)
+                    .update("stock", FieldValue.increment((-quantity).toLong())).await()
+            }
+            productsLock(false)
+        }
+
+        // update will be denied until resource is no longer locked
+        withContext(Dispatchers.IO) {
+            ordersLock(true)
+        }
+
         var maxOrderId = withContext(Dispatchers.IO) {
             ordersCollection.orderBy("orderId", Query.Direction.DESCENDING).limit(1).get()
                 .await().documents.run {
@@ -314,18 +360,48 @@ class SalesmanPastSalesViewModel(
                 ordersCollection.add(it).await()
             }
         }
+
         withContext(Dispatchers.IO) {
-            productQuantities.forEach { (productId, quantity) ->
-                productsCollection.document(productId)
-                    .update("stock", FieldValue.increment((-quantity).toLong())).await()
-            }
+            ordersLock(false)
         }
+
         orderRepository.deleteOrders(*localOrders.value.toTypedArray())
         _uploadState.value = UploadSaleState.UploadSuccessful
         loadPastSales()
         _newOrdersRefresh.value = true
         delay(100)
         _newOrdersRefresh.value = false
+    }
+
+    private val lockDelay = 500L
+    private suspend fun productsLock(shouldLock: Boolean) {
+        if (shouldLock) {
+            while (true) {
+                try {
+                    productsCollection.document("attributes").update("lockedBy", currentUser.uid).await()
+                    break;
+                } catch (e: Exception) {
+                    delay(lockDelay)
+                }
+            }
+        } else {
+            productsCollection.document("attributes").update("lockedBy", "").await()
+        }
+    }
+
+    private suspend fun ordersLock(shouldLock: Boolean) {
+        if (shouldLock) {
+            while (true) {
+                try {
+                    ordersCollection.document("attributes").update("lockedBy", currentUser.uid).await()
+                    break;
+                } catch (e: Exception) {
+                    delay(lockDelay)
+                }
+            }
+        } else {
+            ordersCollection.document("attributes").update("lockedBy", "").await()
+        }
     }
 
     fun dismissAlert() {
@@ -349,7 +425,8 @@ class SalesmanPastSalesViewModel(
 
     // used to scroll to the client with the pending order
     fun scrollTo(clientId: String) = viewModelScope.launch {
-        _scrollToClient.value = pendingClients.value.indexOfFirst { it.client.clientId == clientId } + 1
+        _scrollToClient.value =
+            pendingClients.value.indexOfFirst { it.client.clientId == clientId } + 1
         delay(100)
         _scrollToClient.value = 0
     }
