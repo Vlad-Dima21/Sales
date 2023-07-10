@@ -120,6 +120,8 @@
     <string name="ViewTeamMembers">View team members</string>
     <string name="NotificationImportanceDetails">Filter notifications</string>
     <string name="PendingOrderNumber">Pending order no. %1$d</string>
+    <string name="Search">Search</string>
+    <string name="Or">Or</string>
     <string-array name="PasswordRequirements">
         <item>Minimum length of 8</item>
         <item>Alphanumerical characters</item>

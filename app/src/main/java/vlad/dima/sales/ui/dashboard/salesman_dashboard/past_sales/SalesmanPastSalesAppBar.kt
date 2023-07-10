@@ -18,13 +18,26 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -37,9 +50,22 @@ import vlad.dima.sales.ui.settings.SettingsActivity
 @Composable
 fun SalesmanPastSalesAppBar(
     isHintVisible: Boolean,
+    query: String,
+    onQueryChange: (String) -> Unit,
     onHintClick: () -> Unit
 ) {
     val localContext = LocalContext.current
+    var isQueryVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
+    val focusRequester = remember {
+        FocusRequester()
+    }
+    LaunchedEffect(isQueryVisible) {
+        if (isQueryVisible) {
+            focusRequester.requestFocus()
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -51,24 +77,89 @@ fun SalesmanPastSalesAppBar(
             elevation = dimensionResource(id = R.dimen.standard_elevation),
             color = MaterialTheme.colors.primary
         ) {
-            Box(
+            Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = localContext.getString(R.string.DashboardSales),
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(16.dp)
-                )
-                IconButton(
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    onClick = {
-                        localContext.startActivity(
-                            Intent(localContext, SettingsActivity::class.java)
-                        )
-                    }
+                Box(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(id = R.string.Options))
+                    Text(
+                        text = localContext.getString(R.string.DashboardSales),
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .padding(16.dp)
+                    )
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        AnimatedVisibility(visible = !isQueryVisible) {
+                            IconButton(
+                                onClick = {
+                                    isQueryVisible = true
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = stringResource(id = R.string.Search)
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                localContext.startActivity(
+                                    Intent(localContext, SettingsActivity::class.java)
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = stringResource(id = R.string.Options)
+                            )
+                        }
+                    }
+                }
+                AnimatedVisibility(visible = isQueryVisible) {
+                    TextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        placeholder = {
+                            Text(text = stringResource(id = R.string.Search))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Search,
+                                contentDescription = stringResource(
+                                    id = R.string.Search
+                                )
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    onQueryChange("")
+                                    isQueryVisible = false
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Clear,
+                                    contentDescription = stringResource(
+                                        id = R.string.ClearText
+                                    )
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        colors = TextFieldDefaults.textFieldColors(
+                            leadingIconColor = MaterialTheme.colors.onPrimary,
+                            trailingIconColor = MaterialTheme.colors.onPrimary,
+                            cursorColor = MaterialTheme.colors.onPrimary,
+                            focusedIndicatorColor = MaterialTheme.colors.onPrimary,
+                            unfocusedIndicatorColor = MaterialTheme.colors.onPrimary
+                        )
+                    )
                 }
             }
         }

@@ -49,7 +49,14 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     // gradient colors used for card header text
-    val gradientColors = listOf(GreenPrimaryLight, GreenPrimary, GreenPrimaryDark, TealSecondaryDark, TealSecondary, TealSecondaryLight)
+    val gradientColors = listOf(
+        GreenPrimaryLight,
+        GreenPrimary,
+        GreenPrimaryDark,
+        TealSecondaryDark,
+        TealSecondary,
+        TealSecondaryLight
+    )
 
     Column(
         modifier = Modifier.padding(15.dp),
@@ -80,11 +87,18 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 label = {
                     Text(stringResource(id = R.string.Email))
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
-                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Email),
+                isError = inputError in listOf(
+                    EnterAccountViewModel.InvalidFields.All,
+                    EnterAccountViewModel.InvalidFields.Email
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = viewModel.passwordFieldState,
                 onValueChange = {
@@ -93,7 +107,10 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 label = {
                     Text(stringResource(R.string.Password))
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
                 keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
@@ -103,7 +120,8 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                 }),
                 visualTransformation = if (passwordVisibleState) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val toggle = if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val toggle =
+                        if (passwordVisibleState) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = {
                         passwordVisibleState = !passwordVisibleState
                     }) {
@@ -114,43 +132,61 @@ fun LoginComposable(navController: NavController, viewModel: EnterAccountViewMod
                     }
                 },
                 singleLine = true,
-                isError = inputError in listOf(EnterAccountViewModel.InvalidFields.All, EnterAccountViewModel.InvalidFields.Password),
+                isError = inputError in listOf(
+                    EnterAccountViewModel.InvalidFields.All,
+                    EnterAccountViewModel.InvalidFields.Password
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp)
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    focusManager.clearFocus()
+                    viewModel.loginUser()
+                },
+                enabled = buttonEnabled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.Login).uppercase(),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
             Row(
                 modifier = Modifier
-                    .padding(top = 50.dp)
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        viewModel.loginUser()
-                    },
-                    enabled = buttonEnabled
-                ) {
-                    Text(
-                        text = stringResource(R.string.Login),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Row {
-                    ClickableText(
-                        text = AnnotatedString(stringResource(R.string.SignUp)),
-                        style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
-                        onClick = {
-                            viewModel.switchPage()
-                            navController.navigate(Screen.SignUpScreen.route) {
-                                popUpTo(Screen.LoginScreen.route) { inclusive = true }
-                            }
-                        }
-                    )
-                }
+                Divider(
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp)
+                )
+                Text(text = stringResource(id = R.string.Or).lowercase())
+                Divider(
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp - ButtonDefaults.ContentPadding.calculateTopPadding()))
+            TextButton(
+                onClick = {
+                    viewModel.switchPage()
+                    navController.navigate(Screen.SignUpScreen.route) {
+                        popUpTo(Screen.LoginScreen.route) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = stringResource(R.string.SignUp),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

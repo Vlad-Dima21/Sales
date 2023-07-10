@@ -159,38 +159,54 @@ fun SignUpComposable(navController: NavController, viewModel: EnterAccountViewMo
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(50.dp))
+            Button(
+                onClick = {
+                    viewModel.signUpUser()
+                    focusManager.clearFocus()
+                },
+                enabled = buttonEnabled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.SignUp).uppercase(),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
             Row(
                 modifier = Modifier
-                    .padding(top = 50.dp)
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(
-                    onClick = {
-                        viewModel.signUpUser()
-                        focusManager.clearFocus()
-                    },
-                    enabled = buttonEnabled
-                ) {
-                    Text(
-                        text = stringResource(R.string.SignUp),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Row {
-                    ClickableText(
-                        text = AnnotatedString(stringResource(R.string.Login)),
-                        style = TextStyle(color = if(isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline),
-                        onClick = {
-                            viewModel.switchPage()
-                            navController.navigate(Screen.LoginScreen.route) {
-                                popUpTo(Screen.SignUpScreen.route) { inclusive = true }
-                            }
-                        }
-                    )
-                }
+                Divider(
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp)
+                )
+                Text(text = stringResource(id = R.string.Or).lowercase())
+                Divider(
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp - ButtonDefaults.ContentPadding.calculateTopPadding()))
+            TextButton(
+                onClick = {
+                    viewModel.switchPage()
+                    navController.navigate(Screen.LoginScreen.route) {
+                        popUpTo(Screen.SignUpScreen.route) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = stringResource(R.string.Login),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

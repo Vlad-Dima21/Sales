@@ -63,6 +63,9 @@ class SalesmanPastSalesViewModel(
     private val _ordersWithRemovedProducts = MutableStateFlow(emptyList<Int>())
     val ordersWithRemovedProducts = _ordersWithRemovedProducts.asStateFlow()
 
+    private val _queryText = MutableStateFlow("")
+    val queryText = _queryText.asStateFlow()
+
     val pendingClients = combine(
         _clients,
         localOrders,
@@ -113,6 +116,32 @@ class SalesmanPastSalesViewModel(
             _isRefreshing.value = false
         }
     }
+        .combine(
+            _queryText
+        ) { clients, query ->
+            if (query.isEmpty()) {
+                return@combine clients
+            }
+            val finalClients = mutableListOf<SaleClient>()
+            val query = query.trim().lowercase()
+            try {
+                query.toInt()
+                clients.forEach { saleClient ->
+                    saleClient.orderList.filter { saleOrder ->
+                        saleOrder.order.orderId.toString().contains(query)
+                    }.let {  filteredOrders ->
+                        if (filteredOrders.isNotEmpty()) {
+                            finalClients.add(SaleClient(saleClient.client, filteredOrders))
+                        }
+                    }
+                }
+                return@combine finalClients
+            } catch (e: NumberFormatException) {
+                return@combine clients.filter { saleClient ->
+                    saleClient.client.clientName.lowercase().contains(query)
+                }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     enum class UploadSaleState(var productCode: String = "") {
@@ -171,6 +200,32 @@ class SalesmanPastSalesViewModel(
             emptyList()
         }
     }
+        .combine(
+            _queryText
+        ) { clients, query ->
+            if (query.isEmpty()) {
+                return@combine clients
+            }
+            val finalClients = mutableListOf<SaleClient>()
+            val query = query.trim().lowercase()
+            try {
+                query.toInt()
+                clients.forEach { saleClient ->
+                    saleClient.orderList.filter { saleOrder ->
+                        saleOrder.order.orderId.toString().contains(query)
+                    }.let {  filteredOrders ->
+                        if (filteredOrders.isNotEmpty()) {
+                            finalClients.add(SaleClient(saleClient.client, filteredOrders))
+                        }
+                    }
+                }
+                return@combine finalClients
+            } catch (e: NumberFormatException) {
+                return@combine clients.filter { saleClient ->
+                    saleClient.client.clientName.lowercase().contains(query)
+                }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
 
@@ -242,6 +297,10 @@ class SalesmanPastSalesViewModel(
             documentSnapshot.toObject(Order::class.java)!!
         }
         _isRefreshing.value = false
+    }
+
+    fun searchOrders(query: String) {
+        _queryText.value = query
     }
 
     fun hideHint() = viewModelScope.launch {

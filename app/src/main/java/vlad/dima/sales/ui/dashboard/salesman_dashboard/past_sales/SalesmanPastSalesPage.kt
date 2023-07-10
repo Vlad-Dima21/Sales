@@ -93,6 +93,7 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
         onRefresh = viewModel::refreshPastSales
     )
     val networkStatus by viewModel.networkStatus.collectAsState()
+    val query by viewModel.queryText.collectAsState()
     val pendingClients by viewModel.pendingClients.collectAsState()
     val scrollToClient by viewModel.scrollToClient.collectAsState()
     val pastSaleClients by viewModel.pastSaleClients.collectAsState()
@@ -142,7 +143,9 @@ fun SalesmanPastSales(viewModel: SalesmanPastSalesViewModel) {
             Column {
                 SalesmanPastSalesAppBar(
                     isHintVisible = (pendingClients.isNotEmpty() || pastSaleClients.isNotEmpty()) && !isHintHidden,
-                    onHintClick = viewModel::hideHint
+                    onHintClick = viewModel::hideHint,
+                    query = query,
+                    onQueryChange = viewModel::searchOrders
                 )
                 Box(
                     modifier = Modifier.weight(1f, false)
