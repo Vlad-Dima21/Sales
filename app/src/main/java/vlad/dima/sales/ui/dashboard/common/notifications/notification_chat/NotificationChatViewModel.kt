@@ -14,8 +14,12 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -24,6 +28,8 @@ import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
 import vlad.dima.sales.model.NotificationMessage
+import java.util.Calendar
+import java.util.Date
 
 class NotificationChatViewModel(
     private val notificationId: String,
@@ -48,9 +54,22 @@ class NotificationChatViewModel(
     val currentNotification: StateFlow<Notification>
         get() = _currentNotification.asStateFlow()
 
+    val currentFormattedDay = Calendar.getInstance().let { cl ->
+        "${cl[Calendar.DAY_OF_MONTH]}.${cl[Calendar.MONTH]}.${cl[Calendar.YEAR]}"
+    }
     private val _messages = MutableStateFlow(listOf<NotificationMessage>())
-    val messages: StateFlow<List<NotificationMessage>>
-        get() = _messages.asStateFlow()
+    val messages = _messages.asStateFlow()
+    val groupedMessages = _messages.map { messages ->
+        messages.groupBy {
+            val cl = Calendar.getInstance().apply { time = it.sendDate }
+            "${cl[Calendar.DAY_OF_MONTH]}.${cl[Calendar.MONTH]}.${cl[Calendar.YEAR]}"
+        }
+            .toList()
+            .sortedBy { it.first }
+            .toMap()
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
+    val itemsCount = _messages.value.size + messages.value.size
 
     private val _error = MutableStateFlow<Int?>(null)
     val error: StateFlow<Int?>

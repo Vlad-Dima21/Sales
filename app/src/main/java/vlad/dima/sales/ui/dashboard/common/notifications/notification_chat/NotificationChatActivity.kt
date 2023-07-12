@@ -62,7 +62,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -86,6 +93,7 @@ import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.theme.SalesTheme
 import vlad.dima.sales.ui.theme.extra
+import java.util.Calendar
 
 class NotificationChatActivity : ComponentActivity() {
 
@@ -135,6 +143,7 @@ class NotificationChatActivity : ComponentActivity() {
         setContent {
             SalesTheme(defaultSystemBarsColor = false) {
                 val networkStatus by networkManager.currentConnection.collectAsState(NetworkManager.NetworkStatus.Available)
+                val messageCardColor = MaterialTheme.colors.surface
                 val systemBarsColor by animateColorAsState(
                     if (networkStatus != NetworkManager.NetworkStatus.Available) MaterialTheme.colors.error else MaterialTheme.colors.surface,
                     label = "statusBarColor"
@@ -190,7 +199,7 @@ class NotificationChatActivity : ComponentActivity() {
                         }
                         if (lastIndex == itemsCount - 1 || lastIndex == itemsCount - 2) {
                             oldMessageSize = messages.size
-                            scrollState.animateScrollToItem(messages.lastIndex)
+                            scrollState.animateScrollToItem(itemsCount - 1)
                         }
                     }
                 }
@@ -200,8 +209,9 @@ class NotificationChatActivity : ComponentActivity() {
                     }
                 }
                 LaunchedEffect(isImeShown) {
+                    val itemsCount = scrollState.layoutInfo.totalItemsCount
                     if (isImeShown && messages.isNotEmpty()) {
-                        scrollState.animateScrollToItem(messages.lastIndex + 1)
+                        scrollState.animateScrollToItem(itemsCount - 1)
                     }
                 }
                 Column(
@@ -267,12 +277,16 @@ class NotificationChatActivity : ComponentActivity() {
                                         )
                                     }
                                 }
+
                                 items(
                                     items = messages
                                 ) {
+                                    val previousMessageAuthorIndex = messages.indexOf(it) - 1
+                                    val nextMessageAuthorIndex = previousMessageAuthorIndex + 2
+                                    val isStartOfNewGroup = previousMessageAuthorIndex < 0 || messages[previousMessageAuthorIndex].authorUID != it.authorUID
+                                    val isEndOfGroup = nextMessageAuthorIndex == messages.size || messages[nextMessageAuthorIndex].authorUID != it.authorUID
                                     Column {
-                                        val previousMessageAuthorIndex = messages.indexOf(it) - 1
-                                        if (it.authorUID != currentUser.userUID && (previousMessageAuthorIndex < 0 || messages[previousMessageAuthorIndex].authorUID != it.authorUID)) {
+                                        if (it.authorUID != currentUser.userUID && isStartOfNewGroup) {
                                             Text(
                                                 text = "${if (it.authorUID == currentNotification.managerUID) "✪" else ""} ${it.authorName}",
                                                 fontSize = 18.sp,
@@ -282,7 +296,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                     start = 8.dp
                                                 )
                                             )
-                                        } else if (previousMessageAuthorIndex < 0 || messages[previousMessageAuthorIndex].authorUID != it.authorUID) {
+                                        } else if (isStartOfNewGroup) {
                                             Spacer(modifier = Modifier.height(32.dp))
                                         }
                                         Row(
@@ -300,7 +314,37 @@ class NotificationChatActivity : ComponentActivity() {
                                                                 id = R.dimen.rounded_corner_radius
                                                             )
                                                         ),
-                                                        contentColor = MaterialTheme.colors.secondaryVariant
+                                                        contentColor = MaterialTheme.colors.secondaryVariant,
+                                                        modifier = Modifier.let {  modifier ->
+                                                            if (isStartOfNewGroup)
+                                                                modifier.drawBehind {
+                                                                    drawRoundRect(
+                                                                        messageCardColor,
+                                                                        topLeft = Offset(0f,size.height / 2),
+                                                                        size = Size(size.width / 2, size.height / 2),
+                                                                        cornerRadius = CornerRadius(10f, 10f)
+                                                                    )
+                                                                }
+                                                            else if (isEndOfGroup)
+                                                                modifier.drawBehind {
+                                                                    drawRoundRect(
+                                                                        messageCardColor,
+                                                                        topLeft = Offset(0f,0f),
+                                                                        size = Size(size.width / 2, size.height / 2),
+                                                                        cornerRadius = CornerRadius(10f, 10f)
+                                                                    )
+                                                                }
+                                                            else
+                                                                modifier.drawBehind {
+                                                                    drawRoundRect(
+                                                                        messageCardColor,
+                                                                        topLeft = Offset(0f,0f),
+                                                                        size = Size(size.width / 2, size.height),
+                                                                        cornerRadius = CornerRadius(10f, 10f)
+                                                                    )
+                                                                }
+                                                        },
+                                                        elevation = 0.dp
                                                     ) {
                                                         Text(
                                                             text = it.message,
@@ -322,6 +366,36 @@ class NotificationChatActivity : ComponentActivity() {
                                                         ),
                                                         contentColor = MaterialTheme.colors.primaryVariant,
                                                         modifier = Modifier.align(Alignment.CenterEnd)
+                                                            .let {  modifier ->
+                                                                if (isStartOfNewGroup)
+                                                                    modifier.drawBehind {
+                                                                        drawRoundRect(
+                                                                            messageCardColor,
+                                                                            topLeft = Offset(size.width / 2,size.height / 2),
+                                                                            size = Size(size.width / 2, size.height / 2),
+                                                                            cornerRadius = CornerRadius(10f, 10f)
+                                                                        )
+                                                                    }
+                                                                else if (isEndOfGroup)
+                                                                    modifier.drawBehind {
+                                                                        drawRoundRect(
+                                                                            messageCardColor,
+                                                                            topLeft = Offset(size.width / 2, 0f),
+                                                                            size = Size(size.width / 2, size.height / 2),
+                                                                            cornerRadius = CornerRadius(10f, 10f)
+                                                                        )
+                                                                    }
+                                                                else
+                                                                    modifier.drawBehind {
+                                                                        drawRoundRect(
+                                                                            messageCardColor,
+                                                                            topLeft = Offset(size.width / 2,0f),
+                                                                            size = Size(size.width / 2, size.height),
+                                                                            cornerRadius = CornerRadius(10f, 10f)
+                                                                        )
+                                                                    }
+                                                            },
+                                                        elevation = 0.dp
                                                     ) {
                                                         Text(
                                                             text = it.message,
