@@ -27,7 +27,9 @@ import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
 import vlad.dima.sales.model.NotificationMessage
+import vlad.dima.sales.utils.DateTime
 import java.util.Calendar
+import java.util.Date
 
 class NotificationChatViewModel(
     private val notificationId: String,
@@ -52,18 +54,18 @@ class NotificationChatViewModel(
     val currentNotification: StateFlow<Notification>
         get() = _currentNotification.asStateFlow()
 
-    val currentFormattedDay = Calendar.getInstance().let { cl ->
-        "${cl[Calendar.DAY_OF_MONTH].toString().padStart(2, '0')}.${cl[Calendar.MONTH].toString().padStart(2, '0')}.${cl[Calendar.YEAR]}"
-    }
+    val currentFormattedDay = DateTime.getDate(Date())
     private val _messages = MutableStateFlow(listOf<NotificationMessage>())
     val messages = _messages.asStateFlow()
     val groupedMessages = _messages.map { messages ->
         messages.groupBy {
-            val cl = Calendar.getInstance().apply { time = it.sendDate }
-            "${cl[Calendar.DAY_OF_MONTH].toString().padStart(2, '0')}.${cl[Calendar.MONTH].toString().padStart(2, '0')}.${cl[Calendar.YEAR]}"
+            DateTime(it.sendDate)
         }
             .toList()
-            .sortedBy { it.first }
+            .sortedBy { it.first.date }
+            .map { (dateTime, messages) ->
+                DateTime.getDate(dateTime.date) to messages
+            }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
@@ -129,7 +131,7 @@ class NotificationChatViewModel(
                     querySnapshot?.let { query ->
                         _messages.emit(
                             query.map {
-                                it.toObject(NotificationMessage::class.java)
+                                it.toObject(NotificationMessage::class.java).apply { notificationMessageId = it.id }
                             }
                         )
                     }

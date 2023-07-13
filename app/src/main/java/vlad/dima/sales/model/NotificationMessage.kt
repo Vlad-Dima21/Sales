@@ -4,6 +4,7 @@ import java.util.*
 
 data class NotificationMessage(
     var notificationId: String = "",
+    var notificationMessageId: String = "",
     var authorUID: String = "",
     var authorName: String = "",
     var message: String = "",

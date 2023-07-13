@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -95,6 +96,7 @@ import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.model.room.SalesDatabase
 import vlad.dima.sales.ui.theme.SalesTheme
 import vlad.dima.sales.ui.theme.extra
+import vlad.dima.sales.utils.DateTime
 
 class NotificationChatActivity : ComponentActivity() {
 
@@ -159,6 +161,9 @@ class NotificationChatActivity : ComponentActivity() {
                 val currentUser by viewModel.currentUser.collectAsState()
                 val messages by viewModel.messages.collectAsState()
                 val groupedMessages by viewModel.groupedMessages.collectAsState()
+                var selectedMessageId by rememberSaveable {
+                    mutableStateOf("")
+                }
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val scrollState = rememberLazyListState()
                 val keyboardController = LocalSoftwareKeyboardController.current
@@ -185,9 +190,11 @@ class NotificationChatActivity : ComponentActivity() {
                         }
                     }
                 }
-                val scrollDownVisibility by remember {
+                val scrollDownVisibility by remember(messages, scrollState) {
                     derivedStateOf {
-                        messages.isNotEmpty() && scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index != scrollState.layoutInfo.totalItemsCount - 1 && !isImeShown
+                        val lastIndex = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                        val itemsCount = scrollState.layoutInfo.totalItemsCount
+                        messages.isNotEmpty() && !((itemsCount - 1) downTo (itemsCount - 3)).contains(lastIndex) && !isImeShown
                     }
                 }
                 val coroutineScope = rememberCoroutineScope()
@@ -201,7 +208,7 @@ class NotificationChatActivity : ComponentActivity() {
                             oldMessageSize = messages.size
                             messagesLoaded = true
                         }
-                        if (lastIndex == itemsCount - 1 || lastIndex == itemsCount - 2) {
+                        if (((itemsCount - 1) downTo (itemsCount - 4)).contains(lastIndex)) {
                             oldMessageSize = messages.size
                             scrollState.animateScrollToItem(itemsCount - 1)
                         }
@@ -291,7 +298,6 @@ class NotificationChatActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .padding(5.dp),
                                             shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner_radius)),
-                                            border = BorderStroke(1.dp, MaterialTheme.colors.onSurface),
                                             onClick = {
                                                 coroutineScope.launch {
                                                     scrollState.animateScrollToItem(1 + index + groupedMessages.subList(0, index).fold(0) { acc, (_, list) -> acc + list.size})
@@ -310,7 +316,8 @@ class NotificationChatActivity : ComponentActivity() {
                                         }
                                     }
                                     items(
-                                        items = messages
+                                        items = messages,
+                                        key = { it.notificationMessageId }
                                     ) {
                                         val previousMessageAuthorIndex = messages.indexOf(it) - 1
                                         val nextMessageAuthorIndex = previousMessageAuthorIndex + 2
@@ -337,101 +344,205 @@ class NotificationChatActivity : ComponentActivity() {
                                             ) {
                                                 if (it.authorUID != currentUser.userUID) {
                                                     Box(
-                                                        modifier = Modifier.weight(1f)
+                                                        modifier = Modifier.weight(3f)
                                                     ) {
-                                                        Card(
-                                                            shape = RoundedCornerShape(
-                                                                dimensionResource(
-                                                                    id = R.dimen.rounded_corner_radius
+                                                        Column {
+                                                            Card(
+                                                                shape = RoundedCornerShape(
+                                                                    dimensionResource(
+                                                                        id = R.dimen.rounded_corner_radius
+                                                                    )
+                                                                ),
+                                                                contentColor = MaterialTheme.colors.secondaryVariant,
+                                                                modifier = Modifier
+                                                                    .let { modifier ->
+                                                                        if (isStartOfNewGroup)
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        0f,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                        else if (isEndOfGroup)
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        0f,
+                                                                                        0f
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                        else
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        0f,
+                                                                                        0f
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                    }
+                                                                    .widthIn(min = 50.dp),
+                                                                elevation = 0.dp,
+                                                                onClick = {
+                                                                    selectedMessageId = when {
+                                                                        selectedMessageId != it.notificationMessageId -> it.notificationMessageId
+                                                                        else -> ""
+                                                                    }
+                                                                }
+                                                            ) {
+                                                                Box {
+                                                                    Text(
+                                                                        text = it.message,
+                                                                        modifier = Modifier
+                                                                            .padding(
+                                                                                16.dp
+                                                                            )
+                                                                            .align(Alignment.Center)
+                                                                    )
+                                                                }
+                                                            }
+                                                            AnimatedVisibility(visible = selectedMessageId == it.notificationMessageId) {
+                                                                Text(
+                                                                    text = DateTime.getTime(it.sendDate),
+                                                                    color = MaterialTheme.colors.onBackground,
+                                                                    modifier = Modifier.padding(start = 5.dp, top = 5.dp),
+                                                                    fontSize = 13.sp
                                                                 )
-                                                            ),
-                                                            contentColor = MaterialTheme.colors.secondaryVariant,
-                                                            modifier = Modifier.let {  modifier ->
-                                                                if (isStartOfNewGroup)
-                                                                    modifier.drawBehind {
-                                                                        drawRoundRect(
-                                                                            messageCardColor,
-                                                                            topLeft = Offset(0f,size.height / 2),
-                                                                            size = Size(size.width / 2, size.height / 2),
-                                                                            cornerRadius = CornerRadius(10f, 10f)
-                                                                        )
-                                                                    }
-                                                                else if (isEndOfGroup)
-                                                                    modifier.drawBehind {
-                                                                        drawRoundRect(
-                                                                            messageCardColor,
-                                                                            topLeft = Offset(0f,0f),
-                                                                            size = Size(size.width / 2, size.height / 2),
-                                                                            cornerRadius = CornerRadius(10f, 10f)
-                                                                        )
-                                                                    }
-                                                                else
-                                                                    modifier.drawBehind {
-                                                                        drawRoundRect(
-                                                                            messageCardColor,
-                                                                            topLeft = Offset(0f,0f),
-                                                                            size = Size(size.width / 2, size.height),
-                                                                            cornerRadius = CornerRadius(10f, 10f)
-                                                                        )
-                                                                    }
-                                                            },
-                                                            elevation = 0.dp
-                                                        ) {
-                                                            Text(
-                                                                text = it.message,
-                                                                modifier = Modifier.padding(16.dp)
-                                                            )
+                                                            }
                                                         }
                                                     }
                                                     Spacer(modifier = Modifier.weight(1f))
                                                 } else {
                                                     Spacer(modifier = Modifier.weight(1f))
                                                     Box(
-                                                        modifier = Modifier.weight(1f)
+                                                        modifier = Modifier.weight(3f)
                                                     ) {
-                                                        Card(
-                                                            shape = RoundedCornerShape(
-                                                                dimensionResource(
-                                                                    id = R.dimen.rounded_corner_radius
-                                                                )
-                                                            ),
-                                                            contentColor = MaterialTheme.colors.primaryVariant,
-                                                            modifier = Modifier.align(Alignment.CenterEnd)
-                                                                .let {  modifier ->
-                                                                    if (isStartOfNewGroup)
-                                                                        modifier.drawBehind {
-                                                                            drawRoundRect(
-                                                                                messageCardColor,
-                                                                                topLeft = Offset(size.width / 2,size.height / 2),
-                                                                                size = Size(size.width / 2, size.height / 2),
-                                                                                cornerRadius = CornerRadius(10f, 10f)
-                                                                            )
-                                                                        }
-                                                                    else if (isEndOfGroup)
-                                                                        modifier.drawBehind {
-                                                                            drawRoundRect(
-                                                                                messageCardColor,
-                                                                                topLeft = Offset(size.width / 2, 0f),
-                                                                                size = Size(size.width / 2, size.height / 2),
-                                                                                cornerRadius = CornerRadius(10f, 10f)
-                                                                            )
-                                                                        }
-                                                                    else
-                                                                        modifier.drawBehind {
-                                                                            drawRoundRect(
-                                                                                messageCardColor,
-                                                                                topLeft = Offset(size.width / 2,0f),
-                                                                                size = Size(size.width / 2, size.height),
-                                                                                cornerRadius = CornerRadius(10f, 10f)
-                                                                            )
-                                                                        }
-                                                                },
-                                                            elevation = 0.dp
+                                                        Column(
+                                                            horizontalAlignment = Alignment.End,
+                                                            modifier = Modifier.align(Alignment.TopEnd)
                                                         ) {
-                                                            Text(
-                                                                text = it.message,
-                                                                modifier = Modifier.padding(16.dp)
-                                                            )
+                                                            Card(
+                                                                shape = RoundedCornerShape(
+                                                                    dimensionResource(
+                                                                        id = R.dimen.rounded_corner_radius
+                                                                    )
+                                                                ),
+                                                                contentColor = MaterialTheme.colors.primaryVariant,
+                                                                modifier = Modifier
+                                                                    .let { modifier ->
+                                                                        if (isStartOfNewGroup)
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        size.width / 2,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                        else if (isEndOfGroup)
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        size.width / 2,
+                                                                                        0f
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height / 2
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                        else
+                                                                            modifier.drawBehind {
+                                                                                drawRoundRect(
+                                                                                    messageCardColor,
+                                                                                    topLeft = Offset(
+                                                                                        size.width / 2,
+                                                                                        0f
+                                                                                    ),
+                                                                                    size = Size(
+                                                                                        size.width / 2,
+                                                                                        size.height
+                                                                                    ),
+                                                                                    cornerRadius = CornerRadius(
+                                                                                        10f,
+                                                                                        10f
+                                                                                    )
+                                                                                )
+                                                                            }
+                                                                    }
+                                                                    .widthIn(min = 50.dp),
+                                                                elevation = 0.dp,
+                                                                onClick = {
+                                                                    selectedMessageId = when {
+                                                                        selectedMessageId != it.notificationMessageId -> it.notificationMessageId
+                                                                        else -> ""
+                                                                    }
+                                                                }
+                                                            ) {
+                                                                Box {
+                                                                    Text(
+                                                                        text = it.message,
+                                                                        modifier = Modifier
+                                                                            .padding(
+                                                                                16.dp
+                                                                            )
+                                                                            .align(Alignment.Center)
+                                                                    )
+                                                                }
+                                                            }
+                                                            AnimatedVisibility(visible = selectedMessageId == it.notificationMessageId) {
+                                                                Text(
+                                                                    text = DateTime.getTime(it.sendDate),
+                                                                    color = MaterialTheme.colors.onBackground,
+                                                                    modifier = Modifier.padding(end = 5.dp, top = 5.dp),
+                                                                    fontSize = 13.sp
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                 }
