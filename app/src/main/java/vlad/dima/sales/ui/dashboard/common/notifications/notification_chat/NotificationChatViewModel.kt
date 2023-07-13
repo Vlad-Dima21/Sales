@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -29,7 +28,6 @@ import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
 import vlad.dima.sales.model.NotificationMessage
 import java.util.Calendar
-import java.util.Date
 
 class NotificationChatViewModel(
     private val notificationId: String,
@@ -55,21 +53,19 @@ class NotificationChatViewModel(
         get() = _currentNotification.asStateFlow()
 
     val currentFormattedDay = Calendar.getInstance().let { cl ->
-        "${cl[Calendar.DAY_OF_MONTH]}.${cl[Calendar.MONTH]}.${cl[Calendar.YEAR]}"
+        "${cl[Calendar.DAY_OF_MONTH].toString().padStart(2, '0')}.${cl[Calendar.MONTH].toString().padStart(2, '0')}.${cl[Calendar.YEAR]}"
     }
     private val _messages = MutableStateFlow(listOf<NotificationMessage>())
     val messages = _messages.asStateFlow()
     val groupedMessages = _messages.map { messages ->
         messages.groupBy {
             val cl = Calendar.getInstance().apply { time = it.sendDate }
-            "${cl[Calendar.DAY_OF_MONTH]}.${cl[Calendar.MONTH]}.${cl[Calendar.YEAR]}"
+            "${cl[Calendar.DAY_OF_MONTH].toString().padStart(2, '0')}.${cl[Calendar.MONTH].toString().padStart(2, '0')}.${cl[Calendar.YEAR]}"
         }
             .toList()
             .sortedBy { it.first }
-            .toMap()
     }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
-    val itemsCount = _messages.value.size + messages.value.size
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _error = MutableStateFlow<Int?>(null)
     val error: StateFlow<Int?>
@@ -154,7 +150,7 @@ class NotificationChatViewModel(
         message = ""
     }
 
-    fun deleteMessage() = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteNotification() = viewModelScope.launch(Dispatchers.IO) {
         notificationsCollection.document(notificationId).delete()
     }
 
