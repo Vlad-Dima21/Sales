@@ -54,6 +54,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Message
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -161,8 +166,12 @@ class NotificationChatActivity : ComponentActivity() {
                 val currentUser by viewModel.currentUser.collectAsState()
                 val messages by viewModel.messages.collectAsState()
                 val groupedMessages by viewModel.groupedMessages.collectAsState()
+                val currentResultPosition by viewModel.currentResultPosition.collectAsState()
                 var selectedMessageId by rememberSaveable {
                     mutableStateOf("")
+                }
+                var isSearching by rememberSaveable {
+                    mutableStateOf(false)
                 }
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val scrollState = rememberLazyListState()
@@ -223,6 +232,11 @@ class NotificationChatActivity : ComponentActivity() {
                     val itemsCount = scrollState.layoutInfo.totalItemsCount
                     if (isImeShown && messages.isNotEmpty()) {
                         scrollState.animateScrollToItem(itemsCount - 1)
+                    }
+                }
+                LaunchedEffect(currentResultPosition) {
+                    if (currentResultPosition.second > 0) {
+                        scrollState.animateScrollToItem(currentResultPosition.second)
                     }
                 }
                 Column(
@@ -356,10 +370,12 @@ class NotificationChatActivity : ComponentActivity() {
                                                                 contentColor = MaterialTheme.colors.secondaryVariant,
                                                                 modifier = Modifier
                                                                     .let { modifier ->
+                                                                        val color =
+                                                                            if (currentResultPosition.first == it.notificationMessageId) extraColor else messageCardColor
                                                                         if (isStartOfNewGroup)
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         0f,
                                                                                         size.height / 2
@@ -377,7 +393,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                         else if (isEndOfGroup)
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         0f,
                                                                                         0f
@@ -395,7 +411,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                         else
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         0f,
                                                                                         0f
@@ -412,6 +428,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                             }
                                                                     }
                                                                     .widthIn(min = 50.dp),
+                                                                border = if (currentResultPosition.first == it.notificationMessageId) BorderStroke(1.dp, MaterialTheme.colors.extra) else null,
                                                                 elevation = 0.dp,
                                                                 onClick = {
                                                                     selectedMessageId = when {
@@ -460,10 +477,12 @@ class NotificationChatActivity : ComponentActivity() {
                                                                 contentColor = MaterialTheme.colors.primaryVariant,
                                                                 modifier = Modifier
                                                                     .let { modifier ->
+                                                                        val color =
+                                                                            if (currentResultPosition.first == it.notificationMessageId) extraColor else messageCardColor
                                                                         if (isStartOfNewGroup)
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         size.width / 2,
                                                                                         size.height / 2
@@ -481,7 +500,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                         else if (isEndOfGroup)
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         size.width / 2,
                                                                                         0f
@@ -499,7 +518,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                         else
                                                                             modifier.drawBehind {
                                                                                 drawRoundRect(
-                                                                                    messageCardColor,
+                                                                                    color,
                                                                                     topLeft = Offset(
                                                                                         size.width / 2,
                                                                                         0f
@@ -516,6 +535,7 @@ class NotificationChatActivity : ComponentActivity() {
                                                                             }
                                                                     }
                                                                     .widthIn(min = 50.dp),
+                                                                border = if (currentResultPosition.first == it.notificationMessageId) BorderStroke(1.dp, MaterialTheme.colors.extra) else null,
                                                                 elevation = 0.dp,
                                                                 onClick = {
                                                                     selectedMessageId = when {
@@ -621,69 +641,137 @@ class NotificationChatActivity : ComponentActivity() {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp)
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = viewModel.message,
-                            onValueChange = { newMessage ->
-                                if (newMessage.isEmpty() || newMessage.isNotBlank()) {
-                                    viewModel.message = newMessage
-                                }
-                            },
-                            textStyle = TextStyle(
-                                color = MaterialTheme.colors.onSurface,
-                                fontSize = 18.sp
-                            ),
-                            placeholder = { Text(text = stringResource(id = R.string.SendMessage)) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(
-                                backgroundColor = Color.Transparent
-                            ),
-                            maxLines = 4,
-                            keyboardOptions = KeyboardOptions(
-                                capitalization = KeyboardCapitalization.Sentences,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                }
-                            ),
-                            shape = RoundedCornerShape(30.dp)
-                        )
-                        AnimatedVisibility(
-                            visible = viewModel.message.isNotEmpty(),
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        ) {
+                        AnimatedVisibility(visible = viewModel.message.isEmpty()) {
                             IconButton(
-                                modifier = Modifier.background(
-                                    color = when(networkStatus == NetworkManager.NetworkStatus.Available) {
-                                        true -> MaterialTheme.colors.primaryVariant
-                                        else -> MaterialTheme.colors.primaryVariant.copy(.5f)
-                                    },
-                                    shape = CircleShape
-                                ),
                                 onClick = {
-                                    coroutineScope.launch {
-                                        oldMessageSize++
-                                        viewModel.sendMessage().join()
-                                    }
-                                },
-                                enabled = viewModel.message.isNotEmpty() && networkStatus == NetworkManager.NetworkStatus.Available
+                                    isSearching = !isSearching
+                                    viewModel.resetSearch()
+                                }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Send,
-                                    contentDescription = getString(
-                                        R.string.SendMessage
-                                    ),
-                                    tint = MaterialTheme.colors.onPrimary
+                                    imageVector = if (!isSearching) Icons.Rounded.Search else Icons.Rounded.Message,
+                                    contentDescription = stringResource(id = R.string.Search),
+                                    tint = MaterialTheme.colors.onBackground
                                 )
                             }
                         }
-                    }
+                            OutlinedTextField(
+                                value = if (!isSearching) viewModel.message else viewModel.search,
+                                onValueChange = { newText ->
+                                    if (newText.isEmpty() || newText.isNotBlank()) {
+                                        if (!isSearching) {
+                                            viewModel.message = newText
+                                        } else {
+                                            viewModel.search = newText
+                                        }
+                                    }
+                                },
+                                textStyle = TextStyle(
+                                    color = MaterialTheme.colors.onSurface,
+                                    fontSize = 18.sp
+                                ),
+                                placeholder = {
+                                    if (!isSearching) {
+                                        Text(text = stringResource(id = R.string.SendMessage))
+                                    } else {
+                                        Text(text = stringResource(id = R.string.Search))
+                                    }
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 8.dp),
+                                colors = TextFieldDefaults.outlinedTextFieldColors(
+                                    backgroundColor = Color.Transparent
+                                ),
+                                trailingIcon =
+                                    if (isSearching && viewModel.noResults == 0) {
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Clear,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colors.error
+                                            )
+                                        }
+                                    } else if (isSearching && viewModel.noResults > 0) {
+                                        {
+                                            Text(text = "${viewModel.currentResult + 1}/${viewModel.noResults}")
+                                        }
+                                    } else {
+                                        null
+                                    },
+                                maxLines = if (!isSearching) 4 else 2,
+                                keyboardOptions = when (!isSearching) {
+                                    true -> KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.Sentences,
+                                        imeAction = ImeAction.Done
+                                    )
+                                    else -> KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.Sentences,
+                                        imeAction = ImeAction.Search
+                                    )
+                                },
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+                                    },
+                                    onSearch = {
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+                                        viewModel.searchMessages()
+                                    }
+                                ),
+                                shape = RoundedCornerShape(30.dp)
+                            )
+                            AnimatedVisibility(
+                                visible = viewModel.message.isNotEmpty(),
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            ) {
+                                IconButton(
+                                    modifier = Modifier.background(
+                                        color = when (networkStatus == NetworkManager.NetworkStatus.Available) {
+                                            true -> MaterialTheme.colors.primaryVariant
+                                            else -> MaterialTheme.colors.primaryVariant.copy(.5f)
+                                        },
+                                        shape = CircleShape
+                                    ),
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            oldMessageSize++
+                                            viewModel.sendMessage().join()
+                                        }
+                                    },
+                                    enabled = viewModel.message.isNotEmpty() && networkStatus == NetworkManager.NetworkStatus.Available
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Send,
+                                        contentDescription = getString(
+                                            R.string.SendMessage
+                                        ),
+                                        tint = MaterialTheme.colors.onPrimary
+                                    )
+                                }
+                            }
+                            if (viewModel.noResults > 0) {
+                                IconButton(onClick = { viewModel.goToSearchResult(1) }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colors.onBackground
+                                    )
+                                }
+                                IconButton(onClick = { viewModel.goToSearchResult(-1) }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colors.onBackground
+                                    )
+                                }
+                            }
+                        }
                 }
             }
         }

@@ -13,6 +13,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,12 +24,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import vlad.dima.sales.R
-import vlad.dima.sales.model.repository.UserRepository
-import vlad.dima.sales.model.User
 import vlad.dima.sales.model.Notification
 import vlad.dima.sales.model.NotificationMessage
+import vlad.dima.sales.model.User
+import vlad.dima.sales.model.repository.UserRepository
 import vlad.dima.sales.utils.DateTime
-import java.util.Calendar
 import java.util.Date
 
 class NotificationChatViewModel(
@@ -74,6 +74,12 @@ class NotificationChatViewModel(
         get() = _error.asStateFlow()
 
     var message by mutableStateOf("")
+
+    var search by mutableStateOf("")
+    private var queryResults = mutableListOf<Pair<String, Int>>()
+    var currentResult = -1
+    var currentResultPosition = MutableStateFlow(Pair("", -1))
+    var noResults by mutableStateOf(-1)
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -160,6 +166,55 @@ class NotificationChatViewModel(
         super.onCleared()
         notificationSnapshotListener.remove()
         messagesSnapshotListener.remove()
+    }
+
+    fun searchMessages() = viewModelScope.launch {
+        currentResult = -1
+        currentResultPosition.value = Pair("", -1)
+        delay(100)
+        queryResults = mutableListOf()
+        noResults = -1
+        if (search.isEmpty()) {
+            return@launch
+        }
+        groupedMessages.value.forEachIndexed { index, (_, messages) ->
+            messages.forEachIndexed {  messageIndex, message ->
+                if (message.message.lowercase().contains(search.lowercase().trim())) {
+                    queryResults.add(
+                        Pair(
+                            message.notificationMessageId,
+                            1 + index + messageIndex + groupedMessages.value.subList(0, index).fold(0) { acc, (_, list) -> acc + list.size}
+                        )
+                    )
+                }
+            }
+        }
+        if (queryResults.isNotEmpty()) {
+            currentResult = 0
+            currentResultPosition.value = queryResults[0]
+        }
+        noResults = queryResults.size
+    }
+
+    fun goToSearchResult(position: Int) = viewModelScope.launch {
+        currentResultPosition.value = Pair("", -1)
+        delay(100)
+        if (queryResults.isNotEmpty()) {
+            if (currentResult + position < 0) {
+                currentResult = queryResults.size - 1
+            } else {
+                currentResult = (currentResult + position) % queryResults.size
+            }
+            currentResultPosition.value = queryResults[currentResult]
+        }
+    }
+
+    fun resetSearch() {
+        search = ""
+        currentResult = -1
+        currentResultPosition.value = Pair("", -1)
+        queryResults = mutableListOf()
+        noResults = -1
     }
 
     class Factory(private val notificationId: String, private val repository: UserRepository) :
